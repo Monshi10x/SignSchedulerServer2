@@ -1,6 +1,11 @@
 
+const apiBase =
+      window.location.hostname === "localhost"
+            ? "http://localhost:8080"
+            : "https://signschedulerapp.ts.r.appspot.com";
+
 window.addEventListener("load", async (event) => {
-      new DesignBoard2(document.body, "https://signschedulerapp.ts.r.appspot.com");
+      new DesignBoard2(document.body, {dataURLPath: apiBase});
 });
 
 

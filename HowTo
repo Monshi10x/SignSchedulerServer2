@@ -1,0 +1,7 @@
+For Project:
+- In Terminal: 'npm init' if no none_modules folder
+- In Terminal: 'npm start'
+
+GCloud:
+- In Terminal: 'gcloud auth login'
+- Then 'gcloud app deloy'
