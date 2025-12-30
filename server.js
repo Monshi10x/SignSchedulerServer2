@@ -81,6 +81,10 @@ app.get("/designBoard", (req, res) => {
       res.sendFile(path.join(__dirname) + '/views/designBoard.html');
 });
 
+app.get("/jobBoard", (req, res) => {
+      res.sendFile(path.join(__dirname) + '/views/ScheduleBoard.html');
+});
+
 app.get('/CB_DesignBoard_Data', (req, resp) => {
       console.log("request to goto /CB_DesignBoard_Data");
 
