@@ -1,0 +1,120 @@
+const {timeStamp} = require('console');
+const express = require('express');
+const path = require('path');
+const puppeteer = require('puppeteer');
+
+
+const app = express();
+app.use(express.static(path.join(__dirname) + "/javascript"));
+app.use('/javascript', express.static(__dirname + '/javascript'));//
+
+app.get('/', (req, res) => {
+      res.sendFile(path.join(__dirname) + '/views/index.html');
+});
+
+function delay(time) {
+      return new Promise(resolve => setTimeout(resolve, time));
+}
+
+let CB_DesignBoard_Data;
+var dataFetchedTimes = [];
+var browser = null;
+var page = null;
+(async () => {
+      try {
+            console.log("puppeteer browser starting...");
+            browser = await puppeteer.launch({
+                  args: [
+                        '--disable-gpu',
+                        '--disable-dev-shm-usage',
+                        '--disable-setuid-sandbox',
+                        '--no-first-run',
+                        '--no-sandbox',
+                        '--no-zygote',
+                        '--deterministic-fetch',
+                        '--disable-features=IsolateOrigins',
+                        '--disable-site-isolation-trials',
+                  ],
+                  headless: true,
+            });
+            console.log("puppeteer browser started");
+            await delay(1000);
+            page = await browser.newPage();
+            console.log("puppeteer new page opened");
+
+            await delay(1000);
+            await page.goto("https://sar10686.corebridge.net/DesignModule/DesignMainQueue.aspx", {
+                  waitUntil: "load",
+                  timeout: 60000
+            });
+            console.log("puppeteer goto page");
+
+            await page.waitForSelector('input[id=txtUsername]');
+            await page.type('#txtUsername', 'tristan');
+            await page.type('#txtPassword', 'tristan10x');
+            await page.click("#btnLogin");
+            await page.waitForNavigation();
+            console.log("waiting for navigation");
+
+            page.on('response', async response => {
+                  const url = response.url();
+                  try {
+                        const req = response.request();
+                        const orig = req.url();
+
+                        if(orig == "https://sar10686.corebridge.net/SalesModule/Orders/OrderProduct.asmx/GetOrderProductQueueEntriesPaged") {
+                              let data = await response.json();
+                              CB_DesignBoard_Data = data.d.QueueEntries;
+                              dataFetchedTimes.push(Date.now());
+                              console.log("Data Fetched Times: ", dataFetchedTimes);
+                        }
+                  } catch(err) {
+                        console.error(`Failed getting data from: ${url}`, err);
+                  }
+            });
+      } catch(err) {
+            console.error('Failed Puppeteer', err);
+      }
+})();
+
+app.get("/designBoard", (req, res) => {
+      res.sendFile(path.join(__dirname) + '/views/designBoard.html');
+});
+
+app.get('/CB_DesignBoard_Data', (req, resp) => {
+      console.log("request to goto /CB_DesignBoard_Data");
+
+      if(page != null) {
+            (async () => {
+                  await page.evaluate(async () => {
+                        const response = await fetch("https://sar10686.corebridge.net/SalesModule/Orders/OrderProduct.asmx/GetOrderProductQueueEntriesPaged", {
+                              "headers": {
+                                    "accept": "application/json, text/javascript, */*; q=0.01",
+                                    "accept-language": "en-GB,en;q=0.9",
+                                    "content-type": "application/json; charset=UTF-8",
+                                    "priority": "u=1, i",
+                                    "sec-ch-ua": "\"Not?A_Brand\";v=\"99\", \"Chromium\";v=\"130\"",
+                                    "sec-ch-ua-mobile": "?0",
+                                    "sec-ch-ua-platform": "\"Windows\"",
+                                    "sec-fetch-dest": "empty",
+                                    "sec-fetch-mode": "cors",
+                                    "sec-fetch-site": "same-origin",
+                                    "x-requested-with": "XMLHttpRequest"
+                              },
+                              "referrer": "https://sar10686.corebridge.net/DesignModule/DesignMainQueue.aspx",
+                              "referrerPolicy": "strict-origin-when-cross-origin",
+                              "body": "{\"sEcho\":2,\"iColumns\":21,\"sColumns\":\"\",\"iDisplayStart\":0,\"iDisplayLength\":30,\"iSortCol_0\":6,\"sSortDir_0\":\"asc\",\"viewType\":\"design\",\"queueType\":\"design_wip\",\"txSearch\":\"\",\"pageIndex\":1,\"arrQueueFilters\":[null,\"\",null,\"\",\"\",\"\",null,\"\",null,null,\"\",\"\",null,null]}",
+                              "method": "POST",
+                              "mode": "cors",
+                              "credentials": "include"
+                        });
+                  });
+                  resp.status(200).json(CB_DesignBoard_Data);
+            })();
+      }
+});
+
+const PORT = process.env.PORT || 8080;
+app.listen(PORT, (req, res) => {
+      console.log('listening on port ' + PORT);
+});;
