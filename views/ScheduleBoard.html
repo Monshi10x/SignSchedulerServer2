@@ -2175,6 +2175,7 @@
 
         const visibleStart = startOfDay(days[0]).getTime();
         const visibleEnd = startOfDay(addDays(days[days.length-1], 1)).getTime();
+        const byDay = new Map();
 
         state.tasks.forEach(task=>{
           if(isUnassigned(task)) return;
@@ -2194,8 +2195,43 @@
             const col = daysGridInner.querySelector(`.dayCol[data-day="${isoDate(d)}"]`);
             if(!col) continue;
 
-            col.appendChild(makeTaskElement(task, segStart, segEnd, d));
+            const el = makeTaskElement(task, segStart, segEnd, d);
+            col.appendChild(el);
+            const dayIso = isoDate(d);
+            if(!byDay.has(dayIso)) byDay.set(dayIso, []);
+            byDay.get(dayIso).push({ start: segStart, end: segEnd, el });
           }
+        });
+
+        // Lay out overlapping tasks per day by assigning columns
+        const GAP_PX = 6;
+        byDay.forEach((segments)=>{
+          segments.sort((a,b)=> a.start - b.start || a.end - b.end);
+          const active = [];
+          let maxCol = 0;
+
+          for(const seg of segments){
+            // release ended
+            for(let i=active.length-1;i>=0;i--){
+              if(active[i].end <= seg.start) active.splice(i,1);
+            }
+            // find available column
+            const used = new Set(active.map(x=>x.col));
+            let col = 0;
+            while(used.has(col)) col++;
+            seg.col = col;
+            maxCol = Math.max(maxCol, col);
+            active.push(seg);
+          }
+
+          const cols = maxCol + 1;
+          const widthPct = 100 / cols;
+          segments.forEach(seg=>{
+            const leftPct = seg.col * widthPct;
+            seg.el.style.right = "auto";
+            seg.el.style.left = `calc(${leftPct}% + ${GAP_PX/2}px)`;
+            seg.el.style.width = `calc(${widthPct}% - ${GAP_PX}px)`;
+          });
         });
       }
 
