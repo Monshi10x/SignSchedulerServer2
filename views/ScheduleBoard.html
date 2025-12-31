@@ -118,6 +118,7 @@
     .ico.trash{mask-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="black" d="M7 21q-.825 0-1.412-.587T5 19V6H4V4h5V3h6v1h5v2h-1v13q0 .825-.587 1.413T17 21H7Zm10-15H7v13h10V6ZM9 17h2V8H9v9Zm4 0h2V8h-2v9Z"/></svg>'); -webkit-mask-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="black" d="M7 21q-.825 0-1.412-.587T5 19V6H4V4h5V3h6v1h5v2h-1v13q0 .825-.587 1.413T17 21H7Zm10-15H7v13h10V6ZM9 17h2V8H9v9Zm4 0h2V8h-2v9Z"/></svg>');}
     .ico.play{mask-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="black" d="M8 5v14l11-7z"/></svg>'); -webkit-mask-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="black" d="M8 5v14l11-7z"/></svg>');}
     .ico.stop{mask-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="black" d="M6 6h12v12H6z"/></svg>'); -webkit-mask-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="black" d="M6 6h12v12H6z"/></svg>');}
+    .ico.clock{mask-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill=\"black\" d=\"M12 22q-2.075 0-3.9-.788t-3.187-2.125Q3.575 17.75 2.788 15.925 2 14.1 2 12t.788-3.9q.787-1.825 2.125-3.162Q7.25 3.575 9.075 2.788 10.9 2 13 2t3.9.788q1.825.787 3.163 2.125 1.337 1.337 2.124 3.162Q23 10.9 23 13q0 2.1-.788 3.925-.787 1.825-2.124 3.162-1.338 1.337-3.163 2.125Q14.075 22 12 22Zm0-2q3.35 0 5.675-2.325Q20 15.35 20 12q0-3.35-2.325-5.675Q15.35 4 12 4 8.65 4 6.325 6.325 4 8.65 4 12q0 3.35 2.325 5.675Q8.65 20 12 20Zm.5-7h3v-2h-2v-4h-2v6Z\"/></svg>'); -webkit-mask-image:url('data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\"><path fill=\"black\" d=\"M12 22q-2.075 0-3.9-.788t-3.187-2.125Q3.575 17.75 2.788 15.925 2 14.1 2 12t.788-3.9q.787-1.825 2.125-3.162Q7.25 3.575 9.075 2.788 10.9 2 13 2t3.9.788q1.825.787 3.163 2.125 1.337 1.337 2.124 3.162Q23 10.9 23 13q0 2.1-.788 3.925-.787 1.825-2.124 3.162-1.338 1.337-3.163 2.125Q14.075 22 12 22Zm0-2q3.35 0 5.675-2.325Q20 15.35 20 12q0-3.35-2.325-5.675Q15.35 4 12 4 8.65 4 6.325 6.325 4 8.65 4 12q0 3.35 2.325 5.675Q8.65 20 12 20Zm.5-7h3v-2h-2v-4h-2v6Z\"/></svg>');}
 
     .pill{
       height:36px;
@@ -487,26 +488,16 @@
 
     /* ✅ #3: Urgent animation now becomes the CARD BACKGROUND (not border) */
     .task.urgent{
-      background: rgba(17,21,33,.72);
-      border-color: rgba(255,255,255,.12);
+      background: radial-gradient(circle at 20% 20%, rgba(255,122,140,.28), transparent 45%),
+                  rgba(33,6,10,.82);
+      border-color: rgba(255,120,140,.38);
+      box-shadow: 0 0 0 1px rgba(255,120,140,.28), 0 14px 32px rgba(255,78,106,.30);
+      animation: urgentPulse 1.8s ease-in-out infinite;
     }
-    .task.urgent::before{
-      content:"";
-      position:absolute;
-      inset:0;
-      background: repeating-linear-gradient(
-        45deg,
-        rgba(255,78,106,.62) 0 12px,
-        rgba(255,210,78,.62) 12px 24px
-      );
-      background-size: 64px 64px;
-      animation: urgentMove 1.0s linear infinite;
-      opacity: .35;
-      z-index: 0;
-    }
-    @keyframes urgentMove{
-      from{ background-position: 0 0; }
-      to{ background-position: 64px 0; }
+    @keyframes urgentPulse{
+      0%{ box-shadow: 0 0 0 0 rgba(255,78,106,.40), 0 12px 28px rgba(255,78,106,.18); }
+      60%{ box-shadow: 0 0 0 14px rgba(255,78,106,0), 0 12px 28px rgba(255,78,106,.12); }
+      100%{ box-shadow: 0 0 0 0 rgba(255,78,106,0), 0 12px 28px rgba(255,78,106,.18); }
     }
 
     .taskInner{
@@ -766,6 +757,7 @@
       text-align:center;
       box-shadow: var(--insetShadow);
     }
+    .subtleNote{font-size:12px;color:var(--muted);margin-top:6px;}
     .inlineRow{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
     .help{font-size:12px; color:var(--muted); line-height:1.35}
     .muted{color:var(--muted)}
@@ -838,6 +830,39 @@
     .cardBtn .ico{ width:16px; height:16px; background: currentColor; mask-size: contain; mask-repeat:no-repeat; mask-position:center; -webkit-mask-size:contain; -webkit-mask-repeat:no-repeat; -webkit-mask-position:center; }
     .cardBtn.edit{ border-color: rgba(78,161,255,.30); background: rgba(78,161,255,.10); }
     .cardBtn.delete{ border-color: rgba(255,78,106,.32); background: rgba(255,78,106,.12); color:#ffd3db; }
+    .trackIndicator{
+      width:30px; height:30px;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.04);
+      color: var(--text);
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      position:relative;
+      box-shadow: var(--btnShadow);
+    }
+    .trackIndicator .ico{width:14px;height:14px; background: currentColor; mask-size:contain; mask-repeat:no-repeat; mask-position:center; -webkit-mask-size:contain; -webkit-mask-repeat:no-repeat; -webkit-mask-position:center;}
+    .trackIndicator.running{
+      border-color: rgba(78,161,255,.45);
+      color: #b8d8ff;
+    }
+    .trackIndicator.running::after{
+      content:"";
+      position:absolute;
+      inset:-4px;
+      border-radius:50%;
+      border:2px solid transparent;
+      border-top-color: rgba(78,161,255,.95);
+      border-right-color: rgba(78,161,255,.55);
+      border-left-color: rgba(78,161,255,.30);
+      animation: spinClock 1.2s linear infinite;
+      box-shadow: 0 0 0 1px rgba(78,161,255,.12);
+    }
+    @keyframes spinClock{
+      from{ transform: rotate(0deg); }
+      to{ transform: rotate(360deg); }
+    }
 
     /* Drag ghost for sidebar */
     .dragGhost{
@@ -1023,13 +1048,32 @@
         </div>
 
         <div class="grid2">
+        <div class="field">
+          <label>End date</label>
+          <input id="fEndDate" type="date" />
+        </div>
+        <div class="field">
+          <label>End time</label>
+          <input id="fEndTime" type="time" step="900" />
+        </div>
+      </div>
+
+        <div class="field">
+          <label>Promised install date</label>
+          <input id="fPromisedDate" type="date" />
+          <div class="subtleNote" id="promisedBy">Saved by: —</div>
+        </div>
+
+        <div class="grid2">
           <div class="field">
-            <label>End date</label>
-            <input id="fEndDate" type="date" />
+            <label>Flags</label>
+            <input id="fFlagTokens" type="text" placeholder="e.g. payment needed, not confirmed" />
+            <div class="help">Comma-separated flags that will appear on the task card.</div>
           </div>
           <div class="field">
-            <label>End time</label>
-            <input id="fEndTime" type="time" step="900" />
+            <label>Access equipment flags</label>
+            <input id="fAccessTokens" type="text" placeholder="e.g. spider boom, scissor, trestles" />
+            <div class="help">Comma-separated equipment needs shown on the task card.</div>
           </div>
         </div>
 
@@ -1225,6 +1269,9 @@
         const s = totalSec % 60;
         return `${pad2(h)}:${pad2(m)}:${pad2(s)}`;
       }
+      function parseTokens(str){
+        return (str||"").split(",").map(t=>t.trim()).filter(Boolean);
+      }
 
       function formatTime(dateObj){
         const d = new Date(dateObj);
@@ -1292,6 +1339,10 @@
               const asNum = Number(t.timerStartedAt);
               t.timerStartedAt = Number.isFinite(asNum) ? asNum : null;
             }
+            if(!Array.isArray(t.flags)) t.flags = parseTokens(t.flags || "");
+            if(!Array.isArray(t.accessFlags)) t.accessFlags = parseTokens(t.accessFlags || "");
+            if(typeof t.promisedInstall !== "string") t.promisedInstall = "";
+            if(typeof t.promisedBy !== "string") t.promisedBy = "";
           });
           return st;
         }catch(e){
@@ -1323,7 +1374,11 @@
           jobNo: taskLike.jobNo || "",
           customer: taskLike.customer || "",
           trackedMs: taskLike.trackedMs ?? 0,
-          timerStartedAt: taskLike.timerStartedAt ?? null
+          timerStartedAt: taskLike.timerStartedAt ?? null,
+          promisedInstall: taskLike.promisedInstall ?? "",
+          promisedBy: taskLike.promisedBy ?? "",
+          flags: Array.isArray(taskLike.flags) ? taskLike.flags : parseTokens(taskLike.flags || ""),
+          accessFlags: Array.isArray(taskLike.accessFlags) ? taskLike.accessFlags : parseTokens(taskLike.accessFlags || "")
         };
         state.tasks.push(t);
         if(!silent) toast("Task added", t.title, "var(--accent)");
@@ -1493,9 +1548,12 @@
         return parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--slotH"));
       }
 
+      let renderSlotCountOverride = null;
+
       function totalSlotsInView(){
         const totalMinutes = (state.settings.endHour - state.settings.startHour) * 60;
-        return totalMinutes / SLOT_MIN;
+        const baseSlots = totalMinutes / SLOT_MIN;
+        return renderSlotCountOverride ?? baseSlots;
       }
 
       function tasksOverlappingDay(day){
@@ -1634,6 +1692,7 @@
       }
 
       function render(){
+        renderSlotCountOverride = null;
         // ✅ #4: preserve scroll before wipe
         preserveScrollBeforeRender();
 
@@ -1874,6 +1933,7 @@
       function renderTimeline(root){
         const days = getViewDays();
         const today = startOfDay(new Date());
+        renderSlotCountOverride = null;
 
         const timeline = document.createElement("div");
         timeline.className = "timeline";
@@ -1924,9 +1984,30 @@
         timeRailInner.className = "timeRailInner";
 
         const totalMinutes = (state.settings.endHour - state.settings.startHour) * 60;
-        const totalSlots = totalMinutes / SLOT_MIN;
-        const gridHeight = totalSlots * slotH();
-        const paddedHeight = gridHeight + slotH(); // allow blank space after slots so labels align
+        const baseSlots = totalMinutes / SLOT_MIN;
+        const maxSlotsFromTasks = (()=> {
+          let maxSlots = baseSlots;
+          state.tasks.forEach(task=>{
+            if(isUnassigned(task)) return;
+            const start = new Date(task.start);
+            const end = new Date(task.end);
+            days.forEach(day=>{
+              const dayStart = startOfDay(day).getTime();
+              const dayEnd = startOfDay(addDays(day,1)).getTime();
+              const segEnd = Math.min(end.getTime(), dayEnd);
+              if(segEnd <= dayStart) return;
+              const workStart = new Date(day); workStart.setHours(state.settings.startHour,0,0,0);
+              const minutesFromStart = Math.max(0, minutesBetween(workStart, new Date(segEnd)));
+              const slots = Math.ceil(minutesFromStart / SLOT_MIN);
+              if(slots > maxSlots) maxSlots = slots;
+            });
+          });
+          return maxSlots;
+        })();
+        const slotCount = Math.max(baseSlots, maxSlotsFromTasks);
+        renderSlotCountOverride = slotCount;
+        const paddedSlots = slotCount + 1; // extra blank space to keep labels in sync
+        const paddedHeight = paddedSlots * slotH();
         timeRailInner.style.height = paddedHeight + "px";
 
         for(let h=state.settings.startHour; h<=state.settings.endHour; h++){
@@ -1952,7 +2033,7 @@
           col.className = "dayCol";
           col.dataset.day = isoDate(d);
 
-          for(let s=0; s<=totalSlots; s++){
+          for(let s=0; s<=slotCount; s++){
             const line = document.createElement("div");
             line.className = "slotLine";
             const y = s * slotH();
@@ -2126,6 +2207,9 @@
               <span class="taskTypeName">${escapeHtml(type.name)}</span>
             </div>
             <div class="taskActions">
+              <div class="trackIndicator ${task.timerStartedAt ? "running" : ""}" title="${task.timerStartedAt ? "Job tracking in progress" : "Job tracking stopped"}">
+                <span class="ico clock"></span>
+              </div>
               <button class="cardBtn delete" data-action="delete" title="Delete">
                 <span class="ico trash"></span>
               </button>
@@ -2143,6 +2227,9 @@
               <span class="badge">${escapeHtml(task.status || "Planned")}</span>
               <span class="badge">${escapeHtml(task.priority || "Normal")}</span>
               ${task.jobNo ? `<span class="badge">#${escapeHtml(task.jobNo)}</span>` : ""}
+              ${task.promisedInstall ? `<span class="badge">Promised: ${escapeHtml(task.promisedInstall)}</span>` : ""}
+              ${(task.flags||[]).map(f=>`<span class="badge">${escapeHtml(f)}</span>`).join("")}
+              ${(task.accessFlags||[]).map(f=>`<span class="badge">Equip: ${escapeHtml(f)}</span>`).join("")}
             </div>
 
             <div class="chips">
@@ -2605,13 +2692,14 @@
         const workEnd = new Date(segDay); workEnd.setHours(state.settings.endHour,0,0,0);
 
         const clampStart = Math.max(segStart, workStart.getTime());
-        const clampEnd = Math.min(segEnd, workEnd.getTime());
+        const clampEnd = segEnd;
 
         let topMin = minutesBetween(workStart, new Date(clampStart));
         let durMin = Math.max(15, minutesBetween(new Date(clampStart), new Date(clampEnd)));
 
-        topMin = clamp(topMin, 0, (state.settings.endHour - state.settings.startHour) * 60);
-        durMin = clamp(durMin, 15, (state.settings.endHour - state.settings.startHour) * 60);
+        const maxMinutesRange = (renderSlotCountOverride ?? totalSlotsInView()) * SLOT_MIN;
+        topMin = clamp(topMin, 0, maxMinutesRange);
+        durMin = clamp(durMin, 15, maxMinutesRange);
 
         const topPx = (topMin / 15) * slotH();
         const hPx = (durMin / 15) * slotH();
@@ -2647,6 +2735,10 @@
       const fPriority = $("#fPriority");
       const fLocation = $("#fLocation");
       const fNotes = $("#fNotes");
+      const fPromisedDate = $("#fPromisedDate");
+      const promisedByEl = $("#promisedBy");
+      const fFlagTokens = $("#fFlagTokens");
+      const fAccessTokens = $("#fAccessTokens");
 
       const peoplePick = $("#peoplePick");
       const timerDisplay = $("#timerDisplay");
@@ -2657,6 +2749,7 @@
       let tempPeople = new Set();
       let modalTimerState = { baseMs: 0, startedAt: null };
       let modalTimerInterval = null;
+      let initialPromised = { date:"", by:"" };
 
       function randomNiceColor(){
         const hues = [205, 35, 265, 150, 95, 320, 15, 190];
@@ -2742,10 +2835,11 @@
       }
 
       function trackingPayloadForSave(){
-        if(modalTimerState.startedAt){
-          return { trackedMs: modalTimerState.baseMs, timerStartedAt: modalTimerState.startedAt };
-        }
-        return { trackedMs: modalTimerState.baseMs, timerStartedAt: null };
+        const trackedNow = currentTrackedMs();
+        return {
+          trackedMs: trackedNow,
+          timerStartedAt: modalTimerState.startedAt ? modalTimerState.startedAt : null
+        };
       }
 
       fUnassigned.addEventListener("change", ()=>{
@@ -2790,6 +2884,11 @@
           fType.value = t.typeId || (state.types[0]?.id ?? "");
           fJob.value = t.jobNo || "";
           fCustomer.value = t.customer || "";
+          fPromisedDate.value = t.promisedInstall || "";
+          promisedByEl.textContent = `Saved by: ${t.promisedBy ? escapeHtml(t.promisedBy) : "—"}`;
+          fFlagTokens.value = (t.flags || []).join(", ");
+          fAccessTokens.value = (t.accessFlags || []).join(", ");
+          initialPromised = { date: t.promisedInstall || "", by: t.promisedBy || "" };
 
           tempPeople = new Set(t.people || []);
 
@@ -2827,6 +2926,11 @@
           fType.value = state.types[0]?.id ?? "";
           fJob.value = "";
           fCustomer.value = "";
+          fPromisedDate.value = "";
+          promisedByEl.textContent = "Saved by: —";
+          fFlagTokens.value = "";
+          fAccessTokens.value = "";
+          initialPromised = { date:"", by:"" };
 
           const unassigned = !!preset?.unassigned;
           fUnassigned.checked = unassigned;
@@ -2860,6 +2964,7 @@
         stopTimerTick();
         modalTimerState = { baseMs: 0, startedAt: null };
         renderTimer();
+        initialPromised = { date:"", by:"" };
       }
 
       taskModalClose.addEventListener("click", closeTaskModal);
@@ -2875,6 +2980,18 @@
       taskModalSave.addEventListener("click", ()=>{
         const title = (fTitle.value || "").trim() || "New task";
         const typeId = fType.value || (state.types[0]?.id ?? "");
+        const promisedVal = (fPromisedDate.value || "").trim();
+        const existingTask = editingTaskId ? state.tasks.find(t=>t.id===editingTaskId) : null;
+        let promisedBy = "";
+        if(promisedVal){
+          if(existingTask){
+            const prevDate = existingTask.promisedInstall || "";
+            const prevBy = existingTask.promisedBy || "";
+            promisedBy = (promisedVal !== prevDate) ? "You" : (prevBy || "");
+          } else {
+            promisedBy = "You";
+          }
+        }
 
         const payloadBase = {
           title,
@@ -2886,6 +3003,10 @@
           priority: fPriority.value || "Normal",
           jobNo: (fJob.value || "").trim(),
           customer: (fCustomer.value || "").trim(),
+          promisedInstall: promisedVal,
+          promisedBy,
+          flags: parseTokens(fFlagTokens.value),
+          accessFlags: parseTokens(fAccessTokens.value),
           ...trackingPayloadForSave()
         };
 
