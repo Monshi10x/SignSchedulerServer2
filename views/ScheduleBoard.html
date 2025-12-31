@@ -119,6 +119,7 @@
     .ico.play{mask-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="black" d="M8 5v14l11-7z"/></svg>'); -webkit-mask-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="black" d="M8 5v14l11-7z"/></svg>');}
     .ico.stop{mask-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="black" d="M6 6h12v12H6z"/></svg>'); -webkit-mask-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="black" d="M6 6h12v12H6z"/></svg>');}
     .ico.clock{mask-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill=\"black\" d=\"M12 22q-2.075 0-3.9-.788t-3.187-2.125Q3.575 17.75 2.788 15.925 2 14.1 2 12t.788-3.9q.787-1.825 2.125-3.162Q7.25 3.575 9.075 2.788 10.9 2 13 2t3.9.788q1.825.787 3.163 2.125 1.337 1.337 2.124 3.162Q23 10.9 23 13q0 2.1-.788 3.925-.787 1.825-2.124 3.162-1.338 1.337-3.163 2.125Q14.075 22 12 22Zm0-2q3.35 0 5.675-2.325Q20 15.35 20 12q0-3.35-2.325-5.675Q15.35 4 12 4 8.65 4 6.325 6.325 4 8.65 4 12q0 3.35 2.325 5.675Q8.65 20 12 20Zm.5-7h3v-2h-2v-4h-2v6Z\"/></svg>'); -webkit-mask-image:url('data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\"><path fill=\"black\" d=\"M12 22q-2.075 0-3.9-.788t-3.187-2.125Q3.575 17.75 2.788 15.925 2 14.1 2 12t.788-3.9q.787-1.825 2.125-3.162Q7.25 3.575 9.075 2.788 10.9 2 13 2t3.9.788q1.825.787 3.163 2.125 1.337 1.337 2.124 3.162Q23 10.9 23 13q0 2.1-.788 3.925-.787 1.825-2.124 3.162-1.338 1.337-3.163 2.125Q14.075 22 12 22Zm0-2q3.35 0 5.675-2.325Q20 15.35 20 12q0-3.35-2.325-5.675Q15.35 4 12 4 8.65 4 6.325 6.325 4 8.65 4 12q0 3.35 2.325 5.675Q8.65 20 12 20Zm.5-7h3v-2h-2v-4h-2v6Z\"/></svg>');}
+    .ico.plusCircle{mask-image:url('data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\"><path fill=\"black\" d=\"M11 17h2v-4h4v-2h-4V7h-2v4H7v2h4Zm1 5q-2.075 0-3.9-.788t-3.187-2.125Q3.575 17.75 2.788 15.925 2 14.1 2 12t.788-3.9q.787-1.825 2.125-3.162Q6.25 3.575 8.075 2.788 9.9 2 12 2t3.9.788q1.825.787 3.163 2.125 1.337 1.337 2.124 3.162Q23 9.9 23 12t-.788 3.925q-.787 1.825-2.124 3.162-1.338 1.337-3.163 2.125Q14.075 22 12 22Zm0-2q3.35 0 5.675-2.325Q20 15.35 20 12q0-3.35-2.325-5.675Q15.35 4 12 4 8.65 4 6.325 6.325 4 8.65 4 12q0 3.35 2.325 5.675Q8.65 20 12 20Z\"/></svg>'); -webkit-mask-image:url('data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\"><path fill=\"black\" d=\"M11 17h2v-4h4v-2h-4V7h-2v4H7v2h4Zm1 5q-2.075 0-3.9-.788t-3.187-2.125Q3.575 17.75 2.788 15.925 2 14.1 2 12t.788-3.9q.787-1.825 2.125-3.162Q6.25 3.575 8.075 2.788 9.9 2 12 2t3.9.788q1.825.787 3.163 2.125 1.337 1.337 2.124 3.162Q23 9.9 23 12t-.788 3.925q-.787 1.825-2.124 3.162-1.338 1.337-3.163 2.125Q14.075 22 12 22Zm0-2q3.35 0 5.675-2.325Q20 15.35 20 12q0-3.35-2.325-5.675Q15.35 4 12 4 8.65 4 6.325 6.325 4 8.65 4 12q0 3.35 2.325 5.675Q8.65 20 12 20Z\"/></svg>');}
 
     .pill{
       height:36px;
@@ -488,16 +489,36 @@
 
     /* ✅ #3: Urgent animation now becomes the CARD BACKGROUND (not border) */
     .task.urgent{
-      background: radial-gradient(circle at 20% 20%, rgba(255,122,140,.28), transparent 45%),
-                  rgba(33,6,10,.82);
-      border-color: rgba(255,120,140,.38);
-      box-shadow: 0 0 0 1px rgba(255,120,140,.28), 0 14px 32px rgba(255,78,106,.30);
-      animation: urgentPulse 1.8s ease-in-out infinite;
+      background: radial-gradient(circle at 20% 20%, rgba(255,122,140,.36), transparent 42%),
+                  rgba(45,4,10,.88);
+      border-color: rgba(255,120,140,.55);
+      box-shadow: 0 0 0 2px rgba(255,120,140,.42), 0 16px 34px rgba(255,78,106,.36);
+      animation: urgentPulse 1s ease-in-out infinite, urgentGlow 2s ease-in-out infinite;
+    }
+    .task.urgent::after{
+      content:"";
+      position:absolute;
+      inset:-8px;
+      border-radius:16px;
+      background: radial-gradient(circle, rgba(255,78,106,.25), transparent 55%);
+      filter: blur(8px);
+      z-index:0;
+      animation: urgentAura 1.4s ease-in-out infinite;
+      pointer-events:none;
     }
     @keyframes urgentPulse{
-      0%{ box-shadow: 0 0 0 0 rgba(255,78,106,.40), 0 12px 28px rgba(255,78,106,.18); }
-      60%{ box-shadow: 0 0 0 14px rgba(255,78,106,0), 0 12px 28px rgba(255,78,106,.12); }
-      100%{ box-shadow: 0 0 0 0 rgba(255,78,106,0), 0 12px 28px rgba(255,78,106,.18); }
+      0%{ box-shadow: 0 0 0 2px rgba(255,78,106,.5), 0 20px 40px rgba(255,78,106,.35); transform: translateY(-1px); }
+      45%{ box-shadow: 0 0 0 10px rgba(255,78,106,.0), 0 12px 28px rgba(255,78,106,.22); transform: translateY(0); }
+      100%{ box-shadow: 0 0 0 2px rgba(255,78,106,.5), 0 20px 40px rgba(255,78,106,.35); transform: translateY(-1px); }
+    }
+    @keyframes urgentGlow{
+      0%,100%{ background: radial-gradient(circle at 20% 20%, rgba(255,122,140,.46), transparent 42%), rgba(45,4,10,.9); }
+      50%{ background: radial-gradient(circle at 25% 25%, rgba(255,170,170,.55), transparent 48%), rgba(60,6,12,.95); }
+    }
+    @keyframes urgentAura{
+      0%{ opacity:.6; transform: scale(0.98); }
+      50%{ opacity:.2; transform: scale(1.05); }
+      100%{ opacity:.6; transform: scale(0.98); }
     }
 
     .taskInner{
@@ -841,6 +862,8 @@
       justify-content:center;
       position:relative;
       box-shadow: var(--btnShadow);
+      cursor:pointer;
+      -webkit-tap-highlight-color: transparent;
     }
     .trackIndicator .ico{width:14px;height:14px; background: currentColor; mask-size:contain; mask-repeat:no-repeat; mask-position:center; -webkit-mask-size:contain; -webkit-mask-repeat:no-repeat; -webkit-mask-position:center;}
     .trackIndicator.running{
@@ -1067,13 +1090,27 @@
         <div class="grid2">
           <div class="field">
             <label>Flags</label>
-            <input id="fFlagTokens" type="text" placeholder="e.g. payment needed, not confirmed" />
-            <div class="help">Comma-separated flags that will appear on the task card.</div>
+            <div class="inlineRow">
+              <select id="flagSelect" style="flex:1"></select>
+              <button class="btn icon" id="addFlagPreset" title="Add flag"><span class="ico plus"></span></button>
+            </div>
+            <div class="inlineRow">
+              <input id="fFlagTokens" type="text" placeholder="e.g. payment needed, not confirmed" style="flex:1" />
+              <button class="btn" id="addFlagCustom" title="Add custom flag"><span class="ico plusCircle"></span> Add</button>
+            </div>
+            <div class="help">Pick a preset or add a custom flag. Comma-separated list will appear on the task card.</div>
           </div>
           <div class="field">
             <label>Access equipment flags</label>
-            <input id="fAccessTokens" type="text" placeholder="e.g. spider boom, scissor, trestles" />
-            <div class="help">Comma-separated equipment needs shown on the task card.</div>
+            <div class="inlineRow">
+              <select id="accessSelect" style="flex:1"></select>
+              <button class="btn icon" id="addAccessPreset" title="Add access flag"><span class="ico plus"></span></button>
+            </div>
+            <div class="inlineRow">
+              <input id="fAccessTokens" type="text" placeholder="e.g. spider boom, scissor, trestles" style="flex:1" />
+              <button class="btn" id="addAccessCustom" title="Add custom access flag"><span class="ico plusCircle"></span> Add</button>
+            </div>
+            <div class="help">Pick a preset or add custom equipment notes for the card.</div>
           </div>
         </div>
 
@@ -1129,7 +1166,6 @@
           <span class="ico trash"></span> Delete
         </button>
         <button class="btn" id="taskModalCancel">Cancel</button>
-        <button class="btn primary" id="taskModalSave">Save</button>
       </div>
     </div>
   </div>
@@ -1272,6 +1308,9 @@
       function parseTokens(str){
         return (str||"").split(",").map(t=>t.trim()).filter(Boolean);
       }
+      function uniqTokens(arr){
+        return Array.from(new Set((arr||[]).map(s=>s.trim()).filter(Boolean)));
+      }
 
       function formatTime(dateObj){
         const d = new Date(dateObj);
@@ -1308,6 +1347,8 @@
           timeFormat: "12",
           showUnassignedPanel: true
         },
+        flagOptions: ["Payment needed", "Not confirmed", "Awaiting artwork"],
+        accessOptions: ["Spider boom", "Scissor", "Trestles", "Ladders"],
         staff: [
           { id: uid(), name: "Tristan", color: "#4ea1ff" },
           { id: uid(), name: "Aidan", color: "#ffb020" },
@@ -1333,6 +1374,8 @@
           if(!st.settings || !st.staff || !st.types || !st.tasks || !st.ui) return null;
           if(!st.settings.timeFormat) st.settings.timeFormat = "12";
           if(typeof st.settings.showUnassignedPanel !== "boolean") st.settings.showUnassignedPanel = true;
+          if(!Array.isArray(st.flagOptions)) st.flagOptions = ["Payment needed", "Not confirmed", "Awaiting artwork"];
+          if(!Array.isArray(st.accessOptions)) st.accessOptions = ["Spider boom", "Scissor", "Trestles", "Ladders"];
           st.tasks.forEach(t=>{
             if(typeof t.trackedMs !== "number") t.trackedMs = 0;
             if(t.timerStartedAt && typeof t.timerStartedAt !== "number"){
@@ -1377,8 +1420,8 @@
           timerStartedAt: taskLike.timerStartedAt ?? null,
           promisedInstall: taskLike.promisedInstall ?? "",
           promisedBy: taskLike.promisedBy ?? "",
-          flags: Array.isArray(taskLike.flags) ? taskLike.flags : parseTokens(taskLike.flags || ""),
-          accessFlags: Array.isArray(taskLike.accessFlags) ? taskLike.accessFlags : parseTokens(taskLike.accessFlags || "")
+          flags: uniqTokens(Array.isArray(taskLike.flags) ? taskLike.flags : parseTokens(taskLike.flags || "")),
+          accessFlags: uniqTokens(Array.isArray(taskLike.accessFlags) ? taskLike.accessFlags : parseTokens(taskLike.accessFlags || ""))
         };
         state.tasks.push(t);
         if(!silent) toast("Task added", t.title, "var(--accent)");
@@ -2207,9 +2250,9 @@
               <span class="taskTypeName">${escapeHtml(type.name)}</span>
             </div>
             <div class="taskActions">
-              <div class="trackIndicator ${task.timerStartedAt ? "running" : ""}" title="${task.timerStartedAt ? "Job tracking in progress" : "Job tracking stopped"}">
+              <button class="trackIndicator ${task.timerStartedAt ? "running" : ""}" data-action="track" title="${task.timerStartedAt ? "Job tracking in progress" : "Job tracking stopped"}">
                 <span class="ico clock"></span>
-              </div>
+              </button>
               <button class="cardBtn delete" data-action="delete" title="Delete">
                 <span class="ico trash"></span>
               </button>
@@ -2243,6 +2286,7 @@
           if(!btn) return;
           const act = btn.dataset.action;
           if(act==="delete"){ e.stopPropagation(); deleteTask(task.id); }
+          if(act==="track"){ e.stopPropagation(); toggleTrackingFromCard(task.id); }
         });
 
         attachTaskDragAndResize(el);
@@ -2708,13 +2752,31 @@
         taskEl.style.height = Math.max(slotH(), hPx) + "px";
       }
 
+      function toggleTrackingFromCard(taskId){
+        const t = state.tasks.find(x=>x.id===taskId);
+        if(!t) return;
+        if(t.timerStartedAt){
+          const elapsed = Math.max(0, Date.now() - t.timerStartedAt);
+          const newTracked = (t.trackedMs || 0) + elapsed;
+          updateTask(taskId, { trackedMs: newTracked, timerStartedAt: null }, {silent:true});
+          if(editingTaskId === taskId){
+            resetTimerState(newTracked, null);
+          }
+        } else {
+          const startedAt = Date.now();
+          updateTask(taskId, { timerStartedAt: startedAt }, {silent:true});
+          if(editingTaskId === taskId){
+            resetTimerState(t.trackedMs || 0, startedAt);
+          }
+        }
+      }
+
       /**********************
        * Task modal
        **********************/
       const taskModalBack = $("#taskModalBack");
       const taskModalClose = $("#taskModalClose");
       const taskModalCancel = $("#taskModalCancel");
-      const taskModalSave = $("#taskModalSave");
       const deleteTaskBtn = $("#deleteTaskBtn");
 
       const fTitle = $("#fTitle");
@@ -2739,6 +2801,12 @@
       const promisedByEl = $("#promisedBy");
       const fFlagTokens = $("#fFlagTokens");
       const fAccessTokens = $("#fAccessTokens");
+      const flagSelect = $("#flagSelect");
+      const accessSelect = $("#accessSelect");
+      const addFlagPreset = $("#addFlagPreset");
+      const addAccessPreset = $("#addAccessPreset");
+      const addFlagCustom = $("#addFlagCustom");
+      const addAccessCustom = $("#addAccessCustom");
 
       const peoplePick = $("#peoplePick");
       const timerDisplay = $("#timerDisplay");
@@ -2750,6 +2818,7 @@
       let modalTimerState = { baseMs: 0, startedAt: null };
       let modalTimerInterval = null;
       let initialPromised = { date:"", by:"" };
+      let createdTaskId = null;
 
       function randomNiceColor(){
         const hues = [205, 35, 265, 150, 95, 320, 15, 190];
@@ -2778,10 +2847,18 @@
             if(tempPeople.has(s.id)) tempPeople.delete(s.id);
             else tempPeople.add(s.id);
             applyOn();
+            patchEditingTask({ people: Array.from(tempPeople) });
           });
           applyOn();
           peoplePick.appendChild(chip);
         });
+      }
+
+      function rebuildFlagSelect(){
+        flagSelect.innerHTML = state.flagOptions.map(opt=>`<option value="${escapeHtml(opt)}">${escapeHtml(opt)}</option>`).join("");
+      }
+      function rebuildAccessSelect(){
+        accessSelect.innerHTML = state.accessOptions.map(opt=>`<option value="${escapeHtml(opt)}">${escapeHtml(opt)}</option>`).join("");
       }
 
       function setTimeFieldsEnabled(enabled){
@@ -2789,6 +2866,11 @@
           inp.disabled = !enabled;
           inp.style.opacity = enabled ? "1" : ".65";
         });
+      }
+
+      function patchEditingTask(patch, opts={}){
+        if(!editingTaskId) return;
+        updateTask(editingTaskId, patch, {silent: opts.silent ?? true});
       }
 
       function stopTimerTick(){
@@ -2815,6 +2897,7 @@
         stopTimerTick();
         modalTimerInterval = setInterval(renderTimer, 500);
         renderTimer();
+        patchEditingTask({ timerStartedAt: modalTimerState.startedAt, trackedMs: modalTimerState.baseMs });
       }
 
       function stopTimer(){
@@ -2823,6 +2906,7 @@
         modalTimerState.startedAt = null;
         stopTimerTick();
         renderTimer();
+        patchEditingTask({ timerStartedAt: null, trackedMs: modalTimerState.baseMs });
       }
 
       function resetTimerState(baseMs=0, startedAt=null){
@@ -2870,8 +2954,44 @@
       });
 
       function openTaskModal(taskId=null, preset=null){
+        if(!taskId){
+          const d = preset?.startDate ? parseDateInput(preset.startDate) : parseDateInput(state.ui.anchorDate);
+          const sd = isoDate(d);
+          const ed = preset?.endDate ? preset.endDate : sd;
+          const st = preset?.startTime || "08:00";
+          const et = preset?.endTime || "09:00";
+          const sdObj = parseDateInput(sd);
+          const edObj = parseDateInput(ed);
+          const stObj = parseTimeInput(st);
+          const etObj = parseTimeInput(et);
+          const start = new Date(sdObj); start.setHours(stObj.h, stObj.m,0,0);
+          const end = new Date(edObj); end.setHours(etObj.h, etObj.m,0,0);
+          const newId = addTask({
+            title: "New task",
+            typeId: state.types[0]?.id ?? "",
+            people: [],
+            start: new Date(snapToSlotMs(start.getTime())).toISOString(),
+            end: new Date(snapToSlotMs(end.getTime())).toISOString(),
+            notes: "",
+            location: "",
+            status: "Planned",
+            priority: "Normal",
+            jobNo: "",
+            customer: "",
+            promisedInstall: "",
+            promisedBy: "",
+            flags: [],
+            accessFlags: []
+          }, {silent:true});
+          createdTaskId = newId;
+          taskId = newId;
+        } else {
+          createdTaskId = null;
+        }
         editingTaskId = taskId;
         rebuildTypeSelect();
+        rebuildFlagSelect();
+        rebuildAccessSelect();
 
         if(taskId){
           const t = state.tasks.find(x=>x.id===taskId);
@@ -2965,6 +3085,7 @@
         modalTimerState = { baseMs: 0, startedAt: null };
         renderTimer();
         initialPromised = { date:"", by:"" };
+        createdTaskId = null;
       }
 
       taskModalClose.addEventListener("click", closeTaskModal);
@@ -2977,86 +3098,125 @@
         closeTaskModal();
       });
 
-      taskModalSave.addEventListener("click", ()=>{
-        const title = (fTitle.value || "").trim() || "New task";
-        const typeId = fType.value || (state.types[0]?.id ?? "");
-        const promisedVal = (fPromisedDate.value || "").trim();
-        const existingTask = editingTaskId ? state.tasks.find(t=>t.id===editingTaskId) : null;
-        let promisedBy = "";
-        if(promisedVal){
-          if(existingTask){
-            const prevDate = existingTask.promisedInstall || "";
-            const prevBy = existingTask.promisedBy || "";
-            promisedBy = (promisedVal !== prevDate) ? "You" : (prevBy || "");
-          } else {
-            promisedBy = "You";
-          }
-        }
+      // Save button removed; all changes save immediately.
+      function currentTaskObj(){
+        return editingTaskId ? state.tasks.find(t=>t.id===editingTaskId) : null;
+      }
 
-        const payloadBase = {
-          title,
-          typeId,
-          people: Array.from(tempPeople),
-          notes: fNotes.value || "",
-          location: fLocation.value || "",
-          status: fStatus.value || "Planned",
-          priority: fPriority.value || "Normal",
-          jobNo: (fJob.value || "").trim(),
-          customer: (fCustomer.value || "").trim(),
-          promisedInstall: promisedVal,
-          promisedBy,
-          flags: parseTokens(fFlagTokens.value),
-          accessFlags: parseTokens(fAccessTokens.value),
-          ...trackingPayloadForSave()
-        };
-
+      function applySchedulingFromFields(){
+        if(!editingTaskId) return;
         if(fUnassigned.checked){
-          const payload = { ...payloadBase, start: null, end: null };
-          if(editingTaskId) updateTask(editingTaskId, payload);
-          else addTask(payload);
-          closeTaskModal();
+          patchEditingTask({ start: null, end: null });
           return;
         }
-
-        if(!fStartDate.value || !fEndDate.value){
-          toast("Missing date", "Pick start and end dates", "var(--danger)");
-          return;
-        }
-        if(!fStartTime.value || !fEndTime.value){
-          toast("Missing time", "Pick start and end times", "var(--danger)");
-          return;
-        }
-
+        if(!fStartDate.value || !fEndDate.value || !fStartTime.value || !fEndTime.value) return;
         const sd = parseDateInput(fStartDate.value);
         const ed = parseDateInput(fEndDate.value);
         const st = parseTimeInput(fStartTime.value);
         const en = parseTimeInput(fEndTime.value);
-
         const start = new Date(sd); start.setHours(st.h, st.m, 0, 0);
         const end = new Date(ed); end.setHours(en.h, en.m, 0, 0);
-
         let startMs = start.getTime();
         let endMs = end.getTime();
-
         if(endMs <= startMs){
           while(endMs <= startMs) endMs += 24*60*60*1000;
         }
-
         startMs = snapToSlotMs(startMs);
         endMs = snapToSlotMs(endMs);
         if(endMs - startMs < SLOT_MS) endMs = startMs + SLOT_MS;
-
-        const payload = {
-          ...payloadBase,
+        patchEditingTask({
           start: new Date(startMs).toISOString(),
           end: new Date(endMs).toISOString()
-        };
+        });
+      }
 
-        if(editingTaskId) updateTask(editingTaskId, payload);
-        else addTask(payload);
+      function setPromisedDate(val){
+        const promisedVal = (val || "").trim();
+        const t = currentTaskObj();
+        let promisedBy = "";
+        if(promisedVal){
+          const prevDate = t?.promisedInstall || "";
+          const prevBy = t?.promisedBy || "";
+          promisedBy = (promisedVal !== prevDate) ? "You" : (prevBy || "You");
+        }
+        promisedByEl.textContent = `Saved by: ${promisedBy ? escapeHtml(promisedBy) : "—"}`;
+        patchEditingTask({ promisedInstall: promisedVal, promisedBy });
+      }
 
-        closeTaskModal();
+      function applyFlagTokens(tokens){
+        const uniq = uniqTokens(tokens);
+        fFlagTokens.value = uniq.join(", ");
+        patchEditingTask({ flags: uniq });
+      }
+      function applyAccessTokens(tokens){
+        const uniq = uniqTokens(tokens);
+        fAccessTokens.value = uniq.join(", ");
+        patchEditingTask({ accessFlags: uniq });
+      }
+
+      function addPresetFlag(token){
+        if(!token) return;
+        const tokens = uniqTokens(parseTokens(fFlagTokens.value).concat(token));
+        applyFlagTokens(tokens);
+      }
+      function addPresetAccess(token){
+        if(!token) return;
+        const tokens = uniqTokens(parseTokens(fAccessTokens.value).concat(token));
+        applyAccessTokens(tokens);
+      }
+
+      function addCustomFlagOption(val){
+        const v = (val||"").trim();
+        if(!v) return;
+        if(!state.flagOptions.includes(v)){
+          state.flagOptions.push(v);
+          saveState();
+          rebuildFlagSelect();
+        }
+        addPresetFlag(v);
+      }
+      function addCustomAccessOption(val){
+        const v = (val||"").trim();
+        if(!v) return;
+        if(!state.accessOptions.includes(v)){
+          state.accessOptions.push(v);
+          saveState();
+          rebuildAccessSelect();
+        }
+        addPresetAccess(v);
+      }
+
+      // Immediate save bindings
+      fTitle.addEventListener("input", ()=> patchEditingTask({ title: (fTitle.value||"").trim() || "New task" }));
+      fType.addEventListener("change", ()=> patchEditingTask({ typeId: fType.value || (state.types[0]?.id ?? "") }));
+      fJob.addEventListener("input", ()=> patchEditingTask({ jobNo: (fJob.value||"").trim() }));
+      fCustomer.addEventListener("input", ()=> patchEditingTask({ customer: (fCustomer.value||"").trim() }));
+      fStatus.addEventListener("change", ()=> patchEditingTask({ status: fStatus.value || "Planned" }));
+      fPriority.addEventListener("change", ()=> patchEditingTask({ priority: fPriority.value || "Normal" }));
+      fLocation.addEventListener("input", ()=> patchEditingTask({ location: fLocation.value || "" }));
+      fNotes.addEventListener("input", ()=> patchEditingTask({ notes: fNotes.value || "" }));
+
+      fPromisedDate.addEventListener("change", ()=> setPromisedDate(fPromisedDate.value));
+      fFlagTokens.addEventListener("input", ()=> applyFlagTokens(parseTokens(fFlagTokens.value)));
+      fAccessTokens.addEventListener("input", ()=> applyAccessTokens(parseTokens(fAccessTokens.value)));
+
+      addFlagPreset.addEventListener("click", (e)=>{ e.preventDefault(); addPresetFlag(flagSelect.value); });
+      addAccessPreset.addEventListener("click", (e)=>{ e.preventDefault(); addPresetAccess(accessSelect.value); });
+      addFlagCustom.addEventListener("click", (e)=>{ e.preventDefault(); addCustomFlagOption(fFlagTokens.value); });
+      addAccessCustom.addEventListener("click", (e)=>{ e.preventDefault(); addCustomAccessOption(fAccessTokens.value); });
+
+      fUnassigned.addEventListener("change", ()=>{
+        setTimeFieldsEnabled(!fUnassigned.checked);
+        if(fUnassigned.checked){
+          patchEditingTask({ start: null, end: null });
+        } else {
+          applySchedulingFromFields();
+        }
       });
+      fStartDate.addEventListener("change", applySchedulingFromFields);
+      fEndDate.addEventListener("change", applySchedulingFromFields);
+      fStartTime.addEventListener("change", applySchedulingFromFields);
+      fEndTime.addEventListener("change", applySchedulingFromFields);
 
       /**********************
        * Settings modal
