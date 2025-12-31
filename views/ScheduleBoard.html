@@ -18,11 +18,19 @@
 
       --headerH:56px;
       --dayHeaderH:42px;
+      --monthRowH:28px;
       --timeColW:72px;
-      --slotH:22px; /* 15min slot height */
+      --slotH:22px;
 
       --radius:14px;
       --shadow: 0 10px 30px rgba(0,0,0,.35);
+
+      --btnShadow: 0 6px 14px rgba(0,0,0,.28);
+      --btnShadowDown: 0 3px 8px rgba(0,0,0,.22);
+
+      --insetShadow: inset 0 2px 4px rgba(0,0,0,.55), inset 0 0 0 1px rgba(255,255,255,.04);
+
+      --sideW: 320px;
     }
 
     *{box-sizing:border-box}
@@ -50,10 +58,7 @@
       border-bottom:1px solid rgba(255,255,255,.06);
       z-index:50;
     }
-    .brand{
-      display:flex; align-items:center; gap:10px;
-      min-width: 170px;
-    }
+    .brand{display:flex; align-items:center; gap:10px; min-width: 170px;}
     .brandBadge{
       width:34px;height:34px;border-radius:11px;
       background: linear-gradient(135deg, rgba(78,161,255,.9), rgba(255,78,106,.8));
@@ -62,15 +67,14 @@
     .brandTitle{font-weight:800; letter-spacing:.2px; line-height:1}
     .brandSub{font-size:12px; color:var(--muted); margin-top:2px}
 
-    .headerLeft, .headerRight{
-      display:flex; align-items:center; gap:8px;
-    }
+    .headerLeft, .headerRight{display:flex; align-items:center; gap:8px;}
     .headerLeft{flex:1}
     .headerRight{margin-left:auto}
 
     .btn, .chip, select, input[type="date"], input[type="text"], input[type="number"], textarea{
       font:inherit;
     }
+
     .btn{
       display:inline-flex; align-items:center; justify-content:center; gap:8px;
       height:36px; padding:0 12px;
@@ -82,9 +86,12 @@
       user-select:none;
       -webkit-tap-highlight-color: transparent;
       touch-action: manipulation;
+      box-shadow: var(--btnShadow);
+      transform: translateY(0);
+      transition: box-shadow .12s ease, transform .12s ease, background .12s ease;
     }
     .btn:hover{background: rgba(255,255,255,.06)}
-    .btn:active{transform: translateY(1px)}
+    .btn:active{ box-shadow: var(--btnShadowDown); transform: translateY(1px); }
     .btn.primary{
       border-color: rgba(78,161,255,.35);
       background: rgba(78,161,255,.12);
@@ -94,17 +101,21 @@
       background: rgba(255,78,106,.12);
     }
     .btn.icon{width:36px;padding:0}
+
     .btn .ico{
       width:18px;height:18px; display:inline-block;
       background: currentColor;
       mask-size: contain; mask-repeat:no-repeat; mask-position:center;
       -webkit-mask-size: contain; -webkit-mask-repeat:no-repeat; -webkit-mask-position:center;
     }
+
     .ico.chevL{mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="black" d="M15.5 19 8.5 12l7-7 1.5 1.5L11.5 12 17 17.5z"/></svg>'); -webkit-mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="black" d="M15.5 19 8.5 12l7-7 1.5 1.5L11.5 12 17 17.5z"/></svg>');}
     .ico.chevR{mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="black" d="M8.5 19 7 17.5 12.5 12 7 6.5 8.5 5l7 7z"/></svg>'); -webkit-mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="black" d="M8.5 19 7 17.5 12.5 12 7 6.5 8.5 5l7 7z"/></svg>');}
     .ico.today{mask-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="black" d="M7 2h2v2h6V2h2v2h3v18H2V4h3V2h2v2Zm13 6H4v12h16V8ZM6 10h4v4H6v-4Z"/></svg>'); -webkit-mask-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="black" d="M7 2h2v2h6V2h2v2h3v18H2V4h3V2h2v2Zm13 6H4v12h16V8ZM6 10h4v4H6v-4Z"/></svg>');}
     .ico.plus{mask-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="black" d="M11 11V5h2v6h6v2h-6v6h-2v-6H5v-2h6z"/></svg>'); -webkit-mask-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="black" d="M11 11V5h2v6h6v2h-6v6h-2v-6H5v-2h6z"/></svg>');}
     .ico.cog{mask-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="black" d="M19.14 12.94c.04-.31.06-.63.06-.94s-.02-.63-.06-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.6-.22l-2.39.96a7.08 7.08 0 0 0-1.63-.94l-.36-2.54A.5.5 0 0 0 13.9 1h-3.8a.5.5 0 0 0-.49.42l-.36 2.54c-.58.24-1.12.55-1.63.94l-2.39-.96a.5.5 0 0 0-.6.22L2.71 7.48a.5.5 0 0 0 .12.64l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94l-2.03 1.58a.5.5 0 0 0-.12.64l1.92 3.32c.13.23.4.32.64.22l2.39-.96c.5.39 1.05.7 1.63.94l.36 2.54c.04.24.25.42.49.42h3.8c.24 0 .45-.18.49-.42l.36-2.54c.58-.24 1.12-.55 1.63-.94l2.39.96c.24.1.51.01.64-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.03-1.58ZM12 15.5A3.5 3.5 0 1 1 12 8a3.5 3.5 0 0 1 0 7.5Z"/></svg>'); -webkit-mask-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="black" d="M19.14 12.94c.04-.31.06-.63.06-.94s-.02-.63-.06-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.6-.22l-2.39.96a7.08 7.08 0 0 0-1.63-.94l-.36-2.54A.5.5 0 0 0 13.9 1h-3.8a.5.5 0 0 0-.49.42l-.36 2.54c-.58.24-1.12.55-1.63.94l-2.39-.96a.5.5 0 0 0-.6.22L2.71 7.48a.5.5 0 0 0 .12.64l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94l-2.03 1.58a.5.5 0 0 0-.12.64l1.92 3.32c.13.23.4.32.64.22l2.39-.96c.5.39 1.05.7 1.63.94l.36 2.54c.04.24.25.42.49.42h3.8c.24 0 .45-.18.49-.42l.36-2.54c.58-.24 1.12-.55 1.63-.94l2.39.96c.24.1.51.01.64-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.03-1.58ZM12 15.5A3.5 3.5 0 1 1 12 8a3.5 3.5 0 0 1 0 7.5Z"/></svg>');}
+    .ico.pencil{mask-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="black" d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25ZM20.71 7.04a1.003 1.003 0 0 0 0-1.42l-2.34-2.34a1.003 1.003 0 0 0-1.42 0L15.13 5.1l3.75 3.75 1.83-1.81Z"/></svg>'); -webkit-mask-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="black" d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25ZM20.71 7.04a1.003 1.003 0 0 0 0-1.42l-2.34-2.34a1.003 1.003 0 0 0-1.42 0L15.13 5.1l3.75 3.75 1.83-1.81Z"/></svg>');}
+    .ico.trash{mask-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="black" d="M7 21q-.825 0-1.412-.587T5 19V6H4V4h5V3h6v1h5v2h-1v13q0 .825-.587 1.413T17 21H7Zm10-15H7v13h10V6ZM9 17h2V8H9v9Zm4 0h2V8h-2v9Z"/></svg>'); -webkit-mask-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="black" d="M7 21q-.825 0-1.412-.587T5 19V6H4V4h5V3h6v1h5v2h-1v13q0 .825-.587 1.413T17 21H7Zm10-15H7v13h10V6ZM9 17h2V8H9v9Zm4 0h2V8h-2v9Z"/></svg>');}
 
     .pill{
       height:36px;
@@ -122,12 +133,19 @@
     .select{
       height:36px;
       border-radius:12px;
-      border:1px solid rgba(255,255,255,.10);
-      background: rgba(255,255,255,.03);
-      color:var(--text);
+      border:1px solid rgba(255,255,255,.16);
+      background: rgba(255,255,255,.92);
+      color:#0b0d12;
       padding:0 10px;
       outline:none;
+      box-shadow: var(--btnShadow);
+      transition: box-shadow .12s ease, transform .12s ease;
     }
+    .select:active{ box-shadow: var(--btnShadowDown); transform: translateY(1px); }
+    .select option{color:#0b0d12;background:#ffffff;}
+
+    .modal select{color: var(--text);background: rgba(0,0,0,.20);}
+    .modal select option{color: var(--text);background: #111521;}
 
     .seg{
       height:36px; display:flex; align-items:center; gap:10px;
@@ -136,9 +154,11 @@
       border:1px solid rgba(255,255,255,.10);
       background: rgba(255,255,255,.03);
       min-width: 120px;
+      box-shadow: var(--btnShadow);
+      transition: box-shadow .12s ease, transform .12s ease;
     }
+    .seg:active{ box-shadow: var(--btnShadowDown); transform: translateY(1px); }
 
-    /* App body */
     .appBody{
       height: calc(100vh - var(--headerH));
       display:flex;
@@ -146,6 +166,113 @@
       overflow:hidden;
     }
 
+    /* Layout: main + unassigned panel */
+    .layout{
+      height:100%;
+      display:flex;
+      overflow:hidden;
+      position:relative;
+    }
+    .mainArea{
+      flex: 1 1 auto;
+      min-width: 0;
+      overflow:hidden;
+      display:flex;
+      flex-direction:column;
+    }
+
+    /* Unassigned panel */
+    .sidePanel{
+      width: var(--sideW);
+      max-width: 90vw;
+      height:100%;
+      border-left:1px solid rgba(255,255,255,.08);
+      background: rgba(17,21,33,.55);
+      backdrop-filter: blur(10px);
+      display:flex;
+      flex-direction:column;
+      overflow:hidden;
+      transition: transform .18s ease;
+    }
+    .sidePanel.hidden{
+      transform: translateX(100%);
+      pointer-events:none;
+    }
+    .sideHeader{
+      padding: 10px 10px 8px 10px;
+      border-bottom:1px solid rgba(255,255,255,.08);
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
+    .sideHeaderTop{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:8px;
+    }
+    .sideTitle{
+      font-weight:950;
+      letter-spacing:.2px;
+      display:flex;
+      align-items:center;
+      gap:8px;
+      min-width: 0;
+    }
+    .sideTitle .countBadge{
+      font-size:11px;
+      color: rgba(154,166,195,.95);
+      border:1px solid rgba(255,255,255,.10);
+      padding:3px 7px;
+      border-radius:999px;
+      background: rgba(0,0,0,.18);
+      flex:0 0 auto;
+    }
+    .sideControls{
+      display:flex;
+      gap:8px;
+      align-items:center;
+    }
+    .sideControls input, .sideControls select{
+      height:34px;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.20);
+      color: var(--text);
+      padding: 0 10px;
+      outline:none;
+      box-shadow: var(--insetShadow);
+      min-width: 0;
+    }
+    .sideControls select option{background:#111521;color:var(--text)}
+    .sideList{
+      overflow:auto;
+      padding:10px;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255,255,255,.12) transparent;
+    }
+    .sideList::-webkit-scrollbar{width:10px}
+    .sideList::-webkit-scrollbar-thumb{background: rgba(255,255,255,.12); border-radius:20px}
+    .dropHint{
+      margin: 0 10px 10px 10px;
+      padding:10px;
+      border-radius:14px;
+      border:1px dashed rgba(255,255,255,.14);
+      background: rgba(0,0,0,.14);
+      color: var(--muted);
+      font-size:12px;
+      line-height:1.35;
+    }
+    .sideDropActive .dropHint{
+      border-color: rgba(78,161,255,.55);
+      background: rgba(78,161,255,.12);
+      color: rgba(233,238,252,.92);
+    }
+
+    /* Board */
     .boardWrap{
       position:relative;
       height:100%;
@@ -154,35 +281,60 @@
       flex-direction:column;
     }
 
-    /* Timeline grid (day views) */
     .timeline{
       height:100%;
       display:grid;
-      grid-template-rows: var(--dayHeaderH) 1fr;
+      grid-template-rows: calc(var(--dayHeaderH) + var(--monthRowH)) 1fr;
       overflow:hidden;
       border-top: 1px solid rgba(255,255,255,.06);
     }
     .timelineTop{
       display:grid;
       grid-template-columns: var(--timeColW) 1fr;
+      grid-template-rows: var(--monthRowH) var(--dayHeaderH);
       background: rgba(17,21,33,.6);
       backdrop-filter: blur(10px);
       border-bottom:1px solid rgba(255,255,255,.06);
       z-index:10;
     }
     .timeHeader{
-      height:var(--dayHeaderH);
+      height: calc(var(--dayHeaderH) + var(--monthRowH));
       display:flex; align-items:center; justify-content:center;
       color:var(--muted);
       font-size:12px;
       border-right:1px solid rgba(255,255,255,.06);
+      grid-row: 1 / span 2;
     }
+    .monthBar{
+      grid-column: 2;
+      grid-row: 1;
+      display:flex;
+      align-items:center;
+      padding: 0 10px;
+      border-bottom:1px solid rgba(255,255,255,.06);
+      font-weight:950;
+      letter-spacing:.2px;
+      color: var(--text);
+      overflow:hidden;
+      white-space:nowrap;
+      text-overflow:ellipsis;
+    }
+    .monthBar .muted{
+      font-weight:800;
+      color: var(--muted);
+      margin-left:10px;
+      font-size:12px;
+    }
+
     .daysHeader{
+      grid-column: 2;
+      grid-row: 2;
       display:flex;
       overflow:auto;
       scrollbar-width: none;
     }
     .daysHeader::-webkit-scrollbar{display:none}
+
     .dayHead{
       flex:0 0 210px;
       min-width: 210px;
@@ -191,17 +343,29 @@
       padding:0 10px;
       border-right:1px solid rgba(255,255,255,.06);
       color:var(--text);
+      gap: 10px;
     }
-    .dayHead .dTitle{font-weight:800}
-    .dayHead .dSub{font-size:12px; color:var(--muted)}
     .dayHead.today{background: rgba(78,161,255,.10)}
+
+    /* ✅ #5: Single-line "Wed 30" */
+    .dayHead .dLine{
+      font-weight:950;
+      font-size:14px;
+      line-height:1;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
     .dayHead .count{
-      font-size:12px;
-      color:var(--muted);
-      border:1px solid rgba(255,255,255,.12);
-      padding:4px 8px;
+      font-size:11px;
+      color: rgba(154,166,195,.9);
+      border:1px solid rgba(255,255,255,.10);
+      padding:3px 7px;
       border-radius:999px;
-      background: rgba(0,0,0,.18);
+      background: rgba(0,0,0,.12);
+      opacity: .75;
+      flex:0 0 auto;
     }
 
     .timelineBottom{
@@ -218,10 +382,7 @@
       scrollbar-width: none;
     }
     .timeRail::-webkit-scrollbar{display:none}
-    .timeRailInner{
-      position:relative;
-      width:100%;
-    }
+    .timeRailInner{position:relative;width:100%;}
     .timeLabel{
       position:absolute;
       left:0; right:0;
@@ -232,6 +393,7 @@
       transform: translateY(-7px);
       pointer-events:none;
       opacity:.92;
+      white-space:nowrap;
     }
     .timeLabel::after{
       content:"";
@@ -279,6 +441,25 @@
     .slotLine.hour{border-top:1px solid rgba(255,255,255,.12)}
     .slotLine.half{border-top:1px dashed rgba(255,255,255,.10)}
 
+    .nowLine{
+      position:absolute;
+      left:0; right:0;
+      height:2px;
+      background: rgba(255,78,106,.95);
+      box-shadow: 0 0 0 1px rgba(0,0,0,.25), 0 6px 18px rgba(255,78,106,.25);
+      pointer-events:none;
+      z-index: 5;
+    }
+    .nowDot{
+      position:absolute;
+      left:6px;
+      top:50%;
+      width:10px;height:10px;border-radius:50%;
+      transform: translateY(-50%);
+      background: rgba(255,78,106,.95);
+      box-shadow: 0 0 0 2px rgba(0,0,0,.35);
+    }
+
     /* Tasks */
     .task{
       position:absolute;
@@ -286,8 +467,8 @@
       right:8px;
       border-radius:14px;
       border:1px solid rgba(255,255,255,.12);
-      background: rgba(255,255,255,.05);
-      box-shadow: 0 10px 24px rgba(0,0,0,.22);
+      background: var(--panel);
+      box-shadow: 0 10px 24px rgba(0,0,0,.30);
       overflow:hidden;
       touch-action:none;
     }
@@ -297,51 +478,77 @@
       width:6px; height:100%;
       background: var(--accent);
       opacity:.95;
+      z-index: 1;
     }
+
+    /* ✅ #3: Urgent animation now becomes the CARD BACKGROUND (not border) */
+    .task.urgent{
+      background: rgba(17,21,33,.72);
+      border-color: rgba(255,255,255,.12);
+    }
+    .task.urgent::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      background: repeating-linear-gradient(
+        45deg,
+        rgba(255,78,106,.62) 0 12px,
+        rgba(255,210,78,.62) 12px 24px
+      );
+      background-size: 64px 64px;
+      animation: urgentMove 1.0s linear infinite;
+      opacity: .35;
+      z-index: 0;
+    }
+    @keyframes urgentMove{
+      from{ background-position: 0 0; }
+      to{ background-position: 64px 0; }
+    }
+
     .taskInner{
       position:relative;
       padding:10px 10px 10px 14px;
       display:flex;
       flex-direction:column;
-      gap:6px;
+      gap:8px;
+      z-index: 2;
     }
-    .taskTop{
+
+    /* Buttons top-right, icon only */
+    .taskTopRow{
+      position:absolute;
+      top:8px;
+      right:8px;
       display:flex;
       gap:8px;
-      align-items:flex-start;
-      justify-content:space-between;
+      z-index: 3;
     }
+
     .taskTitle{
-      font-weight:900;
+      font-weight:950;
       font-size:13px;
-      line-height:1.15;
+      line-height:1.2;
+      width:100%;
       overflow:hidden;
       text-overflow:ellipsis;
       display:-webkit-box;
       -webkit-line-clamp: 2;
-      line-clamp: 2;
       -webkit-box-orient: vertical;
+      margin-top:18px; /* space under top-right icons */
+      padding-right: 64px; /* ensure doesn't sit under icons */
     }
-    .taskBtns{
-      display:flex; gap:6px;
-      flex:0 0 auto;
+
+    /* ✅ #6: customer directly below title, 70% brightness, no prefix */
+    .taskCustomer{
+      font-weight:900;
+      font-size:12px;
+      color: rgba(233,238,252,.70);
+      opacity: 1;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+      padding-right: 10px;
     }
-    .tbtn{
-      width:30px;height:30px;
-      border-radius:11px;
-      border:1px solid rgba(255,255,255,.12);
-      background: rgba(0,0,0,.18);
-      color:var(--text);
-      display:flex; align-items:center; justify-content:center;
-      cursor:pointer;
-      -webkit-tap-highlight-color: transparent;
-      touch-action: manipulation;
-    }
-    .tbtn:hover{background: rgba(255,255,255,.06)}
-    .tbtn.danger{border-color: rgba(255,78,106,.28); color: #ffb3bf}
-    .tbtn .ico{width:16px;height:16px}
-    .ico.note{mask-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="black" d="M4 4h16v11.17l-2-2V6H6v12h7.17l2 2H4V4Zm14.83 16.83L14 16h-4v-4l6.83 6.83ZM21.71 20.29l-1.42 1.42-9.19-9.19v-1.42h1.42l9.19 9.19Z"/></svg>'); -webkit-mask-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="black" d="M4 4h16v11.17l-2-2V6H6v12h7.17l2 2H4V4Zm14.83 16.83L14 16h-4v-4l6.83 6.83ZM21.71 20.29l-1.42 1.42-9.19-9.19v-1.42h1.42l9.19 9.19Z"/></svg>');}
-    .ico.trash{mask-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="black" d="M7 21q-.825 0-1.412-.587T5 19V6H4V4h5V3h6v1h5v2h-1v13q0 .825-.587 1.413T17 21H7Zm10-15H7v13h10V6ZM9 17h2V8H9v9Zm4 0h2V8h-2v9Z"/></svg>'); -webkit-mask-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="black" d="M7 21q-.825 0-1.412-.587T5 19V6H4V4h5V3h6v1h5v2h-1v13q0 .825-.587 1.413T17 21H7Zm10-15H7v13h10V6ZM9 17h2V8H9v9Zm4 0h2V8h-2v9Z"/></svg>');}
 
     .taskMeta{
       display:flex;
@@ -367,15 +574,13 @@
       background: var(--accent);
       flex:0 0 auto;
     }
-    .chips{
-      display:flex; flex-wrap:wrap; gap:6px;
-    }
+    .chips{display:flex; flex-wrap:wrap; gap:6px;}
 
     .resizeHandle{
       position:absolute;
       left:0; right:0;
       height:12px;
-      z-index:3;
+      z-index:4;
       cursor: ns-resize;
       touch-action:none;
     }
@@ -404,24 +609,9 @@
     /* Month view */
     .month{height:100%;display:flex;flex-direction:column;overflow:hidden}
     .monthGrid{height:100%;overflow:auto;padding:12px}
-    .monthHeaderRow{
-      display:grid; grid-template-columns: repeat(7, 1fr);
-      gap:10px; padding:0 12px 10px 12px;
-      color:var(--muted); font-weight:800; font-size:12px;
-    }
-    .monthCells{
-      display:grid; grid-template-columns: repeat(7, 1fr);
-      gap:10px; padding: 0 12px 12px 12px;
-    }
-    .mCell{
-      min-height: 120px;
-      border-radius: 16px;
-      border:1px solid rgba(255,255,255,.10);
-      background: rgba(255,255,255,.03);
-      padding:10px;
-      display:flex; flex-direction:column; gap:8px;
-      overflow:hidden;
-    }
+    .monthHeaderRow{display:grid; grid-template-columns: repeat(7, 1fr);gap:10px;padding:0 12px 10px 12px;color:var(--muted);font-weight:800;font-size:12px;}
+    .monthCells{display:grid; grid-template-columns: repeat(7, 1fr);gap:10px;padding: 0 12px 12px 12px;}
+    .mCell{min-height: 120px;border-radius: 16px;border:1px solid rgba(255,255,255,.10);background: rgba(255,255,255,.03);padding:10px;display:flex; flex-direction:column; gap:8px;overflow:hidden;}
     .mCell.outside{opacity:.55;background: rgba(255,255,255,.02)}
     .mCell.today{border-color: rgba(78,161,255,.35);background: rgba(78,161,255,.08)}
     .mTop{display:flex;align-items:center;justify-content:space-between;gap:8px}
@@ -433,7 +623,10 @@
       background: rgba(0,0,0,.18);
       cursor:pointer;
       display:flex; align-items:center; justify-content:center;
+      box-shadow: var(--btnShadow);
+      transition: box-shadow .12s ease, transform .12s ease;
     }
+    .mAdd:active{box-shadow: var(--btnShadowDown); transform: translateY(1px);}
     .mAdd .ico{width:16px;height:16px}
     .mTasks{display:flex;flex-direction:column;gap:6px;overflow:auto;padding-right:4px}
     .mTasks::-webkit-scrollbar{width:8px}
@@ -446,18 +639,19 @@
       display:flex; gap:8px; align-items:center;
       cursor:pointer;
       -webkit-tap-highlight-color: transparent;
+      box-shadow: 0 8px 18px rgba(0,0,0,.22);
     }
     .mTaskPill .bar{width:6px;height: 16px;border-radius:999px;background: var(--accent);flex:0 0 auto}
     .mTaskPill .txt{font-weight:850;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
     .mTaskPill .tm{margin-left:auto;color:var(--muted);font-size:11px;white-space:nowrap}
 
-    /* Modals (CENTERED FIX) */
+    /* Modals */
     .modalBack{
       position:fixed; inset:0;
       background: rgba(0,0,0,.55);
       display:none;
-      align-items:center;   /* ✅ centered vertically */
-      justify-content:center; /* ✅ centered horizontally */
+      align-items:center;
+      justify-content:center;
       z-index:1000;
       padding: 14px;
     }
@@ -501,6 +695,7 @@
       background: rgba(255,255,255,.03);
     }
     .field label{font-size:12px; color:var(--muted); font-weight:800}
+
     .field input, .field select, .field textarea{
       width:100%;
       border-radius:12px;
@@ -509,6 +704,7 @@
       color: var(--text);
       padding: 10px 10px;
       outline:none;
+      box-shadow: var(--insetShadow);
     }
     .field textarea{min-height: 84px; resize: vertical}
 
@@ -521,12 +717,10 @@
       align-items:center;
       flex-wrap:wrap;
     }
-
     .inlineRow{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
     .help{font-size:12px; color:var(--muted); line-height:1.35}
     .muted{color:var(--muted)}
 
-    /* Settings lists */
     .list{display:flex;flex-direction:column;gap:8px}
     .itemRow{
       display:flex; gap:8px; align-items:center;
@@ -543,18 +737,6 @@
     .itemRow input[type="text"]{flex:1}
     .itemRow input[type="color"]{width:40px;height:34px;border:none;background: transparent; padding:0}
 
-    /* Responsive */
-    @media (max-width: 820px){
-      :root{ --timeColW: 62px; }
-      .brand{min-width:unset}
-      .brandSub{display:none}
-      .pill{display:none}
-      .dayHead{flex-basis: 188px; min-width:188px}
-      .dayCol{flex-basis: 188px; min-width:188px}
-      .grid2, .grid3{grid-template-columns:1fr}
-    }
-
-    /* Toast */
     .toastWrap{
       position:fixed;
       top: calc(env(safe-area-inset-top, 0px) + 12px);
@@ -582,6 +764,70 @@
     .toast .bar{width:6px; align-self:stretch; border-radius:999px;background: var(--accent);opacity:.9}
     .toast .tTitle{font-weight:900; font-size:13px; margin-bottom:2px}
     .toast .tMsg{color:var(--muted); font-size:12px; line-height:1.35}
+
+    /* Card buttons (icon-only now) */
+    .cardBtn{
+      width:34px;
+      height:30px;
+      padding:0;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.04);
+      color: var(--text);
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      cursor:pointer;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+      box-shadow: var(--btnShadow);
+      transform: translateY(0);
+      transition: box-shadow .12s ease, transform .12s ease, background .12s ease;
+    }
+    .cardBtn:hover{ background: rgba(255,255,255,.06); }
+    .cardBtn:active{ box-shadow: var(--btnShadowDown); transform: translateY(1px); }
+    .cardBtn .ico{ width:16px; height:16px; background: currentColor; mask-size: contain; mask-repeat:no-repeat; mask-position:center; -webkit-mask-size:contain; -webkit-mask-repeat:no-repeat; -webkit-mask-position:center; }
+    .cardBtn.edit{ border-color: rgba(78,161,255,.30); background: rgba(78,161,255,.10); }
+    .cardBtn.delete{ border-color: rgba(255,78,106,.32); background: rgba(255,78,106,.12); color:#ffd3db; }
+
+    /* Drag ghost for sidebar */
+    .dragGhost{
+      position:fixed;
+      z-index:5000;
+      pointer-events:none;
+      width:min(280px, 70vw);
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(17,21,33,.92);
+      box-shadow: 0 18px 40px rgba(0,0,0,.45);
+      overflow:hidden;
+      opacity:.95;
+    }
+    .dragGhost .band{width:6px; height:100%; position:absolute; left:0; top:0; opacity:.95}
+    .dragGhost .inner{padding:10px 10px 10px 14px; display:flex; flex-direction:column; gap:6px}
+    .dragGhost .t{font-weight:950;font-size:13px; line-height:1.2; overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .dragGhost .c{font-weight:900;font-size:12px; color: rgba(233,238,252,.70); overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .dragGhost .m{color:var(--muted); font-size:12px; display:flex; gap:6px; flex-wrap:wrap}
+
+    @media (max-width: 920px){
+      :root{ --timeColW: 62px; --sideW: 300px; }
+      .brand{min-width:unset}
+      .brandSub{display:none}
+      .pill{display:none}
+      .dayHead{flex-basis: 188px; min-width:188px}
+      .dayCol{flex-basis: 188px; min-width:188px}
+      .grid2, .grid3{grid-template-columns:1fr}
+    }
+    @media (max-width: 720px){
+      :root{ --sideW: 86vw; }
+      .sidePanel{
+        position:absolute;
+        right:0;
+        top:0;
+        z-index:40;
+        box-shadow: -20px 0 60px rgba(0,0,0,.35);
+      }
+    }
   </style>
 </head>
 
@@ -629,7 +875,39 @@
   </div>
 
   <div class="appBody">
-    <div class="boardWrap" id="boardWrap"></div>
+    <div class="layout" id="layout">
+      <div class="mainArea">
+        <div class="boardWrap" id="boardWrap"></div>
+      </div>
+
+      <!-- Unassigned tasks panel -->
+      <aside class="sidePanel hidden" id="sidePanel">
+        <div class="sideHeader">
+          <div class="sideHeaderTop">
+            <div class="sideTitle">
+              Unassigned
+              <span class="countBadge" id="unassignedCount">0</span>
+            </div>
+            <button class="btn icon" id="sideCloseBtn" title="Hide"><span class="ico chevR"></span></button>
+          </div>
+          <div class="sideControls">
+            <input id="unassignedSearch" type="text" placeholder="Filter…" />
+            <select id="unassignedSort" title="Sort">
+              <option value="new">Newest</option>
+              <option value="old">Oldest</option>
+              <option value="az">Title A–Z</option>
+              <option value="za">Title Z–A</option>
+              <option value="priority">Priority</option>
+              <option value="type">Type</option>
+            </select>
+          </div>
+        </div>
+        <div class="dropHint" id="sideDropHint">
+          Drag tasks here to <b>remove time</b> (unassign). Drag from here onto the board to schedule.
+        </div>
+        <div class="sideList" id="unassignedList"></div>
+      </aside>
+    </div>
   </div>
 
   <!-- Task Modal -->
@@ -656,7 +934,34 @@
           </div>
         </div>
 
-        <!-- ✅ Spanning tasks: independent start/end date & time -->
+        <div class="grid2">
+          <div class="field">
+            <label>Job #</label>
+            <input id="fJob" type="text" placeholder="Optional" />
+          </div>
+          <div class="field">
+            <label>Customer name</label>
+            <input id="fCustomer" type="text" placeholder="e.g. John Smith / ACME Pty Ltd" />
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Assigned people</label>
+          <div id="peoplePick" class="chips"></div>
+          <div class="help">Tap chips to toggle staff. Each staff chip has its own color.</div>
+        </div>
+
+        <div class="field">
+          <label>Scheduling</label>
+          <div class="inlineRow" style="justify-content:space-between;">
+            <div class="help">If <b>Unassigned</b> is enabled, this task will appear in the right panel with no time.</div>
+            <label class="help" style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+              <input id="fUnassigned" type="checkbox" />
+              Unassigned (no time)
+            </label>
+          </div>
+        </div>
+
         <div class="grid2">
           <div class="field">
             <label>Start date</label>
@@ -679,17 +984,7 @@
           </div>
         </div>
 
-        <div class="field">
-          <label>Assigned people</label>
-          <div id="peoplePick" class="chips"></div>
-          <div class="help">Tap chips to toggle staff. Each staff chip has its own color.</div>
-        </div>
-
         <div class="grid3">
-          <div class="field">
-            <label>Job #</label>
-            <input id="fJob" type="text" placeholder="Optional" />
-          </div>
           <div class="field">
             <label>Status</label>
             <select id="fStatus">
@@ -708,26 +1003,26 @@
               <option value="Low">Low</option>
             </select>
           </div>
-        </div>
-
-        <div class="grid2">
           <div class="field">
             <label>Location</label>
             <input id="fLocation" type="text" placeholder="Optional (site address / suburb)" />
           </div>
-          <div class="field">
-            <label>Notes</label>
-            <textarea id="fNotes" placeholder="Notes..."></textarea>
-          </div>
+        </div>
+
+        <div class="field">
+          <label>Notes</label>
+          <textarea id="fNotes" placeholder="Notes..."></textarea>
         </div>
 
         <div class="help">
-          <b>Quick use:</b> Drag on an empty day column to create a task. Drag tasks to move.
-          Resize via handles at top/bottom. Times snap to 15-minute slots. Tasks can span days using Start/End date.
+          <b>Quick use:</b> Drag on an empty day column to create a task (1 hour default if you just click).
+          Drag tasks to move. Resize via handles. Times snap to 15-minute slots. Tasks can span days using Start/End date.
         </div>
       </div>
       <div class="modalFooter">
-        <button class="btn danger" id="deleteTaskBtn" style="margin-right:auto; display:none;">Delete</button>
+        <button class="btn danger" id="deleteTaskBtn" style="margin-right:auto; display:none;">
+          <span class="ico trash"></span> Delete
+        </button>
         <button class="btn" id="taskModalCancel">Cancel</button>
         <button class="btn primary" id="taskModalSave">Save</button>
       </div>
@@ -742,7 +1037,7 @@
         <button class="btn icon" id="settingsClose" title="Close">✕</button>
       </div>
       <div class="modalBody">
-        <div class="grid2">
+        <div class="grid3">
           <div class="field">
             <label>Working hours start</label>
             <input id="sStartHour" type="number" min="0" max="23" step="1" />
@@ -752,6 +1047,25 @@
             <label>Working hours end</label>
             <input id="sEndHour" type="number" min="1" max="24" step="1" />
             <div class="help">Hour in 24h time (e.g. 18 = 6pm).</div>
+          </div>
+          <div class="field">
+            <label>Time format</label>
+            <select id="sTimeFormat">
+              <option value="12">AM/PM</option>
+              <option value="24">24-hour</option>
+            </select>
+            <div class="help">Controls the left-side time labels + task time badges.</div>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Unassigned panel</label>
+          <div class="inlineRow" style="justify-content:space-between;">
+            <div class="help">Show the right-side panel for tasks with no time set.</div>
+            <label class="help" style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+              <input id="sShowUnassigned" type="checkbox" />
+              Enabled
+            </label>
           </div>
         </div>
 
@@ -768,7 +1082,6 @@
         <div class="field">
           <label>Task types (name + band color)</label>
           <div class="list" id="typeList"></div>
-          <div class="help">Add/edit types here or in the Task modal.</div>
         </div>
 
         <div class="field">
@@ -801,6 +1114,14 @@
       const $ = (sel, root=document) => root.querySelector(sel);
       const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
 
+      let nowLineTimer = null;
+
+      // ✅ #4 scroll preservation (no jumps after render)
+      let lastScroll = {
+        timeline: { x:0, y:0 },
+        month: { y:0 }
+      };
+
       const toastWrap = $("#toastWrap");
       function escapeHtml(s){
         return (s ?? "").toString()
@@ -827,20 +1148,35 @@
 
       function pad2(n){ return (n<10?"0":"")+n; }
       function clamp(n,a,b){ return Math.max(a, Math.min(b,n)); }
-
       function startOfDay(d){ const x=new Date(d); x.setHours(0,0,0,0); return x; }
       function addDays(d,n){ const x=new Date(d); x.setDate(x.getDate()+n); return x; }
       function sameDay(a,b){ return a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate(); }
       function isoDate(d){ const x=new Date(d); return `${x.getFullYear()}-${pad2(x.getMonth()+1)}-${pad2(x.getDate())}`; }
-      function timeStr(d){ const x=new Date(d); return `${pad2(x.getHours())}:${pad2(x.getMinutes())}`; }
       function parseDateInput(v){ const [y,m,dd]=v.split("-").map(Number); return new Date(y, m-1, dd, 0,0,0,0); }
       function parseTimeInput(v){ const [h,m]=v.split(":").map(Number); return {h, m}; }
-
       function snapToSlotMs(ms){ return Math.round(ms / SLOT_MS) * SLOT_MS; }
       function minutesBetween(a,b){ return Math.round((b-a)/60000); }
-
-      function fmtDowShort(d){ return d.toLocaleDateString(undefined, { weekday:"short" }); }
       function fmtMonthTitle(d){ return d.toLocaleDateString(undefined, { month:"long", year:"numeric" }); }
+
+      function formatTime(dateObj){
+        const d = new Date(dateObj);
+        if(state.settings.timeFormat === "24"){
+          return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+        }
+        let h = d.getHours();
+        const m = d.getMinutes();
+        const ampm = h >= 12 ? "pm" : "am";
+        h = h % 12; if(h === 0) h = 12;
+        return `${h}:${pad2(m)}${ampm}`;
+      }
+      function formatHourLabel(h24){
+        if(state.settings.timeFormat === "24"){
+          return `${pad2(h24%24)}:00`;
+        }
+        const ampm = h24 >= 12 ? "pm" : "am";
+        let h = h24 % 12; if(h === 0) h = 12;
+        return `${h}${ampm}`;
+      }
 
       function getMonday(d){
         const x = startOfDay(d);
@@ -851,7 +1187,12 @@
       function uid(){ return Math.random().toString(16).slice(2) + Date.now().toString(16); }
 
       const defaultState = () => ({
-        settings: { startHour: 6, endHour: 18 },
+        settings: {
+          startHour: 6,
+          endHour: 18,
+          timeFormat: "12",
+          showUnassignedPanel: true
+        },
         staff: [
           { id: uid(), name: "Tristan", color: "#4ea1ff" },
           { id: uid(), name: "Aidan", color: "#ffb020" },
@@ -875,6 +1216,8 @@
           if(!raw) return null;
           const st = JSON.parse(raw);
           if(!st.settings || !st.staff || !st.types || !st.tasks || !st.ui) return null;
+          if(!st.settings.timeFormat) st.settings.timeFormat = "12";
+          if(typeof st.settings.showUnassignedPanel !== "boolean") st.settings.showUnassignedPanel = true;
           return st;
         }catch(e){
           console.warn("Failed to load state", e);
@@ -886,19 +1229,24 @@
 
       function saveState(){ localStorage.setItem(LS_KEY, JSON.stringify(state)); }
 
+      function isUnassigned(task){
+        return !task.start || !task.end; // ✅ supports “no time set”
+      }
+
       function addTask(taskLike, {silent=false}={}){
         const t = {
           id: uid(),
           title: taskLike.title || "New task",
           typeId: taskLike.typeId || (state.types[0]?.id ?? ""),
           people: Array.isArray(taskLike.people) ? taskLike.people : [],
-          start: taskLike.start,
-          end: taskLike.end,
+          start: taskLike.start ?? null,
+          end: taskLike.end ?? null,
           notes: taskLike.notes || "",
           location: taskLike.location || "",
           status: taskLike.status || "Planned",
           priority: taskLike.priority || "Normal",
-          jobNo: taskLike.jobNo || ""
+          jobNo: taskLike.jobNo || "",
+          customer: taskLike.customer || ""
         };
         state.tasks.push(t);
         if(!silent) toast("Task added", t.title, "var(--accent)");
@@ -948,11 +1296,13 @@
             location: extra.location || "",
             status: extra.status || "Planned",
             priority: extra.priority || "Normal",
-            jobNo: extra.jobNo || ""
+            jobNo: extra.jobNo || "",
+            customer: extra.customer || ""
           }, {silent:true});
         };
 
         mk(0, 8, 0, 11, 0, "Install ACM fascia - Springwood", typeInstall, [staffIds[0], staffIds[1]], {
+          customer:"ACME Pty Ltd",
           location: "Springwood",
           jobNo:"SR-10231",
           notes:"Bring ladder + rivet gun. Confirm access with client.",
@@ -960,15 +1310,17 @@
         });
 
         mk(0, 12, 0, 14, 30, "Design proof - Window graphics", typeDesign, [staffIds[2]], {
+          customer:"John Smith",
           status:"In progress",
           notes:"Waiting on customer logo file. Send reminder if not received by 2pm."
         });
 
         mk(1, 9, 0, 12, 0, "Print + laminate - 3x banners", typePrint, [staffIds[3], staffIds[2]], {
+          customer:"Pelleton Renewables",
           notes:"Check artwork bleed and grommet positions."
         });
 
-        // Spanning task
+        // Spans days
         const d2 = addDays(mon, 2);
         const s = new Date(d2); s.setHours(16, 0, 0, 0);
         const e = addDays(d2, 1); e.setHours(10, 0, 0, 0);
@@ -982,7 +1334,22 @@
           location:"CBD",
           status:"Planned",
           priority:"Urgent",
-          jobNo:"SR-10288"
+          jobNo:"SR-10288",
+          customer:"City Council"
+        }, {silent:true});
+
+        // Unassigned example
+        addTask({
+          title:"Call supplier re: vinyl stock",
+          typeId: typeDesign,
+          people: [],
+          start: null,
+          end: null,
+          notes:"No time yet — keep in unassigned until scheduled.",
+          status:"Planned",
+          priority:"Normal",
+          jobNo:"SR-10310",
+          customer:"Internal"
         }, {silent:true});
 
         saveState();
@@ -1058,15 +1425,22 @@
         const dayStart = startOfDay(day).getTime();
         const dayEnd = startOfDay(addDays(day,1)).getTime();
         return state.tasks.filter(t=>{
+          if(isUnassigned(t)) return false;
           const s = new Date(t.start).getTime();
           const e = new Date(t.end).getTime();
           return e > dayStart && s < dayEnd;
         });
       }
 
-      function applyCssVars(){
-        document.documentElement.style.setProperty("--hoursStart", state.settings.startHour);
-        document.documentElement.style.setProperty("--hoursEnd", state.settings.endHour);
+      function fmtMonthRowForDays(days){
+        if(!days || !days.length) return "";
+        const first = days[0];
+        const last = days[days.length - 1];
+        const same = first.getFullYear()===last.getFullYear() && first.getMonth()===last.getMonth();
+        if(same) return fmtMonthTitle(first);
+        const a = first.toLocaleDateString(undefined, {month:"short", year:"numeric"});
+        const b = last.toLocaleDateString(undefined, {month:"short", year:"numeric"});
+        return `${a} → ${b}`;
       }
 
       function viewLabel(v){
@@ -1113,6 +1487,49 @@
       const rangeTitle = $("#rangeTitle");
       const rangeMeta = $("#rangeMeta");
 
+      // Unassigned panel elements
+      const sidePanel = $("#sidePanel");
+      const sideCloseBtn = $("#sideCloseBtn");
+      const unassignedList = $("#unassignedList");
+      const unassignedCount = $("#unassignedCount");
+      const unassignedSearch = $("#unassignedSearch");
+      const unassignedSort = $("#unassignedSort");
+      const sideDropHint = $("#sideDropHint");
+
+      sideCloseBtn.addEventListener("click", ()=>{
+        state.settings.showUnassignedPanel = false;
+        saveState();
+        render();
+      });
+
+      function shouldShowSidePanel(){
+        return !!state.settings.showUnassignedPanel;
+      }
+
+      function preserveScrollBeforeRender(){
+        const dg = boardWrap.querySelector(".daysGrid");
+        if(dg){
+          lastScroll.timeline.x = dg.scrollLeft;
+          lastScroll.timeline.y = dg.scrollTop;
+        }
+        const mg = boardWrap.querySelector(".monthGrid");
+        if(mg){
+          lastScroll.month.y = mg.scrollTop;
+        }
+      }
+
+      function restoreScrollAfterRender(){
+        const dg = boardWrap.querySelector(".daysGrid");
+        if(dg){
+          dg.scrollLeft = lastScroll.timeline.x;
+          dg.scrollTop = lastScroll.timeline.y;
+        }
+        const mg = boardWrap.querySelector(".monthGrid");
+        if(mg){
+          mg.scrollTop = lastScroll.month.y;
+        }
+      }
+
       function getVisibleRangeText(){
         const view = state.ui.view;
         const anchor = parseDateInput(state.ui.anchorDate);
@@ -1132,22 +1549,246 @@
         rangeMeta.textContent = `${state.ui.view === "custom" ? `${days.length} days` : viewLabel(view)} • ${SLOT_MIN} min slots`;
       }
 
-      function render(){
-        applyCssVars();
-        if(viewSelect)viewSelect.value = state.ui.view;//TODO: without if() throws before initialization error
+      function clearNowLineTimer(){
+        if(nowLineTimer){
+          clearInterval(nowLineTimer);
+          nowLineTimer = null;
+        }
+      }
 
+      function render(){
+        // ✅ #4: preserve scroll before wipe
+        preserveScrollBeforeRender();
+
+        viewSelect.value = state.ui.view;
         customSeg.style.display = (state.ui.view === "custom") ? "flex" : "none";
         customDaysInput.value = state.ui.customDays;
         customDaysVal.textContent = String(state.ui.customDays);
 
         getVisibleRangeText();
 
+        // side panel show/hide
+        sidePanel.classList.toggle("hidden", !shouldShowSidePanel());
+
+        clearNowLineTimer();
         boardWrap.innerHTML = "";
+
         if(state.ui.view === "month"){
           renderMonth(boardWrap);
         }else{
           renderTimeline(boardWrap);
         }
+
+        renderUnassignedPanel();
+        restoreScrollAfterRender();
+      }
+
+      /**********************
+       * Unassigned panel
+       **********************/
+      function getUnassignedTasks(){
+        return state.tasks.filter(isUnassigned);
+      }
+
+      function priorityRank(p){
+        const v = (p||"Normal").toLowerCase();
+        if(v==="urgent") return 4;
+        if(v==="high") return 3;
+        if(v==="normal") return 2;
+        if(v==="low") return 1;
+        return 2;
+      }
+
+      function renderUnassignedPanel(){
+        if(!shouldShowSidePanel()){
+          // still update count badge for future enable
+          return;
+        }
+
+        const q = (unassignedSearch.value || "").trim().toLowerCase();
+        const sort = unassignedSort.value;
+
+        let items = getUnassignedTasks();
+
+        if(q){
+          items = items.filter(t=>{
+            const hay = [
+              t.title, t.customer, t.jobNo, t.notes, t.location, t.status, t.priority
+            ].join(" ").toLowerCase();
+            return hay.includes(q);
+          });
+        }
+
+        items.sort((a,b)=>{
+          const aCreated = parseInt(a.id.slice(-8), 16) || 0; // weak but consistent-ish
+          const bCreated = parseInt(b.id.slice(-8), 16) || 0;
+
+          if(sort==="new") return bCreated - aCreated;
+          if(sort==="old") return aCreated - bCreated;
+          if(sort==="az") return (a.title||"").localeCompare(b.title||"");
+          if(sort==="za") return (b.title||"").localeCompare(a.title||"");
+          if(sort==="priority") return priorityRank(b.priority) - priorityRank(a.priority);
+          if(sort==="type"){
+            const at = (state.types.find(x=>x.id===a.typeId)?.name||"").toLowerCase();
+            const bt = (state.types.find(x=>x.id===b.typeId)?.name||"").toLowerCase();
+            return at.localeCompare(bt);
+          }
+          return 0;
+        });
+
+        unassignedCount.textContent = String(items.length);
+        unassignedList.innerHTML = "";
+
+        if(items.length === 0){
+          const empty = document.createElement("div");
+          empty.className = "dropHint";
+          empty.style.margin = "0";
+          empty.textContent = q ? "No matches." : "No unassigned tasks.";
+          unassignedList.appendChild(empty);
+          return;
+        }
+
+        for(const t of items){
+          const el = makeUnassignedItem(t);
+          unassignedList.appendChild(el);
+        }
+      }
+
+      unassignedSearch.addEventListener("input", renderUnassignedPanel);
+      unassignedSort.addEventListener("change", renderUnassignedPanel);
+
+      function makeUnassignedItem(task){
+        const type = state.types.find(t=>t.id===task.typeId) || state.types[0];
+        const el = document.createElement("div");
+        el.className = "mTaskPill"; // reuse pill style
+        el.dataset.taskId = task.id;
+        el.innerHTML = `
+          <div class="bar" style="background:${type.color}"></div>
+          <div class="txt">${escapeHtml(task.title || "(untitled)")}</div>
+          <div class="tm">${escapeHtml((task.customer || "").trim() || "—")}</div>
+        `;
+        el.addEventListener("click", ()=> openTaskModal(task.id));
+        attachUnassignedDrag(el, task.id);
+        return el;
+      }
+
+      function attachUnassignedDrag(pillEl, taskId){
+        pillEl.addEventListener("pointerdown", (e)=>{
+          if(e.pointerType==="mouse" && e.button!==0) return;
+          e.preventDefault();
+
+          const task = state.tasks.find(t=>t.id===taskId);
+          if(!task) return;
+
+          const daysGrid = boardWrap.querySelector(".daysGrid");
+          const daysGridInner = boardWrap.querySelector(".daysGridInner");
+          const gridRect = daysGrid ? daysGrid.getBoundingClientRect() : null;
+
+          const ghost = document.createElement("div");
+          ghost.className = "dragGhost";
+          const type = state.types.find(t=>t.id===task.typeId) || state.types[0];
+          ghost.innerHTML = `
+            <div class="band" style="background:${type.color}"></div>
+            <div class="inner">
+              <div class="t">${escapeHtml(task.title || "(untitled)")}</div>
+              ${task.customer ? `<div class="c">${escapeHtml(task.customer)}</div>` : `<div class="c"> </div>`}
+              <div class="m">
+                <span>${escapeHtml(type.name)}</span>
+                <span>•</span>
+                <span>${escapeHtml(task.priority || "Normal")}</span>
+              </div>
+            </div>
+          `;
+          document.body.appendChild(ghost);
+
+          const pointerId = e.pointerId;
+          const startX = e.clientX, startY = e.clientY;
+
+          const moveGhost = (cx, cy) => {
+            ghost.style.left = (cx + 10) + "px";
+            ghost.style.top  = (cy + 10) + "px";
+          };
+          moveGhost(startX, startY);
+
+          const scroller = daysGrid ? createEdgeAutoScroller(daysGrid, {edge: 70, maxSpeed: 26}) : null;
+          if(scroller){
+            scroller.setPointer(e.clientX, e.clientY);
+            scroller.start();
+          }
+
+          // drop highlight on side
+          sidePanel.classList.add("sideDropActive");
+
+          const move = (ev)=>{
+            if(ev.pointerId !== pointerId) return;
+            moveGhost(ev.clientX, ev.clientY);
+            if(scroller) scroller.setPointer(ev.clientX, ev.clientY);
+
+            // show drop active if pointer over board/side
+            if(isPointInside(ev.clientX, ev.clientY, sidePanel.getBoundingClientRect())){
+              sidePanel.classList.add("sideDropActive");
+            } else {
+              sidePanel.classList.remove("sideDropActive");
+            }
+          };
+
+          const up = (ev)=>{
+            if(ev.pointerId !== pointerId) return;
+
+            document.removeEventListener("pointermove", move);
+            document.removeEventListener("pointerup", up);
+            document.removeEventListener("pointercancel", up);
+
+            if(scroller) scroller.stop();
+            ghost.remove();
+
+            // Determine drop target
+            const droppedOnBoard = daysGrid && gridRect && isPointInside(ev.clientX, ev.clientY, gridRect);
+            const droppedOnSide  = shouldShowSidePanel() && isPointInside(ev.clientX, ev.clientY, sidePanel.getBoundingClientRect());
+
+            sidePanel.classList.remove("sideDropActive");
+
+            if(droppedOnBoard && daysGridInner){
+              const dayCols = Array.from(daysGridInner.querySelectorAll(".dayCol"));
+              if(dayCols.length){
+                const colWidth = dayCols[0].getBoundingClientRect().width || 210;
+
+                const xContent = (ev.clientX - gridRect.left) + daysGrid.scrollLeft;
+                const yContent = (ev.clientY - gridRect.top) + daysGrid.scrollTop;
+
+                const idx = clamp(Math.floor(xContent / colWidth), 0, dayCols.length - 1);
+                const colTarget = dayCols[idx];
+                const dayIso = colTarget.dataset.day;
+
+                const slot = clamp(Math.floor(yContent / slotH()), 0, totalSlotsInView()-1);
+
+                const day = parseDateInput(dayIso);
+                const start = new Date(day);
+                start.setHours(state.settings.startHour, 0, 0, 0);
+                start.setMinutes(start.getMinutes() + slot * SLOT_MIN);
+                const end = new Date(start.getTime() + 60*60*1000); // 1 hour default
+
+                updateTask(taskId, {
+                  start: new Date(snapToSlotMs(start.getTime())).toISOString(),
+                  end: new Date(snapToSlotMs(end.getTime())).toISOString()
+                }, {silent:true});
+                toast("Scheduled", task.title, "var(--accent)");
+              }
+            } else if(droppedOnSide){
+              // already unassigned, do nothing
+            } else {
+              // dropped elsewhere, do nothing
+            }
+          };
+
+          document.addEventListener("pointermove", move);
+          document.addEventListener("pointerup", up);
+          document.addEventListener("pointercancel", up);
+        });
+      }
+
+      function isPointInside(x,y,rect){
+        return x>=rect.left && x<=rect.right && y>=rect.top && y<=rect.bottom;
       }
 
       /**********************
@@ -1167,6 +1808,11 @@
         timeHeader.className = "timeHeader";
         timeHeader.textContent = "Time";
 
+        const monthBar = document.createElement("div");
+        monthBar.className = "monthBar";
+        const monthText = fmtMonthRowForDays(days);
+        monthBar.innerHTML = `${escapeHtml(monthText)} <span class="muted">(${escapeHtml(viewLabel(state.ui.view))})</span>`;
+
         const daysHeader = document.createElement("div");
         daysHeader.className = "daysHeader";
 
@@ -1174,17 +1820,21 @@
           const head = document.createElement("div");
           head.className = "dayHead" + (sameDay(d, today) ? " today" : "");
           const count = tasksOverlappingDay(d).length;
+
+          // ✅ #5: "Wed 30"
+          const dow = d.toLocaleDateString(undefined,{weekday:"short"});
+          const dayNum = String(d.getDate());
+          const line = `${dow} ${dayNum}`;
+
           head.innerHTML = `
-            <div>
-              <div class="dTitle">${escapeHtml(fmtDowShort(d))}</div>
-              <div class="dSub">${escapeHtml(d.toLocaleDateString(undefined,{month:"short", day:"numeric"}))}</div>
-            </div>
+            <div class="dLine">${escapeHtml(line)}</div>
             <div class="count">${count}</div>
           `;
           daysHeader.appendChild(head);
         });
 
         top.appendChild(timeHeader);
+        top.appendChild(monthBar);
         top.appendChild(daysHeader);
 
         const bottom = document.createElement("div");
@@ -1207,7 +1857,7 @@
           const lbl = document.createElement("div");
           lbl.className = "timeLabel";
           lbl.style.top = y + "px";
-          lbl.textContent = `${pad2(h%24)}:00`;
+          lbl.textContent = formatHourLabel(h);
           timeRailInner.appendChild(lbl);
         }
         timeRail.appendChild(timeRailInner);
@@ -1252,16 +1902,70 @@
         daysGrid.addEventListener("scroll", ()=>{
           daysHeader.scrollLeft = daysGrid.scrollLeft;
           timeRail.scrollTop = daysGrid.scrollTop;
+          monthBar.scrollLeft = daysGrid.scrollLeft;
         }, {passive:true});
 
-        requestAnimationFrame(()=>{
-          const targetHour = Math.max(state.settings.startHour, 8);
-          const mins = (targetHour - state.settings.startHour) * 60;
-          const y = (mins / SLOT_MIN) * slotH();
-          daysGrid.scrollTop = Math.max(0, y - 40);
+        // no forced scroll; preserve handles it now
+        renderTasksIntoTimeline(daysGridInner, days);
+
+        setupNowLine(daysGridInner);
+        window.addEventListener("focus", () => setupNowLine(daysGridInner, {force:true}));
+        document.addEventListener("visibilitychange", () => {
+          if(!document.hidden) setupNowLine(daysGridInner, {force:true});
         });
 
-        renderTasksIntoTimeline(daysGridInner, days);
+        // allow dropping board tasks into side panel by drag end (handled in task drag)
+      }
+
+      function setupNowLine(daysGridInner, opts={}){
+        const todayLocal = new Date();
+        const todayIso = isoDate(todayLocal);
+        const col = daysGridInner.querySelector(`.dayCol[data-day="${todayIso}"]`);
+        if(!col) return;
+
+        let line = col.querySelector(".nowLine");
+        if(!line){
+          line = document.createElement("div");
+          line.className = "nowLine";
+          line.innerHTML = `<div class="nowDot"></div>`;
+          col.appendChild(line);
+        }
+
+        const update = () => {
+          const now = new Date();
+          const workStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), state.settings.startHour, 0, 0, 0);
+          const workEnd   = new Date(now.getFullYear(), now.getMonth(), now.getDate(), state.settings.endHour,   0, 0, 0);
+
+          if(now < workStart || now > workEnd){
+            line.style.display = "none";
+            return;
+          }
+          line.style.display = "block";
+
+          const minutesFromStart = (now - workStart) / 60000;
+          const y = (minutesFromStart / SLOT_MIN) * slotH();
+          line.style.top = `${y}px`;
+        };
+
+        if(opts.force) {
+          if(nowLineTimer){ clearInterval(nowLineTimer); nowLineTimer = null; }
+        } else {
+          if(nowLineTimer) return;
+        }
+
+        update();
+
+        const scheduleNextMinute = () => {
+          const now = new Date();
+          const msToNextMinute = (60 - now.getSeconds()) * 1000 - now.getMilliseconds() + 10;
+          setTimeout(() => {
+            update();
+            if(nowLineTimer) clearInterval(nowLineTimer);
+            nowLineTimer = setInterval(update, 60 * 1000);
+          }, msToNextMinute);
+        };
+
+        scheduleNextMinute();
       }
 
       function renderTasksIntoTimeline(daysGridInner, days){
@@ -1271,6 +1975,8 @@
         const visibleEnd = startOfDay(addDays(days[days.length-1], 1)).getTime();
 
         state.tasks.forEach(task=>{
+          if(isUnassigned(task)) return;
+
           const start = new Date(task.start).getTime();
           const end   = new Date(task.end).getTime();
           if(end <= visibleStart || start >= visibleEnd) return;
@@ -1308,6 +2014,7 @@
 
         const el = document.createElement("div");
         el.className = "task";
+        if((task.priority || "").toLowerCase() === "urgent") el.classList.add("urgent");
         el.dataset.taskId = task.id;
 
         el.style.top = topPx + "px";
@@ -1319,26 +2026,35 @@
         }).join("");
         const more = people.length>3 ? `<span class="badge">+${people.length-3}</span>` : "";
 
-        const segStartStr = timeStr(new Date(segStartMs));
-        const segEndStr = timeStr(new Date(segEndMs));
+        const segStartStr = formatTime(new Date(segStartMs));
+        const segEndStr = formatTime(new Date(segEndMs));
 
         const dayStart = startOfDay(segDayDate).getTime();
         const dayEnd = startOfDay(addDays(segDayDate,1)).getTime();
         const continuesFromPrev = new Date(task.start).getTime() < dayStart;
         const continuesToNext = new Date(task.end).getTime() > dayEnd;
 
+        const customerText = (task.customer || "").trim();
+
         el.innerHTML = `
           <div class="band" style="background:${type.color}"></div>
+
           <div class="resizeHandle top" data-handle="top"><div class="resizeGrip"></div></div>
           <div class="resizeHandle bottom" data-handle="bottom"><div class="resizeGrip"></div></div>
+
+          <div class="taskTopRow">
+            <button class="cardBtn edit" data-action="edit" title="Edit">
+              <span class="ico pencil"></span>
+            </button>
+            <button class="cardBtn delete" data-action="delete" title="Delete">
+              <span class="ico trash"></span>
+            </button>
+          </div>
+
           <div class="taskInner">
-            <div class="taskTop">
-              <div class="taskTitle">${escapeHtml(task.title || "(untitled)")}</div>
-              <div class="taskBtns">
-                <button class="tbtn" data-action="edit" title="Notes / Edit"><span class="ico note"></span></button>
-                <button class="tbtn danger" data-action="delete" title="Delete"><span class="ico trash"></span></button>
-              </div>
-            </div>
+            <div class="taskTitle">${escapeHtml(task.title || "(untitled)")}</div>
+            ${customerText ? `<div class="taskCustomer">${escapeHtml(customerText)}</div>` : ``}
+
             <div class="taskMeta">
               <span class="badge"><span class="dot" style="background:${type.color}"></span>${escapeHtml(type.name)}</span>
               <span class="badge">${segStartStr}–${segEndStr}</span>
@@ -1348,6 +2064,7 @@
               <span class="badge">${escapeHtml(task.priority || "Normal")}</span>
               ${task.jobNo ? `<span class="badge">#${escapeHtml(task.jobNo)}</span>` : ""}
             </div>
+
             <div class="chips">
               ${peopleChips}${more}
             </div>
@@ -1375,9 +2092,6 @@
         const lastOfMonth = new Date(anchor.getFullYear(), anchor.getMonth()+1, 0);
 
         const firstCell = getMonday(firstOfMonth);
-
-        // lastCell: end of the last week that contains lastOfMonth
-        const lastDowMonBased = (lastOfMonth.getDay() === 0 ? 7 : lastOfMonth.getDay()); // 1..7 (Mon..Sun)
         const lastWeekStart = getMonday(lastOfMonth);
         const lastCell = addDays(lastWeekStart, 6);
 
@@ -1405,7 +2119,7 @@
           const top = document.createElement("div");
           top.className = "mTop";
           top.innerHTML = `
-            <div class="mDate">${escapeHtml(String(d.getDate()))}<span>${escapeHtml(fmtDowShort(d))}</span></div>
+            <div class="mDate">${escapeHtml(String(d.getDate()))}<span>${escapeHtml(d.toLocaleDateString(undefined,{weekday:"short"}))}</span></div>
             <button class="mAdd" title="Add task"><span class="ico plus" style="background: var(--text)"></span></button>
           `;
 
@@ -1417,7 +2131,7 @@
             const type = state.types.find(x=>x.id===t.typeId) || state.types[0];
             const tStart = new Date(t.start);
             const tEnd = new Date(t.end);
-            const show = `${timeStr(tStart)}–${timeStr(tEnd)}`;
+            const show = `${formatTime(tStart)}–${formatTime(tEnd)}`;
 
             const pill = document.createElement("div");
             pill.className = "mTaskPill";
@@ -1435,11 +2149,7 @@
 
           cell.querySelector(".mAdd").addEventListener("click", (e)=>{
             e.stopPropagation();
-            openTaskModal(null, { startDate: isoDate(d), startTime: "08:00", endDate: isoDate(d), endTime: "09:00" });
-          });
-
-          cell.addEventListener("dblclick", ()=>{
-            openTaskModal(null, { startDate: isoDate(d), startTime: "08:00", endDate: isoDate(d), endTime: "09:00" });
+            openTaskModal(null, { unassigned:false, startDate: isoDate(d), startTime: "08:00", endDate: isoDate(d), endTime: "09:00" });
           });
 
           cells.appendChild(cell);
@@ -1461,9 +2171,6 @@
           if(e.target.closest(".task")) return;
           if(e.pointerType === "mouse" && e.button !== 0) return;
 
-          const dayIso = col.dataset.day;
-          const day = parseDateInput(dayIso);
-
           const colRect = col.getBoundingClientRect();
           const y = e.clientY - colRect.top;
           const startSlot = clamp(Math.floor(y / slotH()), 0, totalSlotsInView()-1);
@@ -1471,15 +2178,16 @@
           const ghost = document.createElement("div");
           ghost.className = "ghostCreate";
           ghost.style.top = (startSlot * slotH()) + "px";
-          ghost.style.height = slotH() + "px";
+          ghost.style.height = (4 * slotH()) + "px"; // 1 hour default
           col.appendChild(ghost);
 
-          creating = { pointerId: e.pointerId, dayIso, startSlot, ghost };
+          creating = { pointerId: e.pointerId, dayIso: col.dataset.day, startSlot, ghost, moved:false };
           col.setPointerCapture(e.pointerId);
         });
 
         col.addEventListener("pointermove", (e)=>{
           if(!creating || creating.pointerId !== e.pointerId) return;
+          creating.moved = true;
 
           const colRect = col.getBoundingClientRect();
           const y = e.clientY - colRect.top;
@@ -1503,7 +2211,9 @@
           const hPx = parseFloat(ghost.style.height);
 
           const startSlot = Math.round(topPx / slotH());
-          const slotLen = Math.max(1, Math.round(hPx / slotH()));
+          let slotLen = Math.max(1, Math.round(hPx / slotH()));
+
+          if(!creating.moved || slotLen < 4) slotLen = 4;
 
           const day = parseDateInput(creating.dayIso);
 
@@ -1514,6 +2224,7 @@
           const end = new Date(start.getTime() + slotLen * SLOT_MS);
 
           ghost.remove();
+
           const newId = addTask({
             title: "New task",
             typeId: state.types[0]?.id ?? "",
@@ -1524,7 +2235,8 @@
             location: "",
             status: "Planned",
             priority: "Normal",
-            jobNo: ""
+            jobNo: "",
+            customer: ""
           }, {silent:true});
 
           creating = null;
@@ -1540,8 +2252,7 @@
 
       /**********************
        * Drag + Resize tasks
-       * ✅ stable pointer capture on daysGrid (fixes cross-day save)
-       * ✅ edge auto-scroll
+       * ✅ supports dragging into side panel to unassign
        **********************/
       function attachTaskDragAndResize(taskEl){
         const id = taskEl.dataset.taskId;
@@ -1649,7 +2360,6 @@
         topHandle.addEventListener("pointerdown", (e)=> startResize("top", e));
         bottomHandle.addEventListener("pointerdown", (e)=> startResize("bottom", e));
 
-        // ✅ Drag move (capture on daysGrid, not the task element)
         taskEl.addEventListener("pointerdown", (e)=>{
           if(e.target.closest(".resizeHandle")) return;
           if(e.target.closest("[data-action]")) return;
@@ -1703,12 +2413,15 @@
 
             scroller.setPointer(ev.clientX, ev.clientY);
 
+            const overSide = shouldShowSidePanel() && isPointInside(ev.clientX, ev.clientY, sidePanel.getBoundingClientRect());
+            sidePanel.classList.toggle("sideDropActive", overSide);
+
             const { colTarget, dayIso, slot } = getTargetFromPointer(ev.clientX, ev.clientY);
 
             const targetDay = parseDateInput(dayIso);
             const start = new Date(targetDay);
             start.setHours(state.settings.startHour, 0, 0, 0);
-            start.setMinutes(start.getMinutes() + slot * SLOT_MIN);
+            start.setMinutes(start.getMinutes() + slot * 15);
 
             const newStartMs = snapToSlotMs(start.getTime());
             const newEndMs = newStartMs + dur;
@@ -1735,6 +2448,17 @@
 
             taskEl.style.pointerEvents = prevPointerEvents || "";
             try{ daysGrid.releasePointerCapture(pointerId); } catch {}
+
+            const droppedOnSide = shouldShowSidePanel() && isPointInside(ev.clientX, ev.clientY, sidePanel.getBoundingClientRect());
+
+            sidePanel.classList.remove("sideDropActive");
+
+            if(droppedOnSide){
+              updateTask(id, { start: null, end: null }, {silent:true});
+              toast("Unassigned", task.title, "var(--accent)");
+              ev.preventDefault();
+              return;
+            }
 
             const finalStart = parseInt(taskEl.dataset.previewStart || String(startMs), 10);
             const finalEnd = parseInt(taskEl.dataset.previewEnd || String(endMs), 10);
@@ -1780,13 +2504,13 @@
         const clampEnd = Math.min(segEnd, workEnd.getTime());
 
         let topMin = minutesBetween(workStart, new Date(clampStart));
-        let durMin = Math.max(SLOT_MIN, minutesBetween(new Date(clampStart), new Date(clampEnd)));
+        let durMin = Math.max(15, minutesBetween(new Date(clampStart), new Date(clampEnd)));
 
         topMin = clamp(topMin, 0, (state.settings.endHour - state.settings.startHour) * 60);
-        durMin = clamp(durMin, SLOT_MIN, (state.settings.endHour - state.settings.startHour) * 60);
+        durMin = clamp(durMin, 15, (state.settings.endHour - state.settings.startHour) * 60);
 
-        const topPx = (topMin / SLOT_MIN) * slotH();
-        const hPx = (durMin / SLOT_MIN) * slotH();
+        const topPx = (topMin / 15) * slotH();
+        const hPx = (durMin / 15) * slotH();
 
         taskEl.style.top = topPx + "px";
         taskEl.style.height = Math.max(slotH(), hPx) + "px";
@@ -1806,12 +2530,15 @@
       const fNewType = $("#fNewType");
       const addTypeOnFlyBtn = $("#addTypeOnFlyBtn");
 
+      const fJob = $("#fJob");
+      const fCustomer = $("#fCustomer");
+      const fUnassigned = $("#fUnassigned");
+
       const fStartDate = $("#fStartDate");
       const fStartTime = $("#fStartTime");
       const fEndDate = $("#fEndDate");
       const fEndTime = $("#fEndTime");
 
-      const fJob = $("#fJob");
       const fStatus = $("#fStatus");
       const fPriority = $("#fPriority");
       const fLocation = $("#fLocation");
@@ -1855,6 +2582,17 @@
         });
       }
 
+      function setTimeFieldsEnabled(enabled){
+        [fStartDate,fStartTime,fEndDate,fEndTime].forEach(inp=>{
+          inp.disabled = !enabled;
+          inp.style.opacity = enabled ? "1" : ".65";
+        });
+      }
+
+      fUnassigned.addEventListener("change", ()=>{
+        setTimeFieldsEnabled(!fUnassigned.checked);
+      });
+
       addTypeOnFlyBtn.addEventListener("click", ()=>{
         const name = (fNewType.value || "").trim();
         if(!name) return;
@@ -1888,29 +2626,48 @@
 
           fTitle.value = t.title || "";
           fType.value = t.typeId || (state.types[0]?.id ?? "");
-
-          const s = new Date(t.start);
-          const e = new Date(t.end);
-
-          fStartDate.value = isoDate(s);
-          fStartTime.value = timeStr(s);
-
-          fEndDate.value = isoDate(e);
-          fEndTime.value = timeStr(e);
-
           fJob.value = t.jobNo || "";
+          fCustomer.value = t.customer || "";
+
+          tempPeople = new Set(t.people || []);
+
+          const unassigned = isUnassigned(t);
+          fUnassigned.checked = unassigned;
+          setTimeFieldsEnabled(!unassigned);
+
+          if(unassigned){
+            // sensible defaults shown but not used unless scheduled
+            const d = parseDateInput(state.ui.anchorDate);
+            fStartDate.value = isoDate(d);
+            fStartTime.value = "08:00";
+            fEndDate.value = isoDate(d);
+            fEndTime.value = "09:00";
+          } else {
+            const s = new Date(t.start);
+            const e = new Date(t.end);
+            fStartDate.value = isoDate(s);
+            fStartTime.value = `${pad2(s.getHours())}:${pad2(s.getMinutes())}`;
+            fEndDate.value = isoDate(e);
+            fEndTime.value = `${pad2(e.getHours())}:${pad2(e.getMinutes())}`;
+          }
+
           fStatus.value = t.status || "Planned";
           fPriority.value = t.priority || "Normal";
           fLocation.value = t.location || "";
           fNotes.value = t.notes || "";
 
-          tempPeople = new Set(t.people || []);
         } else {
           $("#taskModalTitle").textContent = "New Task";
           deleteTaskBtn.style.display = "none";
 
           fTitle.value = "New task";
           fType.value = state.types[0]?.id ?? "";
+          fJob.value = "";
+          fCustomer.value = "";
+
+          const unassigned = !!preset?.unassigned;
+          fUnassigned.checked = unassigned;
+          setTimeFieldsEnabled(!unassigned);
 
           const d = preset?.startDate ? parseDateInput(preset.startDate) : parseDateInput(state.ui.anchorDate);
           const sd = isoDate(d);
@@ -1921,7 +2678,6 @@
           fEndDate.value = ed;
           fEndTime.value = preset?.endTime || "09:00";
 
-          fJob.value = "";
           fStatus.value = "Planned";
           fPriority.value = "Normal";
           fLocation.value = "";
@@ -1953,6 +2709,26 @@
         const title = (fTitle.value || "").trim() || "New task";
         const typeId = fType.value || (state.types[0]?.id ?? "");
 
+        const payloadBase = {
+          title,
+          typeId,
+          people: Array.from(tempPeople),
+          notes: fNotes.value || "",
+          location: fLocation.value || "",
+          status: fStatus.value || "Planned",
+          priority: fPriority.value || "Normal",
+          jobNo: (fJob.value || "").trim(),
+          customer: (fCustomer.value || "").trim()
+        };
+
+        if(fUnassigned.checked){
+          const payload = { ...payloadBase, start: null, end: null };
+          if(editingTaskId) updateTask(editingTaskId, payload);
+          else addTask(payload);
+          closeTaskModal();
+          return;
+        }
+
         if(!fStartDate.value || !fEndDate.value){
           toast("Missing date", "Pick start and end dates", "var(--danger)");
           return;
@@ -1973,7 +2749,6 @@
         let startMs = start.getTime();
         let endMs = end.getTime();
 
-        // If user accidentally sets end <= start, keep old “roll forward” behaviour.
         if(endMs <= startMs){
           while(endMs <= startMs) endMs += 24*60*60*1000;
         }
@@ -1983,16 +2758,9 @@
         if(endMs - startMs < SLOT_MS) endMs = startMs + SLOT_MS;
 
         const payload = {
-          title,
-          typeId,
-          people: Array.from(tempPeople),
+          ...payloadBase,
           start: new Date(startMs).toISOString(),
-          end: new Date(endMs).toISOString(),
-          notes: fNotes.value || "",
-          location: fLocation.value || "",
-          status: fStatus.value || "Planned",
-          priority: fPriority.value || "Normal",
-          jobNo: (fJob.value || "").trim()
+          end: new Date(endMs).toISOString()
         };
 
         if(editingTaskId) updateTask(editingTaskId, payload);
@@ -2013,6 +2781,8 @@
 
       const sStartHour = $("#sStartHour");
       const sEndHour = $("#sEndHour");
+      const sTimeFormat = $("#sTimeFormat");
+      const sShowUnassigned = $("#sShowUnassigned");
 
       const staffList = $("#staffList");
       const newStaffName = $("#newStaffName");
@@ -2029,6 +2799,8 @@
       function openSettings(){
         sStartHour.value = state.settings.startHour;
         sEndHour.value = state.settings.endHour;
+        sTimeFormat.value = state.settings.timeFormat || "12";
+        sShowUnassigned.checked = !!state.settings.showUnassignedPanel;
         renderStaffList();
         renderTypeList();
         settingsModalBack.classList.add("show");
@@ -2130,8 +2902,11 @@
           toast("Invalid hours", "End must be after start", "var(--danger)");
           return;
         }
+
         state.settings.startHour = sh;
         state.settings.endHour = eh;
+        state.settings.timeFormat = sTimeFormat.value || "12";
+        state.settings.showUnassignedPanel = !!sShowUnassigned.checked;
 
         saveState();
         toast("Saved", "Settings updated", "var(--accent)");
@@ -2143,9 +2918,10 @@
        * Header controls
        **********************/
       $("#addTaskBtn").addEventListener("click", ()=>{
+        // If panel enabled, default to unassigned? No—keep scheduled default.
         const anchor = parseDateInput(state.ui.anchorDate);
         const d = (state.ui.view==="month") ? startOfDay(anchor) : getViewDays()[0];
-        openTaskModal(null, { startDate: isoDate(d), startTime:"08:00", endDate: isoDate(d), endTime:"09:00" });
+        openTaskModal(null, { unassigned:false, startDate: isoDate(d), startTime:"08:00", endDate: isoDate(d), endTime:"09:00" });
       });
 
       $("#todayBtn").addEventListener("click", ()=>{
@@ -2191,9 +2967,6 @@
         saveState(); render();
       });
 
-      /**********************
-       * ESC closes modals
-       **********************/
       window.addEventListener("keydown", (e)=>{
         if(e.key === "Escape"){
           if(taskModalBack.classList.contains("show")) closeTaskModal();
@@ -2201,15 +2974,6 @@
         }
       });
 
-      /**********************
-       * Modal close buttons
-       **********************/
-      $("#taskModalClose").addEventListener("click", closeTaskModal);
-      $("#taskModalCancel").addEventListener("click", closeTaskModal);
-
-      /**********************
-       * Start
-       **********************/
       render();
 
     });
@@ -2217,3 +2981,4 @@
   </script>
 </body>
 </html>
+
