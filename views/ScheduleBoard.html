@@ -1164,6 +1164,18 @@
           <div class="help">Use start/stop to track job time in hours, minutes, and seconds. Click Save to keep it with the task.</div>
         </div>
 
+        <div class="field">
+          <label>Job time tracking</label>
+          <div class="timerRow">
+            <div class="timerDisplay" id="timerDisplay">00:00:00</div>
+            <div class="inlineRow">
+              <button class="btn primary" id="timerStartBtn" type="button"><span class="ico play" aria-hidden="true"></span> Start</button>
+              <button class="btn" id="timerStopBtn" type="button" disabled><span class="ico stop" aria-hidden="true"></span> Stop</button>
+            </div>
+          </div>
+          <div class="help">Use start/stop to track job time in hours, minutes, and seconds. Click Save to keep it with the task.</div>
+        </div>
+
         <div class="grid3">
           <div class="field">
             <label>Status</label>
@@ -2226,6 +2238,7 @@
       }
 
       function renderTasksIntoTimeline(daysGridInner, days){
+        const GAP_PX = 6;
         $$(".task", daysGridInner).forEach(t=>t.remove());
 
         const visibleStart = startOfDay(days[0]).getTime();
@@ -2259,6 +2272,58 @@
             if(!byDay.has(dayIso)) byDay.set(dayIso, []);
             byDay.get(dayIso).push({ start: segStart, end: segEnd, el });
           }
+
+          segments.forEach(seg=>{
+            const widthPct = 100 / seg.maxConcurrent;
+            const leftPct = seg.col * widthPct;
+            seg.el.style.right = "auto";
+            seg.el.style.left = `calc(${leftPct}% + ${GAP_PX/2}px)`;
+            seg.el.style.width = `calc(${widthPct}% - ${GAP_PX}px)`;
+          });
+        });
+
+        // Lay out overlapping tasks per day by assigning columns
+        const GAP_PX = 6;
+        byDay.forEach((segList)=>{
+          segList.forEach(s=>{ s.col = null; s.maxConcurrent = 1; });
+          const events = [];
+          segList.forEach(seg=>{
+            events.push({ t: seg.start, type: "start", seg });
+            events.push({ t: seg.end, type: "end", seg });
+          });
+          events.sort((a,b)=>{
+            if(a.t === b.t){
+              if(a.type === b.type) return 0;
+              return a.type === "end" ? -1 : 1; // free slots before new starts at same time
+            }
+            return a.t - b.t;
+          });
+
+          const active = [];
+          const usedCols = ()=> new Set(active.map(x=>x.col));
+
+          for(const ev of events){
+            if(ev.type === "start"){
+              const used = usedCols();
+              let col = 0;
+              while(used.has(col)) col++;
+              ev.seg.col = col;
+              active.push(ev.seg);
+              const concurrent = active.length;
+              active.forEach(s=>{ s.maxConcurrent = Math.max(s.maxConcurrent, concurrent); });
+            } else {
+              const idx = active.indexOf(ev.seg);
+              if(idx>=0) active.splice(idx,1);
+            }
+          }
+
+          segList.forEach(seg=>{
+            const widthPct = 100 / seg.maxConcurrent;
+            const leftPct = seg.col * widthPct;
+            seg.el.style.right = "auto";
+            seg.el.style.left = `calc(${leftPct}% + ${GAP_PX/2}px)`;
+            seg.el.style.width = `calc(${widthPct}% - ${GAP_PX}px)`;
+          });
         });
 
         // Lay out overlapping tasks per day by assigning columns
@@ -2378,6 +2443,9 @@
               ${continuesFromPrev ? `<span class="badge">← continues</span>` : ``}
               ${continuesToNext ? `<span class="badge">continues →</span>` : ``}
               ${task.jobNo ? `<span class="badge">#${escapeHtml(task.jobNo)}</span>` : ""}
+              ${task.promisedInstall ? `<span class="badge">Promised: ${escapeHtml(task.promisedInstall)}</span>` : ""}
+              ${(task.flags||[]).map(f=>`<span class="badge">${escapeHtml(f)}</span>`).join("")}
+              ${(task.accessFlags||[]).map(f=>`<span class="badge">Equip: ${escapeHtml(f)}</span>`).join("")}
             </div>
 
             <div class="chips">
