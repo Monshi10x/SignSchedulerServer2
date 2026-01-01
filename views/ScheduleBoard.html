@@ -1136,7 +1136,7 @@
               <input id="fFlagTokens" type="text" placeholder="e.g. payment needed, not confirmed" style="flex:1" />
               <button class="btn" id="addFlagCustom" title="Add custom flag"><span class="ico plusCircle"></span> Add</button>
             </div>
-            <div class="help">Pick a preset or add a custom flag. Comma-separated list will appear on the task card.</div>
+            <div class="help">Pick a preset or add a custom flag. Comma-separated list is saved with the task.</div>
           </div>
           <div class="field">
             <label>Access equipment flags</label>
@@ -1148,20 +1148,8 @@
               <input id="fAccessTokens" type="text" placeholder="e.g. spider boom, scissor, trestles" style="flex:1" />
               <button class="btn" id="addAccessCustom" title="Add custom access flag"><span class="ico plusCircle"></span> Add</button>
             </div>
-            <div class="help">Pick a preset or add custom equipment notes for the card.</div>
+            <div class="help">Pick a preset or add custom equipment notes; they stay in the task details.</div>
           </div>
-        </div>
-
-        <div class="field">
-          <label>Job time tracking</label>
-          <div class="timerRow">
-            <div class="timerDisplay" id="timerDisplay">00:00:00</div>
-            <div class="inlineRow">
-              <button class="btn primary" id="timerStartBtn" type="button"><span class="ico play" aria-hidden="true"></span> Start</button>
-              <button class="btn" id="timerStopBtn" type="button" disabled><span class="ico stop" aria-hidden="true"></span> Stop</button>
-            </div>
-          </div>
-          <div class="help">Use start/stop to track job time in hours, minutes, and seconds. Click Save to keep it with the task.</div>
         </div>
 
         <div class="field">
@@ -2360,6 +2348,44 @@
             });
           }
 
+          // Cap widths by the densest column count seen while the segment is active
+          segments.forEach(seg=>{
+            let widthCap = 100;
+            for(const interval of intervals){
+              if(interval.end <= seg.start || interval.start >= seg.end) continue;
+              const maxCol = interval.active.reduce((m,s)=> Math.max(m, s.col ?? 0), 0);
+              widthCap = Math.min(widthCap, 100 / (maxCol + 1));
+            }
+            if(seg.widthPct > widthCap) seg.widthPct = widthCap;
+          });
+
+          // Final pass: shift segments left into any available gaps using their actual positions
+          const overlapsInTime = (a,b) => a.start < b.end && b.start < a.end;
+          const SHIFT_PASSES = 5;
+          const EPS = 1e-6;
+          for(let pass=0; pass<SHIFT_PASSES; pass++){
+            let moved = false;
+            segments.forEach(seg=>{
+              const width = seg.widthPct ?? 100;
+              const overlapping = segments
+                .filter(other => other !== seg && overlapsInTime(other, seg))
+                .sort((a,b)=> (a.leftPct ?? 0) - (b.leftPct ?? 0));
+
+              let cursor = 0;
+              for(const other of overlapping){
+                if(cursor + width <= (other.leftPct ?? 0) + EPS) break;
+                cursor = Math.max(cursor, (other.leftPct ?? 0) + (other.widthPct ?? 0));
+              }
+              const maxLeft = Math.max(0, 100 - width);
+              const desiredLeft = Math.min(cursor, maxLeft);
+              if(desiredLeft + EPS < (seg.leftPct ?? 0)){
+                seg.leftPct = desiredLeft;
+                moved = true;
+              }
+            });
+            if(!moved) break;
+          }
+
           segments.forEach(seg=>{
             const widthPct = seg.widthPct ?? 100;
             const leftPct = seg.leftPct ?? (seg.col * widthPct);
@@ -2443,9 +2469,6 @@
               ${continuesFromPrev ? `<span class="badge">← continues</span>` : ``}
               ${continuesToNext ? `<span class="badge">continues →</span>` : ``}
               ${task.jobNo ? `<span class="badge">#${escapeHtml(task.jobNo)}</span>` : ""}
-              ${task.promisedInstall ? `<span class="badge">Promised: ${escapeHtml(task.promisedInstall)}</span>` : ""}
-              ${(task.flags||[]).map(f=>`<span class="badge">${escapeHtml(f)}</span>`).join("")}
-              ${(task.accessFlags||[]).map(f=>`<span class="badge">Equip: ${escapeHtml(f)}</span>`).join("")}
             </div>
 
             <div class="chips">
