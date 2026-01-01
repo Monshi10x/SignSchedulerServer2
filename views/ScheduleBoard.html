@@ -1164,6 +1164,18 @@
           <div class="help">Use start/stop to track job time in hours, minutes, and seconds. Click Save to keep it with the task.</div>
         </div>
 
+        <div class="field">
+          <label>Job time tracking</label>
+          <div class="timerRow">
+            <div class="timerDisplay" id="timerDisplay">00:00:00</div>
+            <div class="inlineRow">
+              <button class="btn primary" id="timerStartBtn" type="button"><span class="ico play" aria-hidden="true"></span> Start</button>
+              <button class="btn" id="timerStopBtn" type="button" disabled><span class="ico stop" aria-hidden="true"></span> Stop</button>
+            </div>
+          </div>
+          <div class="help">Use start/stop to track job time in hours, minutes, and seconds. Click Save to keep it with the task.</div>
+        </div>
+
         <div class="grid3">
           <div class="field">
             <label>Status</label>
@@ -1290,7 +1302,6 @@
       const SLOT_MIN = 15;
       const SLOT_MS = SLOT_MIN * 60 * 1000;
       const CURRENT_USER = "Tristan";
-      const OVERLAP_GAP_PX = 6;
 
       const $ = (sel, root=document) => root.querySelector(sel);
       const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
@@ -2226,7 +2237,6 @@
       }
 
       function renderTasksIntoTimeline(daysGridInner, days){
-        const GAP_PX = 6;
         $$(".task", daysGridInner).forEach(t=>t.remove());
 
         const visibleStart = startOfDay(days[0]).getTime();
@@ -2260,99 +2270,47 @@
             if(!byDay.has(dayIso)) byDay.set(dayIso, []);
             byDay.get(dayIso).push({ start: segStart, end: segEnd, el });
           }
-
-          segList.forEach(seg=>{
-            const widthPct = 100 / seg.maxConcurrent;
-            const leftPct = seg.col * widthPct;
-            seg.el.style.right = "auto";
-            seg.el.style.left = `calc(${leftPct}% + ${OVERLAP_GAP_PX/2}px)`;
-            seg.el.style.width = `calc(${widthPct}% - ${OVERLAP_GAP_PX}px)`;
-          });
         });
 
         // Lay out overlapping tasks per day by assigning columns
-        byDay.forEach((daySegments)=>{
-          daySegments.forEach(s=>{ s.col = null; s.maxConcurrent = 1; });
-          const events = [];
-          daySegments.forEach(seg=>{
-            events.push({ t: seg.start, type: "start", seg });
-            events.push({ t: seg.end, type: "end", seg });
-          });
-          events.sort((a,b)=>{
-            if(a.t === b.t){
-              if(a.type === b.type) return 0;
-              return a.type === "end" ? -1 : 1; // free slots before new starts at same time
-            }
-            return a.t - b.t;
-          });
-
-          const active = [];
-          const usedCols = ()=> new Set(active.map(x=>x.col));
-
-          for(const ev of events){
-            if(ev.type === "start"){
-              const used = usedCols();
-              let col = 0;
-              while(used.has(col)) col++;
-              ev.seg.col = col;
-              active.push(ev.seg);
-              const concurrent = active.length;
-              active.forEach(s=>{ s.maxConcurrent = Math.max(s.maxConcurrent, concurrent); });
-            } else {
-              const idx = active.indexOf(ev.seg);
-              if(idx>=0) active.splice(idx,1);
-            }
-          }
-
-          daySegments.forEach(seg=>{
-            const widthPct = 100 / seg.maxConcurrent;
-            const leftPct = seg.col * widthPct;
-            seg.el.style.right = "auto";
-            seg.el.style.left = `calc(${leftPct}% + ${OVERLAP_GAP_PX/2}px)`;
-            seg.el.style.width = `calc(${widthPct}% - ${OVERLAP_GAP_PX}px)`;
-          });
-        });
-
-        // Lay out overlapping tasks per day by assigning columns
+        const GAP_PX = 6;
         byDay.forEach((segments)=>{
-          segments.forEach(s=>{ s.col = null; s.maxConcurrent = 1; });
-          const events = [];
-          segments.forEach(seg=>{
-            events.push({ t: seg.start, type: "start", seg });
-            events.push({ t: seg.end, type: "end", seg });
-          });
-          events.sort((a,b)=>{
-            if(a.t === b.t){
-              if(a.type === b.type) return 0;
-              return a.type === "end" ? -1 : 1; // free slots before new starts at same time
-            }
-            return a.t - b.t;
-          });
-
+          segments.sort((a,b)=> a.start - b.start || a.end - b.end);
           const active = [];
-          const usedCols = ()=> new Set(active.map(x=>x.col));
+          let maxCol = 0;
 
-          for(const ev of events){
-            if(ev.type === "start"){
-              const used = usedCols();
-              let col = 0;
-              while(used.has(col)) col++;
-              ev.seg.col = col;
-              active.push(ev.seg);
-              const concurrent = active.length;
-              active.forEach(s=>{ s.maxConcurrent = Math.max(s.maxConcurrent, concurrent); });
-            } else {
-              const idx = active.indexOf(ev.seg);
-              if(idx>=0) active.splice(idx,1);
+          for(const seg of segments){
+            // release ended
+            for(let i=active.length-1;i>=0;i--){
+              if(active[i].end <= seg.start) active.splice(i,1);
             }
+            // find available column
+            const used = new Set(active.map(x=>x.col));
+            let col = 0;
+            while(used.has(col)) col++;
+            seg.col = col;
+            maxCol = Math.max(maxCol, col);
+            active.push(seg);
           }
 
           segments.forEach(seg=>{
-            const widthPct = 100 / seg.maxConcurrent;
+            let overlapCount = 1;
+            segments.forEach(other=>{
+              if(other === seg) return;
+              if(!(other.end <= seg.start || other.start >= seg.end)){
+                overlapCount++;
+              }
+            });
+            seg.maxOverlap = Math.max(overlapCount, seg.col + 1);
+          });
+
+          segments.forEach(seg=>{
+            const colsForSeg = seg.maxOverlap;
+            const widthPct = 100 / colsForSeg;
             const leftPct = seg.col * widthPct;
             seg.el.style.right = "auto";
-            seg.el.style.left = `calc(${leftPct}% + ${OVERLAP_GAP_PX/2}px)`;
-            seg.el.style.width = `calc(${widthPct}% - ${OVERLAP_GAP_PX}px)`;
+            seg.el.style.left = `calc(${leftPct}% + ${GAP_PX/2}px)`;
+            seg.el.style.width = `calc(${widthPct}% - ${GAP_PX}px)`;
           });
         });
       }
