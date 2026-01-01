@@ -1164,6 +1164,18 @@
           <div class="help">Use start/stop to track job time in hours, minutes, and seconds. Click Save to keep it with the task.</div>
         </div>
 
+        <div class="field">
+          <label>Job time tracking</label>
+          <div class="timerRow">
+            <div class="timerDisplay" id="timerDisplay">00:00:00</div>
+            <div class="inlineRow">
+              <button class="btn primary" id="timerStartBtn" type="button"><span class="ico play" aria-hidden="true"></span> Start</button>
+              <button class="btn" id="timerStopBtn" type="button" disabled><span class="ico stop" aria-hidden="true"></span> Stop</button>
+            </div>
+          </div>
+          <div class="help">Use start/stop to track job time in hours, minutes, and seconds. Click Save to keep it with the task.</div>
+        </div>
+
         <div class="grid3">
           <div class="field">
             <label>Status</label>
@@ -2376,6 +2388,9 @@
               ${continuesFromPrev ? `<span class="badge">← continues</span>` : ``}
               ${continuesToNext ? `<span class="badge">continues →</span>` : ``}
               ${task.jobNo ? `<span class="badge">#${escapeHtml(task.jobNo)}</span>` : ""}
+              ${task.promisedInstall ? `<span class="badge">Promised: ${escapeHtml(task.promisedInstall)}</span>` : ""}
+              ${(task.flags||[]).map(f=>`<span class="badge">${escapeHtml(f)}</span>`).join("")}
+              ${(task.accessFlags||[]).map(f=>`<span class="badge">Equip: ${escapeHtml(f)}</span>`).join("")}
             </div>
 
             <div class="chips">
