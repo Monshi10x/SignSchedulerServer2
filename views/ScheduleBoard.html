@@ -2360,6 +2360,33 @@
             });
           }
 
+          // Final pass: shift segments left into any available gaps using their actual positions
+          const overlapsInTime = (a,b) => a.start < b.end && b.start < a.end;
+          const SHIFT_PASSES = 5;
+          const EPS = 1e-6;
+          for(let pass=0; pass<SHIFT_PASSES; pass++){
+            let moved = false;
+            segments.forEach(seg=>{
+              const width = seg.widthPct ?? 100;
+              const overlapping = segments
+                .filter(other => other !== seg && overlapsInTime(other, seg))
+                .sort((a,b)=> (a.leftPct ?? 0) - (b.leftPct ?? 0));
+
+              let cursor = 0;
+              for(const other of overlapping){
+                if(cursor + width <= (other.leftPct ?? 0) + EPS) break;
+                cursor = Math.max(cursor, (other.leftPct ?? 0) + (other.widthPct ?? 0));
+              }
+              const maxLeft = Math.max(0, 100 - width);
+              const desiredLeft = Math.min(cursor, maxLeft);
+              if(desiredLeft + EPS < (seg.leftPct ?? 0)){
+                seg.leftPct = desiredLeft;
+                moved = true;
+              }
+            });
+            if(!moved) break;
+          }
+
           segments.forEach(seg=>{
             const widthPct = seg.widthPct ?? 100;
             const leftPct = seg.leftPct ?? (seg.col * widthPct);
