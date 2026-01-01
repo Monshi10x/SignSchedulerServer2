@@ -2300,6 +2300,48 @@
             seg.el.style.width = `calc(${widthPct}% - ${GAP_PX}px)`;
           });
         });
+
+        // Lay out overlapping tasks per day by assigning columns
+        const GAP_PX = 6;
+        byDay.forEach((segments)=>{
+          segments.sort((a,b)=> a.start - b.start || a.end - b.end);
+          const active = [];
+          let maxCol = 0;
+
+          for(const seg of segments){
+            // release ended
+            for(let i=active.length-1;i>=0;i--){
+              if(active[i].end <= seg.start) active.splice(i,1);
+            }
+            // find available column
+            const used = new Set(active.map(x=>x.col));
+            let col = 0;
+            while(used.has(col)) col++;
+            seg.col = col;
+            maxCol = Math.max(maxCol, col);
+            active.push(seg);
+          }
+
+          segments.forEach(seg=>{
+            let overlapCount = 1;
+            segments.forEach(other=>{
+              if(other === seg) return;
+              if(!(other.end <= seg.start || other.start >= seg.end)){
+                overlapCount++;
+              }
+            });
+            seg.maxOverlap = Math.max(overlapCount, seg.col + 1);
+          });
+
+          segments.forEach(seg=>{
+            const colsForSeg = seg.maxOverlap;
+            const widthPct = 100 / colsForSeg;
+            const leftPct = seg.col * widthPct;
+            seg.el.style.right = "auto";
+            seg.el.style.left = `calc(${leftPct}% + ${GAP_PX/2}px)`;
+            seg.el.style.width = `calc(${widthPct}% - ${GAP_PX}px)`;
+          });
+        });
       }
 
       function makeTaskElement(task, segStartMs, segEndMs, segDayDate){
@@ -2375,6 +2417,9 @@
               ${continuesFromPrev ? `<span class="badge">← continues</span>` : ``}
               ${continuesToNext ? `<span class="badge">continues →</span>` : ``}
               ${task.jobNo ? `<span class="badge">#${escapeHtml(task.jobNo)}</span>` : ""}
+              ${task.promisedInstall ? `<span class="badge">Promised: ${escapeHtml(task.promisedInstall)}</span>` : ""}
+              ${(task.flags||[]).map(f=>`<span class="badge">${escapeHtml(f)}</span>`).join("")}
+              ${(task.accessFlags||[]).map(f=>`<span class="badge">Equip: ${escapeHtml(f)}</span>`).join("")}
             </div>
 
             <div class="chips">
