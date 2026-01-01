@@ -2295,41 +2295,74 @@
 
           const events = [];
           segments.forEach(seg=>{
-            events.push({ time: seg.start, delta: 1 });
-            events.push({ time: seg.end, delta: -1 });
+            events.push({ time: seg.start, type: "start", seg });
+            events.push({ time: seg.end,   type: "end",   seg });
           });
 
-          events.sort((a,b)=> a.time - b.time);
-          const overlapIntervals = [];
-          let current = 0;
+          events.sort((a,b)=>{
+            if(a.time !== b.time) return a.time - b.time;
+            if(a.type === b.type) return 0;
+            return a.type === "end" ? -1 : 1; // end before start at same time
+          });
+          const intervals = [];
+          const activeSet = new Set();
           for(let i=0;i<events.length;i++){
             const time = events[i].time;
-            let delta = 0;
+            // process all events at this timestamp
             while(i < events.length && events[i].time === time){
-              delta += events[i].delta;
+              const e = events[i];
+              if(e.type === "start") activeSet.add(e.seg);
+              else activeSet.delete(e.seg);
               i++;
             }
-            current += delta;
             const nextTime = i < events.length ? events[i].time : null;
-            if(nextTime !== null && nextTime > time){
-              overlapIntervals.push({ start: time, end: nextTime, count: current });
+            if(nextTime !== null && nextTime > time && activeSet.size){
+              intervals.push({ start: time, end: nextTime, active: Array.from(activeSet) });
             }
             i--;
           }
 
           segments.forEach(seg=>{
-            let overlapCount = 1;
-            for(const interval of overlapIntervals){
+            let maxActive = 1;
+            for(const interval of intervals){
               if(interval.end <= seg.start || interval.start >= seg.end) continue;
-              overlapCount = Math.max(overlapCount, interval.count);
+              if(!interval.active.includes(seg)) continue;
+              maxActive = Math.max(maxActive, interval.active.length);
             }
-            seg.maxOverlap = Math.max(overlapCount, seg.col + 1);
+            const initialWidth = 100 / maxActive;
+            seg.widthPct = initialWidth;
+            seg.leftPct = seg.col * initialWidth;
           });
 
+          const ITERATIONS = 4;
+          for(let iter=0; iter<ITERATIONS; iter++){
+            segments.forEach(seg=>{
+              let maxLeft = 0;
+              let minAvailable = 100;
+
+              for(const interval of intervals){
+                if(interval.end <= seg.start || interval.start >= seg.end) continue;
+                if(!interval.active.includes(seg)) continue;
+
+                const overlapping = interval.active.filter(s=>s !== seg);
+                const occupiedWidth = overlapping.reduce((sum,s)=> sum + (s.widthPct || 0), 0);
+                const leftBound = overlapping
+                  .filter(s=> s.col < seg.col)
+                  .reduce((sum,s)=> sum + (s.widthPct || 0), 0);
+
+                maxLeft = Math.max(maxLeft, leftBound);
+                minAvailable = Math.min(minAvailable, Math.max(0, 100 - occupiedWidth));
+              }
+
+              const width = Math.max(0, Math.min(minAvailable, 100 - maxLeft));
+              seg.widthPct = width;
+              seg.leftPct = maxLeft;
+            });
+          }
+
           segments.forEach(seg=>{
-            const colsForSeg = seg.maxOverlap;
-            const widthPct = 100 / colsForSeg;
-            const leftPct = seg.col * widthPct;
+            const widthPct = seg.widthPct ?? 100;
+            const leftPct = seg.leftPct ?? (seg.col * widthPct);
             seg.el.style.right = "auto";
             seg.el.style.left = `calc(${leftPct}% + ${GAP_PX/2}px)`;
             seg.el.style.width = `calc(${widthPct}% - ${GAP_PX}px)`;
