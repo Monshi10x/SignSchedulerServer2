@@ -2293,14 +2293,36 @@
             active.push(seg);
           }
 
+          const events = [];
+          segments.forEach(seg=>{
+            events.push({ time: seg.start, delta: 1 });
+            events.push({ time: seg.end, delta: -1 });
+          });
+
+          events.sort((a,b)=> a.time - b.time);
+          const overlapIntervals = [];
+          let current = 0;
+          for(let i=0;i<events.length;i++){
+            const time = events[i].time;
+            let delta = 0;
+            while(i < events.length && events[i].time === time){
+              delta += events[i].delta;
+              i++;
+            }
+            current += delta;
+            const nextTime = i < events.length ? events[i].time : null;
+            if(nextTime !== null && nextTime > time){
+              overlapIntervals.push({ start: time, end: nextTime, count: current });
+            }
+            i--;
+          }
+
           segments.forEach(seg=>{
             let overlapCount = 1;
-            segments.forEach(other=>{
-              if(other === seg) return;
-              if(!(other.end <= seg.start || other.start >= seg.end)){
-                overlapCount++;
-              }
-            });
+            for(const interval of overlapIntervals){
+              if(interval.end <= seg.start || interval.start >= seg.end) continue;
+              overlapCount = Math.max(overlapCount, interval.count);
+            }
             seg.maxOverlap = Math.max(overlapCount, seg.col + 1);
           });
 
