@@ -2225,6 +2225,7 @@
       }
 
       function renderTasksIntoTimeline(daysGridInner, days){
+        const GAP_PX = 6;
         $$(".task", daysGridInner).forEach(t=>t.remove());
 
         const visibleStart = startOfDay(days[0]).getTime();
@@ -2258,6 +2259,14 @@
             if(!byDay.has(dayIso)) byDay.set(dayIso, []);
             byDay.get(dayIso).push({ start: segStart, end: segEnd, el });
           }
+
+          segments.forEach(seg=>{
+            const widthPct = 100 / seg.maxConcurrent;
+            const leftPct = seg.col * widthPct;
+            seg.el.style.right = "auto";
+            seg.el.style.left = `calc(${leftPct}% + ${GAP_PX/2}px)`;
+            seg.el.style.width = `calc(${widthPct}% - ${GAP_PX}px)`;
+          });
         });
 
         // Lay out overlapping tasks per day by assigning columns
@@ -2378,6 +2387,9 @@
               ${continuesFromPrev ? `<span class="badge">← continues</span>` : ``}
               ${continuesToNext ? `<span class="badge">continues →</span>` : ``}
               ${task.jobNo ? `<span class="badge">#${escapeHtml(task.jobNo)}</span>` : ""}
+              ${task.promisedInstall ? `<span class="badge">Promised: ${escapeHtml(task.promisedInstall)}</span>` : ""}
+              ${(task.flags||[]).map(f=>`<span class="badge">${escapeHtml(f)}</span>`).join("")}
+              ${(task.accessFlags||[]).map(f=>`<span class="badge">Equip: ${escapeHtml(f)}</span>`).join("")}
             </div>
 
             <div class="chips">
