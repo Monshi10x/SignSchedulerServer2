@@ -2317,46 +2317,45 @@
             }
             const nextTime = i < events.length ? events[i].time : null;
             if(nextTime !== null && nextTime > time && activeSet.size){
-              intervals.push({ start: time, end: nextTime, active: Array.from(activeSet) });
+              const activeArr = Array.from(activeSet).sort((a,b)=> a.col - b.col);
+              intervals.push({ start: time, end: nextTime, active: activeArr });
             }
             i--;
           }
 
           segments.forEach(seg=>{
-            let maxActive = 1;
-            for(const interval of intervals){
-              if(interval.end <= seg.start || interval.start >= seg.end) continue;
-              if(!interval.active.includes(seg)) continue;
-              maxActive = Math.max(maxActive, interval.active.length);
-            }
-            const initialWidth = 100 / maxActive;
-            seg.widthPct = initialWidth;
-            seg.leftPct = seg.col * initialWidth;
+            seg.widthPct = 100;
+            seg.leftPct = 0;
           });
 
-          const ITERATIONS = 4;
+          const ITERATIONS = 6;
           for(let iter=0; iter<ITERATIONS; iter++){
+            const updates = new Map();
+
             segments.forEach(seg=>{
-              let maxLeft = 0;
               let minAvailable = 100;
+              let maxLeft = 0;
 
               for(const interval of intervals){
                 if(interval.end <= seg.start || interval.start >= seg.end) continue;
                 if(!interval.active.includes(seg)) continue;
 
                 const overlapping = interval.active.filter(s=>s !== seg);
-                const occupiedWidth = overlapping.reduce((sum,s)=> sum + (s.widthPct || 0), 0);
-                const leftBound = overlapping
+                const occupiedWidth = overlapping.reduce((sum,s)=> sum + (s.widthPct ?? 100), 0);
+                const leftBound = interval.active
                   .filter(s=> s.col < seg.col)
-                  .reduce((sum,s)=> sum + (s.widthPct || 0), 0);
+                  .reduce((sum,s)=> sum + (s.widthPct ?? 100), 0);
 
-                maxLeft = Math.max(maxLeft, leftBound);
                 minAvailable = Math.min(minAvailable, Math.max(0, 100 - occupiedWidth));
+                maxLeft = Math.max(maxLeft, leftBound);
               }
 
-              const width = Math.max(0, Math.min(minAvailable, 100 - maxLeft));
-              seg.widthPct = width;
-              seg.leftPct = maxLeft;
+              updates.set(seg, { width: Math.max(0, Math.min(seg.widthPct, minAvailable)), left: maxLeft });
+            });
+
+            updates.forEach((vals, seg)=>{
+              seg.widthPct = vals.width;
+              seg.leftPct = vals.left;
             });
           }
 
