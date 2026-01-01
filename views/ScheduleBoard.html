@@ -2312,6 +2312,49 @@
             seg.el.style.width = `calc(${widthPct}% - ${OVERLAP_GAP_PX}px)`;
           });
         });
+
+        // Lay out overlapping tasks per day by assigning columns
+        byDay.forEach((segments)=>{
+          segments.forEach(s=>{ s.col = null; s.maxConcurrent = 1; });
+          const events = [];
+          segments.forEach(seg=>{
+            events.push({ t: seg.start, type: "start", seg });
+            events.push({ t: seg.end, type: "end", seg });
+          });
+          events.sort((a,b)=>{
+            if(a.t === b.t){
+              if(a.type === b.type) return 0;
+              return a.type === "end" ? -1 : 1; // free slots before new starts at same time
+            }
+            return a.t - b.t;
+          });
+
+          const active = [];
+          const usedCols = ()=> new Set(active.map(x=>x.col));
+
+          for(const ev of events){
+            if(ev.type === "start"){
+              const used = usedCols();
+              let col = 0;
+              while(used.has(col)) col++;
+              ev.seg.col = col;
+              active.push(ev.seg);
+              const concurrent = active.length;
+              active.forEach(s=>{ s.maxConcurrent = Math.max(s.maxConcurrent, concurrent); });
+            } else {
+              const idx = active.indexOf(ev.seg);
+              if(idx>=0) active.splice(idx,1);
+            }
+          }
+
+          segments.forEach(seg=>{
+            const widthPct = 100 / seg.maxConcurrent;
+            const leftPct = seg.col * widthPct;
+            seg.el.style.right = "auto";
+            seg.el.style.left = `calc(${leftPct}% + ${OVERLAP_GAP_PX/2}px)`;
+            seg.el.style.width = `calc(${widthPct}% - ${OVERLAP_GAP_PX}px)`;
+          });
+        });
       }
 
       function makeTaskElement(task, segStartMs, segEndMs, segDayDate){
