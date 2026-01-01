@@ -2360,6 +2360,17 @@
             });
           }
 
+          // Cap widths by the densest column count seen while the segment is active
+          segments.forEach(seg=>{
+            let widthCap = 100;
+            for(const interval of intervals){
+              if(interval.end <= seg.start || interval.start >= seg.end) continue;
+              const maxCol = interval.active.reduce((m,s)=> Math.max(m, s.col ?? 0), 0);
+              widthCap = Math.min(widthCap, 100 / (maxCol + 1));
+            }
+            if(seg.widthPct > widthCap) seg.widthPct = widthCap;
+          });
+
           // Final pass: shift segments left into any available gaps using their actual positions
           const overlapsInTime = (a,b) => a.start < b.end && b.start < a.end;
           const SHIFT_PASSES = 5;
