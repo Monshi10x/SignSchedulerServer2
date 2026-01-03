@@ -484,14 +484,18 @@
       box-shadow: 0 16px 36px rgba(0,0,0,.45), 0 0 0 2px rgba(78,161,255,.35);
       transform: translateY(-2px);
       transition: box-shadow .08s ease, transform .08s ease;
+      overflow: visible;
     }
+    .task.resizing{ overflow: visible; }
     .task.dragging::before,
     .task.dragging::after,
     .task.resizing::before,
     .task.resizing::after{
       content:"";
       position:absolute;
-      left:0; right:0;
+      left:50%;
+      width:100vw;
+      transform: translateX(-50%);
       height:3px;
       background: linear-gradient(90deg, rgba(255,220,120,.1), rgba(255,220,120,.9), rgba(255,220,120,.1));
       box-shadow: 0 0 6px rgba(255,220,120,.8);
