@@ -479,6 +479,12 @@
       overflow:hidden;
       touch-action:none;
     }
+    .task.dragging{
+      cursor: grabbing;
+      box-shadow: 0 16px 36px rgba(0,0,0,.45), 0 0 0 2px rgba(78,161,255,.35);
+      transform: translateY(-2px);
+      transition: box-shadow .08s ease, transform .08s ease;
+    }
     .task .band{
       position:absolute;
       top:0; left:0;
@@ -2815,6 +2821,7 @@
 
           const prevPointerEvents = taskEl.style.pointerEvents;
           taskEl.style.pointerEvents = "none";
+          taskEl.classList.add("dragging");
 
           const getTargetFromPointer = (clientX, clientY) => {
             const xContent = (clientX - gridRect.left) + daysGrid.scrollLeft;
@@ -2884,6 +2891,7 @@
             scroller.stop();
 
             taskEl.style.pointerEvents = prevPointerEvents || "";
+            taskEl.classList.remove("dragging");
             try{ daysGrid.releasePointerCapture(pointerId); } catch {}
 
             if(!dragging){
