@@ -479,6 +479,35 @@
       overflow:hidden;
       touch-action:none;
     }
+    .task.dragging{
+      cursor: grabbing;
+      box-shadow: 0 16px 36px rgba(0,0,0,.45);
+      background: rgba(255,220,120,0.9);
+      border-color: rgba(255,220,120,1);
+      transform: translateY(-2px);
+      transition: box-shadow .08s ease, transform .08s ease, background .08s ease, border-color .08s ease;
+      overflow: visible;
+    }
+    .task.resizing{ overflow: visible; }
+    .task.dragging::before,
+    .task.dragging::after,
+    .task.resizing::before,
+    .task.resizing::after{
+      content:"";
+      position:absolute;
+      left:50%;
+      width:100vw;
+      transform: translateX(-50%);
+      height:3px;
+      background: linear-gradient(90deg, rgba(255,220,120,.1), rgba(255,220,120,.9), rgba(255,220,120,.1));
+      box-shadow: 0 0 6px rgba(255,220,120,.8);
+      pointer-events:none;
+      z-index: 6;
+    }
+    .task.dragging::before,
+    .task.resizing::before{ top:0; }
+    .task.dragging::after,
+    .task.resizing::after{ bottom:0; }
     .task .band{
       position:absolute;
       top:0; left:0;
@@ -1136,7 +1165,7 @@
               <input id="fFlagTokens" type="text" placeholder="e.g. payment needed, not confirmed" style="flex:1" />
               <button class="btn" id="addFlagCustom" title="Add custom flag"><span class="ico plusCircle"></span> Add</button>
             </div>
-            <div class="help">Pick a preset or add a custom flag. Comma-separated list will appear on the task card.</div>
+            <div class="help">Pick a preset or add a custom flag. Comma-separated list is saved with the task.</div>
           </div>
           <div class="field">
             <label>Access equipment flags</label>
@@ -1148,20 +1177,8 @@
               <input id="fAccessTokens" type="text" placeholder="e.g. spider boom, scissor, trestles" style="flex:1" />
               <button class="btn" id="addAccessCustom" title="Add custom access flag"><span class="ico plusCircle"></span> Add</button>
             </div>
-            <div class="help">Pick a preset or add custom equipment notes for the card.</div>
+            <div class="help">Pick a preset or add custom equipment notes; they stay in the task details.</div>
           </div>
-        </div>
-
-        <div class="field">
-          <label>Job time tracking</label>
-          <div class="timerRow">
-            <div class="timerDisplay" id="timerDisplay">00:00:00</div>
-            <div class="inlineRow">
-              <button class="btn primary" id="timerStartBtn" type="button"><span class="ico play" aria-hidden="true"></span> Start</button>
-              <button class="btn" id="timerStopBtn" type="button" disabled><span class="ico stop" aria-hidden="true"></span> Stop</button>
-            </div>
-          </div>
-          <div class="help">Use start/stop to track job time in hours, minutes, and seconds. Click Save to keep it with the task.</div>
         </div>
 
         <div class="field">
@@ -2034,6 +2051,162 @@
         return x>=rect.left && x<=rect.right && y>=rect.top && y<=rect.bottom;
       }
 
+      const GAP_PX = 6;
+      const MIN_CARD_WIDTH_PX = 44;
+      let currentDaysGridInner = null;
+      let currentRenderedDays = [];
+      let layoutRaf = null;
+
+      function scheduleLayout(){
+        if(layoutRaf) return;
+        layoutRaf = requestAnimationFrame(()=> {
+          layoutRaf = null;
+          layoutVisibleDays();
+        });
+      }
+
+      function buildOverlapClusters(segments){
+        const clusters = [];
+        const sorted = [...segments].sort((a,b)=> a.start - b.start || a.end - b.end);
+        let current = [];
+        let currentEnd = -Infinity;
+        for(const seg of sorted){
+          if(!current.length){
+            current = [seg];
+            currentEnd = seg.end;
+            continue;
+          }
+          if(seg.start < currentEnd){
+            current.push(seg);
+            currentEnd = Math.max(currentEnd, seg.end);
+          } else {
+            clusters.push(current);
+            current = [seg];
+            currentEnd = seg.end;
+          }
+        }
+        if(current.length) clusters.push(current);
+        return clusters;
+      }
+
+      function assignLanes(cluster){
+        const lanes = [];
+        for(const seg of cluster){
+          let laneIdx = -1;
+          for(let i=0;i<lanes.length;i++){
+            if(seg.start >= lanes[i]){
+              laneIdx = i;
+              break;
+            }
+          }
+          if(laneIdx === -1){
+            laneIdx = lanes.length;
+            lanes.push(seg.end);
+          } else {
+            lanes[laneIdx] = seg.end;
+          }
+          seg._lane = laneIdx;
+        }
+        return lanes.length;
+      }
+
+      function expandAcrossEmptyLanes(cluster, laneCount){
+        for(const seg of cluster){
+          let left = seg._lane;
+          let right = seg._lane;
+
+          for(let cand = seg._lane + 1; cand < laneCount; cand++){
+            const blocked = cluster.some(other => other._lane === cand && other.start < seg.end && seg.start < other.end);
+            if(blocked) break;
+            right = cand;
+          }
+          for(let cand = seg._lane - 1; cand >= 0; cand--){
+            const blocked = cluster.some(other => other._lane === cand && other.start < seg.end && seg.start < other.end);
+            if(blocked) break;
+            left = cand;
+          }
+
+          seg._spanL = left;
+          seg._spanR = right;
+          seg._lanes = laneCount;
+        }
+      }
+
+      function layoutDayColumn(colEl, dayDate){
+        if(!colEl) return;
+        const tasksEls = Array.from(colEl.querySelectorAll(".task"));
+        if(!tasksEls.length) return;
+
+        const dayStart = startOfDay(dayDate).getTime();
+        const dayEnd = startOfDay(addDays(dayDate,1)).getTime();
+
+        const workStart = new Date(dayDate); workStart.setHours(state.settings.startHour,0,0,0);
+
+        const segments = [];
+        for(const el of tasksEls){
+          const task = state.tasks.find(t=>t.id === el.dataset.taskId);
+          if(!task || isUnassigned(task)) continue;
+
+          const startMs = new Date(task.start).getTime();
+          const endMs = new Date(task.end).getTime();
+          const segStart = Math.max(startMs, dayStart);
+          const segEnd = Math.min(endMs, dayEnd);
+          if(segEnd <= segStart) continue;
+
+          segments.push({
+            el,
+            taskId: task.id,
+            start: segStart,
+            end: segEnd,
+            task
+          });
+        }
+
+        if(!segments.length) return;
+
+        const clusters = buildOverlapClusters(segments);
+        const colWidth = colEl.clientWidth;
+        for(const cluster of clusters){
+          const laneCount = assignLanes(cluster);
+          cluster.forEach(seg=>{ seg._spanL = seg._lane; seg._spanR = seg._lane; seg._lanes = laneCount; });
+          expandAcrossEmptyLanes(cluster, laneCount);
+
+          const laneGapTotal = Math.max(0, (laneCount - 1) * GAP_PX);
+          const laneWidth = (colWidth - laneGapTotal) / Math.max(1, laneCount);
+
+          for(const seg of cluster){
+            const spanL = seg._spanL;
+            const spanR = seg._spanR;
+            const leftPx = spanL * (laneWidth + GAP_PX);
+            const widthPx = (spanR - spanL + 1) * laneWidth + (spanR - spanL) * GAP_PX;
+
+            let topMin = minutesBetween(workStart, new Date(seg.start));
+            let durMin = Math.max(SLOT_MIN, minutesBetween(new Date(seg.start), new Date(seg.end)));
+
+            const maxMinutesRange = (renderSlotCountOverride ?? totalSlotsInView()) * SLOT_MIN;
+            topMin = clamp(topMin, 0, maxMinutesRange);
+            durMin = clamp(durMin, SLOT_MIN, maxMinutesRange);
+
+            const topPx = (topMin / SLOT_MIN) * slotH();
+            const hPx = Math.max(slotH(), (durMin / SLOT_MIN) * slotH());
+
+            seg.el.style.left = `${leftPx}px`;
+            seg.el.style.width = `${Math.max(MIN_CARD_WIDTH_PX, widthPx)}px`;
+            seg.el.style.right = "auto";
+            seg.el.style.top = `${topPx}px`;
+            seg.el.style.height = `${hPx}px`;
+          }
+        }
+      }
+
+      function layoutVisibleDays(){
+        if(!currentDaysGridInner || !currentRenderedDays?.length) return;
+        currentRenderedDays.forEach(day=>{
+          const col = currentDaysGridInner.querySelector(`.dayCol[data-day="${isoDate(day)}"]`);
+          layoutDayColumn(col, day);
+        });
+      }
+
       /**********************
        * Timeline render
        **********************/
@@ -2173,6 +2346,9 @@
 
         // no forced scroll; preserve handles it now
         renderTasksIntoTimeline(daysGridInner, days);
+        currentDaysGridInner = daysGridInner;
+        currentRenderedDays = days;
+        layoutVisibleDays();
 
         setupNowLine(daysGridInner);
         window.addEventListener("focus", () => setupNowLine(daysGridInner, {force:true}));
@@ -2241,7 +2417,6 @@
 
         const visibleStart = startOfDay(days[0]).getTime();
         const visibleEnd = startOfDay(addDays(days[days.length-1], 1)).getTime();
-        const byDay = new Map();
 
         state.tasks.forEach(task=>{
           if(isUnassigned(task)) return;
@@ -2266,108 +2441,12 @@
 
             const el = makeTaskElement(task, segStart, segEnd, d);
             col.appendChild(el);
-            const dayIso = isoDate(d);
-            if(!byDay.has(dayIso)) byDay.set(dayIso, []);
-            byDay.get(dayIso).push({ start: segStart, end: segEnd, el });
           }
         });
 
-        // Lay out overlapping tasks per day by assigning columns
-        const GAP_PX = 6;
-        byDay.forEach((segments)=>{
-          segments.sort((a,b)=> a.start - b.start || a.end - b.end);
-          const active = [];
-          let maxCol = 0;
-
-          for(const seg of segments){
-            // release ended
-            for(let i=active.length-1;i>=0;i--){
-              if(active[i].end <= seg.start) active.splice(i,1);
-            }
-            // find available column
-            const used = new Set(active.map(x=>x.col));
-            let col = 0;
-            while(used.has(col)) col++;
-            seg.col = col;
-            maxCol = Math.max(maxCol, col);
-            active.push(seg);
-          }
-
-          const events = [];
-          segments.forEach(seg=>{
-            events.push({ time: seg.start, type: "start", seg });
-            events.push({ time: seg.end,   type: "end",   seg });
-          });
-
-          events.sort((a,b)=>{
-            if(a.time !== b.time) return a.time - b.time;
-            if(a.type === b.type) return 0;
-            return a.type === "end" ? -1 : 1; // end before start at same time
-          });
-          const intervals = [];
-          const activeSet = new Set();
-          for(let i=0;i<events.length;i++){
-            const time = events[i].time;
-            // process all events at this timestamp
-            while(i < events.length && events[i].time === time){
-              const e = events[i];
-              if(e.type === "start") activeSet.add(e.seg);
-              else activeSet.delete(e.seg);
-              i++;
-            }
-            const nextTime = i < events.length ? events[i].time : null;
-            if(nextTime !== null && nextTime > time && activeSet.size){
-              intervals.push({ start: time, end: nextTime, active: Array.from(activeSet) });
-            }
-            i--;
-          }
-
-          segments.forEach(seg=>{
-            let maxActive = 1;
-            for(const interval of intervals){
-              if(interval.end <= seg.start || interval.start >= seg.end) continue;
-              if(!interval.active.includes(seg)) continue;
-              maxActive = Math.max(maxActive, interval.active.length);
-            }
-            const initialWidth = 100 / maxActive;
-            seg.widthPct = initialWidth;
-            seg.leftPct = seg.col * initialWidth;
-          });
-
-          const ITERATIONS = 4;
-          for(let iter=0; iter<ITERATIONS; iter++){
-            segments.forEach(seg=>{
-              let maxLeft = 0;
-              let minAvailable = 100;
-
-              for(const interval of intervals){
-                if(interval.end <= seg.start || interval.start >= seg.end) continue;
-                if(!interval.active.includes(seg)) continue;
-
-                const overlapping = interval.active.filter(s=>s !== seg);
-                const occupiedWidth = overlapping.reduce((sum,s)=> sum + (s.widthPct || 0), 0);
-                const leftBound = overlapping
-                  .filter(s=> s.col < seg.col)
-                  .reduce((sum,s)=> sum + (s.widthPct || 0), 0);
-
-                maxLeft = Math.max(maxLeft, leftBound);
-                minAvailable = Math.min(minAvailable, Math.max(0, 100 - occupiedWidth));
-              }
-
-              const width = Math.max(0, Math.min(minAvailable, 100 - maxLeft));
-              seg.widthPct = width;
-              seg.leftPct = maxLeft;
-            });
-          }
-
-          segments.forEach(seg=>{
-            const widthPct = seg.widthPct ?? 100;
-            const leftPct = seg.leftPct ?? (seg.col * widthPct);
-            seg.el.style.right = "auto";
-            seg.el.style.left = `calc(${leftPct}% + ${GAP_PX/2}px)`;
-            seg.el.style.width = `calc(${widthPct}% - ${GAP_PX}px)`;
-          });
-        });
+        currentDaysGridInner = daysGridInner;
+        currentRenderedDays = days;
+        layoutVisibleDays();
       }
 
       function makeTaskElement(task, segStartMs, segEndMs, segDayDate){
@@ -2443,9 +2522,6 @@
               ${continuesFromPrev ? `<span class="badge">← continues</span>` : ``}
               ${continuesToNext ? `<span class="badge">continues →</span>` : ``}
               ${task.jobNo ? `<span class="badge">#${escapeHtml(task.jobNo)}</span>` : ""}
-              ${task.promisedInstall ? `<span class="badge">Promised: ${escapeHtml(task.promisedInstall)}</span>` : ""}
-              ${(task.flags||[]).map(f=>`<span class="badge">${escapeHtml(f)}</span>`).join("")}
-              ${(task.accessFlags||[]).map(f=>`<span class="badge">Equip: ${escapeHtml(f)}</span>`).join("")}
             </div>
 
             <div class="chips">
@@ -2650,6 +2726,7 @@
 
           const task = state.tasks.find(t=>t.id===id);
           if(!task) return;
+          taskEl.classList.add("resizing");
 
           const daysGrid = taskEl.closest(".daysGrid");
           const pointerId = e.pointerId;
@@ -2688,6 +2765,17 @@
 
             taskEl.style.top = newTop + "px";
             taskEl.style.height = newH + "px";
+            const colDay = parseDateInput(col.dataset.day);
+            const startSlot = clamp(Math.round(newTop / slotH()), 0, totalSlotsInView());
+            const endSlot = Math.max(startSlot + 1, clamp(Math.round((newTop + newH) / slotH()), 0, totalSlotsInView()));
+            const segStart = new Date(colDay); segStart.setHours(state.settings.startHour, 0, 0, 0); segStart.setMinutes(segStart.getMinutes() + startSlot * SLOT_MIN);
+            const segEnd = new Date(colDay); segEnd.setHours(state.settings.startHour, 0, 0, 0); segEnd.setMinutes(segEnd.getMinutes() + endSlot * SLOT_MIN);
+            const tObj = state.tasks.find(t=>t.id===id);
+            if(tObj){
+              tObj.start = new Date(snapToSlotMs(segStart.getTime())).toISOString();
+              tObj.end = new Date(snapToSlotMs(segEnd.getTime())).toISOString();
+              scheduleLayout();
+            }
             ev.preventDefault();
           };
 
@@ -2700,37 +2788,12 @@
             scroller.stop();
             try{ daysGrid.releasePointerCapture(pointerId); } catch {}
 
-            const col = taskEl.closest(".dayCol");
-            if(!col) return;
-
-            const day = parseDateInput(col.dataset.day);
-            const topPx = parseFloat(taskEl.style.top) || 0;
-            const hPx = parseFloat(taskEl.style.height) || slotH();
-
-            const startSlot = clamp(Math.round(topPx / slotH()), 0, totalSlotsInView());
-            const lenSlots = Math.max(1, Math.round(hPx / slotH()));
-
-            const segStart = new Date(day);
-            segStart.setHours(state.settings.startHour, 0, 0, 0);
-            segStart.setMinutes(segStart.getMinutes() + startSlot * SLOT_MIN);
-
-            const segEnd = new Date(segStart.getTime() + lenSlots * SLOT_MS);
-
             const taskObj = state.tasks.find(t=>t.id===id);
             if(!taskObj) return;
-
-            let newStart = new Date(taskObj.start).getTime();
-            let newEnd = new Date(taskObj.end).getTime();
-
-            if(handle === "top"){
-              newStart = snapToSlotMs(segStart.getTime());
-              if(newEnd - newStart < SLOT_MS) newStart = newEnd - SLOT_MS;
-            } else {
-              newEnd = snapToSlotMs(segEnd.getTime());
-              if(newEnd - newStart < SLOT_MS) newEnd = newStart + SLOT_MS;
-            }
-
-            updateTask(id, { start: new Date(newStart).toISOString(), end: new Date(newEnd).toISOString() }, {silent:true});
+            const finalStart = new Date(taskObj.start).toISOString();
+            const finalEnd = new Date(taskObj.end).toISOString();
+            updateTask(id, { start: finalStart, end: finalEnd }, {silent:true});
+            taskEl.classList.remove("resizing");
             ev.preventDefault();
           };
 
@@ -2764,6 +2827,7 @@
           const startMs = new Date(task.start).getTime();
           const endMs = new Date(task.end).getTime();
           const dur = endMs - startMs;
+          const origin = { startMs, endMs };
 
           const scroller = createEdgeAutoScroller(daysGrid, { edge: 70, maxSpeed: 26 });
 
@@ -2782,6 +2846,7 @@
 
           const prevPointerEvents = taskEl.style.pointerEvents;
           taskEl.style.pointerEvents = "none";
+          taskEl.classList.add("dragging");
 
           const getTargetFromPointer = (clientX, clientY) => {
             const xContent = (clientX - gridRect.left) + daysGrid.scrollLeft;
@@ -2823,17 +2888,21 @@
             start.setHours(state.settings.startHour, 0, 0, 0);
             start.setMinutes(start.getMinutes() + slot * 15);
 
-            const newStartMs = snapToSlotMs(start.getTime());
-            const newEndMs = newStartMs + dur;
+            const minStart = new Date(targetDay); minStart.setHours(state.settings.startHour,0,0,0);
+            const maxStart = new Date(targetDay); maxStart.setHours(state.settings.endHour,0,0,0);
 
-            taskEl.dataset.previewStart = String(newStartMs);
-            taskEl.dataset.previewEnd = String(newEndMs);
+            let newStartMs = snapToSlotMs(start.getTime());
+            const latestStart = Math.max(minStart.getTime(), maxStart.getTime() - Math.max(SLOT_MS, dur));
+            newStartMs = clamp(newStartMs, minStart.getTime(), latestStart);
+            const newEndMs = Math.min(maxStart.getTime(), newStartMs + dur);
 
             if(taskEl.parentElement !== colTarget){
               colTarget.appendChild(taskEl);
             }
 
-            previewSegment(taskEl, newStartMs, newEndMs, dayIso);
+            task.start = new Date(newStartMs).toISOString();
+            task.end = new Date(newEndMs).toISOString();
+            scheduleLayout();
             ev.preventDefault();
           };
 
@@ -2847,6 +2916,7 @@
             scroller.stop();
 
             taskEl.style.pointerEvents = prevPointerEvents || "";
+            taskEl.classList.remove("dragging");
             try{ daysGrid.releasePointerCapture(pointerId); } catch {}
 
             if(!dragging){
@@ -2861,24 +2931,23 @@
             sidePanel.classList.remove("sideDropActive");
 
             if(droppedOnSide){
-              delete taskEl.dataset.previewStart;
-              delete taskEl.dataset.previewEnd;
               updateTask(id, { start: null, end: null }, {silent:true});
               toast("Unassigned", task.title, "var(--accent)");
               ev.preventDefault();
               return;
             }
 
-            const finalStart = parseInt(taskEl.dataset.previewStart || String(startMs), 10);
-            const finalEnd = parseInt(taskEl.dataset.previewEnd || String(endMs), 10);
+            const target = getTargetFromPointer(ev.clientX, ev.clientY);
+            if(!target){
+              updateTask(id, { start: new Date(origin.startMs).toISOString(), end: new Date(origin.endMs).toISOString() }, { silent: true });
+              ev.preventDefault();
+              return;
+            }
 
-            delete taskEl.dataset.previewStart;
-            delete taskEl.dataset.previewEnd;
-
-            updateTask(id, {
-              start: new Date(finalStart).toISOString(),
-              end: new Date(finalEnd).toISOString()
-            }, { silent: true });
+            const taskObj = state.tasks.find(t=>t.id===id);
+            if(taskObj){
+              updateTask(id, { start: taskObj.start, end: taskObj.end }, { silent: true });
+            }
 
             ev.preventDefault();
           };
@@ -2889,41 +2958,6 @@
           daysGrid.addEventListener("pointerup", endDrag);
           daysGrid.addEventListener("pointercancel", endDrag);
         });
-      }
-
-      function previewSegment(taskEl, startMs, endMs, targetDayIso=null){
-        const currentCol = taskEl.closest(".dayCol");
-        const col = (targetDayIso)
-          ? currentCol.parentElement.querySelector(`.dayCol[data-day="${targetDayIso}"]`) || currentCol
-          : currentCol;
-
-        if(col !== currentCol) col.appendChild(taskEl);
-
-        const segDay = parseDateInput(col.dataset.day);
-        const dayStart = startOfDay(segDay).getTime();
-        const dayEnd = startOfDay(addDays(segDay,1)).getTime();
-
-        const segStart = Math.max(startMs, dayStart);
-        const segEnd = Math.min(endMs, dayEnd);
-
-        const workStart = new Date(segDay); workStart.setHours(state.settings.startHour,0,0,0);
-        const workEnd = new Date(segDay); workEnd.setHours(state.settings.endHour,0,0,0);
-
-        const clampStart = Math.max(segStart, workStart.getTime());
-        const clampEnd = segEnd;
-
-        let topMin = minutesBetween(workStart, new Date(clampStart));
-        let durMin = Math.max(15, minutesBetween(new Date(clampStart), new Date(clampEnd)));
-
-        const maxMinutesRange = (renderSlotCountOverride ?? totalSlotsInView()) * SLOT_MIN;
-        topMin = clamp(topMin, 0, maxMinutesRange);
-        durMin = clamp(durMin, 15, maxMinutesRange);
-
-        const topPx = (topMin / 15) * slotH();
-        const hPx = (durMin / 15) * slotH();
-
-        taskEl.style.top = topPx + "px";
-        taskEl.style.height = Math.max(slotH(), hPx) + "px";
       }
 
       function toggleTrackingFromCard(taskId){
@@ -3090,9 +3124,9 @@
       }
 
       function renderTimer(){
-        timerDisplay.textContent = formatDurationHMS(currentTrackedMs());
-        timerStartBtn.disabled = !!modalTimerState.startedAt;
-        timerStopBtn.disabled = !modalTimerState.startedAt;
+        if(timerDisplay) timerDisplay.textContent = formatDurationHMS(currentTrackedMs());
+        if(timerStartBtn) timerStartBtn.disabled = !!modalTimerState.startedAt;
+        if(timerStopBtn) timerStopBtn.disabled = !modalTimerState.startedAt;
       }
 
       function startTimer(){
@@ -3134,8 +3168,8 @@
         setTimeFieldsEnabled(!fUnassigned.checked);
       });
 
-      timerStartBtn.addEventListener("click", startTimer);
-      timerStopBtn.addEventListener("click", stopTimer);
+      if(timerStartBtn) timerStartBtn.addEventListener("click", startTimer);
+      if(timerStopBtn) timerStopBtn.addEventListener("click", stopTimer);
 
       addTypeOnFlyBtn.addEventListener("click", ()=>{
         const name = (fNewType.value || "").trim();
