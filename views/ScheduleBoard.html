@@ -1175,6 +1175,17 @@
           </div>
         </div>
 
+        <div class="field">
+          <label>Job time tracking</label>
+          <div class="timerRow">
+            <div class="timerDisplay" id="timerDisplay">00:00:00</div>
+            <div class="inlineRow">
+              <button class="btn primary" id="timerStartBtn" type="button"><span class="ico play" aria-hidden="true"></span> Start</button>
+              <button class="btn" id="timerStopBtn" type="button" disabled><span class="ico stop" aria-hidden="true"></span> Stop</button>
+            </div>
+          </div>
+        </div>
+
         <div class="grid3">
           <div class="field">
             <label>Status</label>
@@ -3106,9 +3117,9 @@
       }
 
       function renderTimer(){
-        timerDisplay.textContent = formatDurationHMS(currentTrackedMs());
-        timerStartBtn.disabled = !!modalTimerState.startedAt;
-        timerStopBtn.disabled = !modalTimerState.startedAt;
+        if(timerDisplay) timerDisplay.textContent = formatDurationHMS(currentTrackedMs());
+        if(timerStartBtn) timerStartBtn.disabled = !!modalTimerState.startedAt;
+        if(timerStopBtn) timerStopBtn.disabled = !modalTimerState.startedAt;
       }
 
       function startTimer(){
@@ -3150,8 +3161,8 @@
         setTimeFieldsEnabled(!fUnassigned.checked);
       });
 
-      timerStartBtn.addEventListener("click", startTimer);
-      timerStopBtn.addEventListener("click", stopTimer);
+      if(timerStartBtn) timerStartBtn.addEventListener("click", startTimer);
+      if(timerStopBtn) timerStopBtn.addEventListener("click", stopTimer);
 
       addTypeOnFlyBtn.addEventListener("click", ()=>{
         const name = (fNewType.value || "").trim();
