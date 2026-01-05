@@ -5,6 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Schedule Board</title>
 
+  <!-- Firebase (compat build keeps the current non-module script structure simple) -->
+  <script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore-compat.js"></script>
+
   <style>
     :root{
       --bg:#0b0d12;
@@ -1319,6 +1323,24 @@
       const SLOT_MS = SLOT_MIN * 60 * 1000;
       const CURRENT_USER = "Tristan";
 
+      const FIREBASE_CONFIG = {
+        // TODO: replace placeholders with your real Firebase project settings
+        apiKey: "<YOUR_API_KEY>",
+        authDomain: "<YOUR_PROJECT_ID>.firebaseapp.com",
+        projectId: "<YOUR_PROJECT_ID>",
+        storageBucket: "<YOUR_PROJECT_ID>.appspot.com",
+        messagingSenderId: "<YOUR_MESSAGING_SENDER_ID>",
+        appId: "<YOUR_APP_ID>"
+      };
+      const FIRESTORE_TASKS_COLLECTION = "scheduleBoardTasks";
+      const FIREBASE_CONFIG_VALID = Object.values(FIREBASE_CONFIG).every(v => typeof v === "string" && v && !v.includes("<YOUR_"));
+      let firestoreDb = null;
+      let unsubscribeTasks = null;
+      let firestoreReady = false;
+      let applyingRemoteSnapshot = false;
+      let bootstrappedFromLocal = false;
+      const pendingFirestoreOps = [];
+
       const $ = (sel, root=document) => root.querySelector(sel);
       const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
 
@@ -1377,6 +1399,116 @@
       }
       function uniqTokens(arr){
         return Array.from(new Set((arr||[]).map(s=>s.trim()).filter(Boolean)));
+      }
+      function enqueueFirestoreOp(fn){
+        pendingFirestoreOps.push(fn);
+        flushFirestoreQueue();
+      }
+      function flushFirestoreQueue(){
+        if(!firestoreReady) return;
+        while(pendingFirestoreOps.length){
+          const op = pendingFirestoreOps.shift();
+          try{
+            op();
+          }catch(err){
+            console.error("Firestore operation failed", err);
+          }
+        }
+      }
+      function normalizeTaskFromFirestore(id, data){
+        const safe = data || {};
+        return {
+          id,
+          title: safe.title || "New task",
+          typeId: safe.typeId || (state.types[0]?.id ?? ""),
+          people: Array.isArray(safe.people) ? safe.people : [],
+          start: safe.start ?? null,
+          end: safe.end ?? null,
+          notes: safe.notes || "",
+          location: safe.location || "",
+          status: safe.status || "Planned",
+          priority: safe.priority || "Normal",
+          jobNo: safe.jobNo || "",
+          customer: safe.customer || "",
+          contactName: safe.contactName || "",
+          contactPhone: safe.contactPhone || "",
+          customerEmail: safe.customerEmail || "",
+          trackedMs: typeof safe.trackedMs === "number" ? safe.trackedMs : 0,
+          timerStartedAt: typeof safe.timerStartedAt === "number" ? safe.timerStartedAt : null,
+          promisedInstall: safe.promisedInstall || "",
+          promisedBy: safe.promisedBy || "",
+          flags: Array.isArray(safe.flags) ? safe.flags : parseTokens(safe.flags || ""),
+          accessFlags: Array.isArray(safe.accessFlags) ? safe.accessFlags : parseTokens(safe.accessFlags || "")
+        };
+      }
+      function syncTaskToFirestore(task){
+        if(!FIREBASE_CONFIG_VALID || applyingRemoteSnapshot || !window.firebase) return;
+        enqueueFirestoreOp(()=>{
+          if(!firestoreReady || !firestoreDb) return;
+          const {id, ...payload} = task;
+          firestoreDb
+            .collection(FIRESTORE_TASKS_COLLECTION)
+            .doc(id)
+            .set({
+              ...payload,
+              updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+              updatedBy: CURRENT_USER
+            }, { merge: true })
+            .catch(err => console.error("Failed to sync task to Firestore", err));
+        });
+      }
+      function deleteTaskFromFirestore(taskId){
+        if(!FIREBASE_CONFIG_VALID || applyingRemoteSnapshot || !window.firebase) return;
+        enqueueFirestoreOp(()=>{
+          if(!firestoreReady || !firestoreDb) return;
+          firestoreDb
+            .collection(FIRESTORE_TASKS_COLLECTION)
+            .doc(taskId)
+            .delete()
+            .catch(err => console.error("Failed to delete task from Firestore", err));
+        });
+      }
+      async function initFirestoreSync(){
+        if(!FIREBASE_CONFIG_VALID || !window.firebase){
+          console.info("Firebase config missing; running in local-only mode.");
+          return;
+        }
+        try{
+          firebase.initializeApp(FIREBASE_CONFIG);
+          firestoreDb = firebase.firestore();
+          try{
+            await firestoreDb.enablePersistence({ synchronizeTabs:true });
+          }catch(err){
+            console.warn("Firestore offline persistence not enabled", err);
+          }
+          firestoreReady = true;
+          flushFirestoreQueue();
+          subscribeToTaskChanges();
+        }catch(err){
+          console.error("Failed to initialize Firebase", err);
+        }
+      }
+      function subscribeToTaskChanges(){
+        if(!firestoreDb) return;
+        if(unsubscribeTasks) unsubscribeTasks();
+        unsubscribeTasks = firestoreDb
+          .collection(FIRESTORE_TASKS_COLLECTION)
+          .onSnapshot(snapshot=>{
+            if(!snapshot) return;
+            if(snapshot.empty && state.tasks.length && !bootstrappedFromLocal){
+              state.tasks.forEach(syncTaskToFirestore);
+              bootstrappedFromLocal = true;
+              return;
+            }
+            const remoteTasks = snapshot.docs.map(doc=> normalizeTaskFromFirestore(doc.id, doc.data()));
+            applyingRemoteSnapshot = true;
+            state.tasks = remoteTasks;
+            saveState();
+            render();
+            applyingRemoteSnapshot = false;
+          }, err=>{
+            console.error("Firestore live sync error", err);
+          });
       }
 
       function formatTime(dateObj){
@@ -1502,6 +1634,7 @@
           accessFlags: uniqTokens(Array.isArray(taskLike.accessFlags) ? taskLike.accessFlags : parseTokens(taskLike.accessFlags || ""))
         };
         state.tasks.push(t);
+        syncTaskToFirestore(t);
         if(!silent) toast("Task added", t.title, "var(--accent)");
         saveState();
         render();
@@ -1512,6 +1645,7 @@
         const i = state.tasks.findIndex(t=>t.id===taskId);
         if(i<0) return;
         state.tasks[i] = {...state.tasks[i], ...patch};
+        syncTaskToFirestore(state.tasks[i]);
         if(!silent) toast("Task saved", state.tasks[i].title, "var(--accent)");
         saveState();
         render();
@@ -1522,6 +1656,7 @@
         if(i<0) return;
         const title = state.tasks[i].title || "Task";
         state.tasks.splice(i,1);
+        deleteTaskFromFirestore(taskId);
         saveState();
         toast("Deleted", title, "var(--danger)");
         render();
@@ -1607,7 +1742,10 @@
 
         saveState();
       }
-      seedIfEmpty();
+      if(!FIREBASE_CONFIG_VALID){
+        seedIfEmpty();
+      }
+      initFirestoreSync();
 
       /**********************
        * Auto-scroll helper
@@ -3583,7 +3721,9 @@
         if(!confirm("Reset local data? This wipes tasks + settings.")) return;
         localStorage.removeItem(LS_KEY);
         state = defaultState();
-        seedIfEmpty();
+        if(!FIREBASE_CONFIG_VALID){
+          seedIfEmpty();
+        }
         toast("Reset", "Local data wiped", "var(--danger)");
         closeSettings();
         render();
