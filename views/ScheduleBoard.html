@@ -1324,14 +1324,15 @@
       const CURRENT_USER = "Tristan";
 
       const FIREBASE_CONFIG = {
-        // TODO: replace placeholders with your real Firebase project settings
-        apiKey: "<YOUR_API_KEY>",
-        authDomain: "<YOUR_PROJECT_ID>.firebaseapp.com",
-        projectId: "<YOUR_PROJECT_ID>",
-        storageBucket: "<YOUR_PROJECT_ID>.appspot.com",
-        messagingSenderId: "<YOUR_MESSAGING_SENDER_ID>",
-        appId: "<YOUR_APP_ID>"
-      };
+  apiKey: "AIzaSyDQFoHRttdQVuFnti1cpd1D_5OTCNvGvEQ",
+  authDomain: "signscheduler-f5e80.firebaseapp.com",
+  databaseURL: "https://signscheduler-f5e80-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "signscheduler-f5e80",
+  storageBucket: "signscheduler-f5e80.firebasestorage.app",
+  messagingSenderId: "536047819614",
+  appId: "1:536047819614:web:cfed13e1a9e62bc4a60dcf",
+  measurementId: "G-W885N8J421"
+};
       const FIRESTORE_TASKS_COLLECTION = "scheduleBoardTasks";
       const FIREBASE_CONFIG_VALID = Object.values(FIREBASE_CONFIG).every(v => typeof v === "string" && v && !v.includes("<YOUR_"));
       let firestoreDb = null;
