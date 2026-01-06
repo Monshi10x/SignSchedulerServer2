@@ -2749,6 +2749,10 @@
           const textColor = "#0b0d12";
           return `<span class="badge" title="${escapeHtml(p.name)}" style="background:${p.color};border-color:${p.color};color:${textColor};font-weight:800;">${escapeHtml(p.name)}</span>`;
         }).join("");
+        const timerBtn = task.timerStartedAt ? `
+          <button class="trackIndicator running" data-action="track" title="Job tracking in progress">
+            <span class="ico clock"></span>
+          </button>` : "";
 
         const segStartStr = formatTime(new Date(segStartMs));
         const segEndStr = formatTime(new Date(segEndMs));
@@ -2772,14 +2776,9 @@
               <span class="taskTypeName">${escapeHtml(type.name)}</span>
             </div>
             <div class="taskActions">
-              <button class="trackIndicator ${task.timerStartedAt ? "running" : ""}" data-action="track" title="${task.timerStartedAt ? "Job tracking in progress" : "Job tracking stopped"}">
-                <span class="ico clock"></span>
-              </button>
+              ${timerBtn}
               <button class="cardBtn done" data-action="done" title="Mark done">
                 <span class="ico check"></span>
-              </button>
-              <button class="cardBtn delete" data-action="delete" title="Delete">
-                <span class="ico trash"></span>
               </button>
             </div>
           </div>
