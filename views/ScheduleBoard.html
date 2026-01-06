@@ -5,6 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Schedule Board</title>
 
+  <!-- Firebase (compat build keeps the current non-module script structure simple) -->
+  <script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore-compat.js"></script>
+
   <style>
     :root{
       --bg:#0b0d12;
@@ -111,6 +115,8 @@
 
     .ico.chevL{mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="black" d="M15.5 19 8.5 12l7-7 1.5 1.5L11.5 12 17 17.5z"/></svg>'); -webkit-mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="black" d="M15.5 19 8.5 12l7-7 1.5 1.5L11.5 12 17 17.5z"/></svg>');}
     .ico.chevR{mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="black" d="M8.5 19 7 17.5 12.5 12 7 6.5 8.5 5l7 7z"/></svg>'); -webkit-mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="black" d="M8.5 19 7 17.5 12.5 12 7 6.5 8.5 5l7 7z"/></svg>');}
+    .ico.chevLL{mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill=\"black\" d=\"m17.5 19-7-7 7-7 1.5 1.5L12.5 12l6.5 6.5Zm-7 0-7-7 7-7L12 6.5 5.5 12 12 17.5Z\"/></svg>'); -webkit-mask-image: url('data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\"><path fill=\"black\" d=\"m17.5 19-7-7 7-7 1.5 1.5L12.5 12l6.5 6.5Zm-7 0-7-7 7-7L12 6.5 5.5 12 12 17.5Z\"/></svg>');}
+    .ico.chevRR{mask-image: url('data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\"><path fill=\"black\" d=\"m6.5 5 7 7-7 7-1.5-1.5L11.5 12 5 6.5Zm7 0 7 7-7 7-1.5-1.5L18.5 12 12 6.5Z\"/></svg>'); -webkit-mask-image: url('data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\"><path fill=\"black\" d=\"m6.5 5 7 7-7 7-1.5-1.5L11.5 12 5 6.5Zm7 0 7 7-7 7-1.5-1.5L18.5 12 12 6.5Z\"/></svg>');}
     .ico.today{mask-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="black" d="M7 2h2v2h6V2h2v2h3v18H2V4h3V2h2v2Zm13 6H4v12h16V8ZM6 10h4v4H6v-4Z"/></svg>'); -webkit-mask-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="black" d="M7 2h2v2h6V2h2v2h3v18H2V4h3V2h2v2Zm13 6H4v12h16V8ZM6 10h4v4H6v-4Z"/></svg>');}
     .ico.plus{mask-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="black" d="M11 11V5h2v6h6v2h-6v6h-2v-6H5v-2h6z"/></svg>'); -webkit-mask-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="black" d="M11 11V5h2v6h6v2h-6v6h-2v-6H5v-2h6z"/></svg>');}
     .ico.cog{mask-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="black" d="M19.14 12.94c.04-.31.06-.63.06-.94s-.02-.63-.06-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.6-.22l-2.39.96a7.08 7.08 0 0 0-1.63-.94l-.36-2.54A.5.5 0 0 0 13.9 1h-3.8a.5.5 0 0 0-.49.42l-.36 2.54c-.58.24-1.12.55-1.63.94l-2.39-.96a.5.5 0 0 0-.6.22L2.71 7.48a.5.5 0 0 0 .12.64l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94l-2.03 1.58a.5.5 0 0 0-.12.64l1.92 3.32c.13.23.4.32.64.22l2.39-.96c.5.39 1.05.7 1.63.94l.36 2.54c.04.24.25.42.49.42h3.8c.24 0 .45-.18.49-.42l.36-2.54c.58-.24 1.12-.55 1.63-.94l2.39.96c.24.1.51.01.64-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.03-1.58ZM12 15.5A3.5 3.5 0 1 1 12 8a3.5 3.5 0 0 1 0 7.5Z"/></svg>'); -webkit-mask-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="black" d="M19.14 12.94c.04-.31.06-.63.06-.94s-.02-.63-.06-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.6-.22l-2.39.96a7.08 7.08 0 0 0-1.63-.94l-.36-2.54A.5.5 0 0 0 13.9 1h-3.8a.5.5 0 0 0-.49.42l-.36 2.54c-.58.24-1.12.55-1.63.94l-2.39-.96a.5.5 0 0 0-.6.22L2.71 7.48a.5.5 0 0 0 .12.64l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94l-2.03 1.58a.5.5 0 0 0-.12.64l1.92 3.32c.13.23.4.32.64.22l2.39-.96c.5.39 1.05.7 1.63.94l.36 2.54c.04.24.25.42.49.42h3.8c.24 0 .45-.18.49-.42l.36-2.54c.58-.24 1.12-.55 1.63-.94l2.39.96c.24.1.51.01.64-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.03-1.58ZM12 15.5A3.5 3.5 0 1 1 12 8a3.5 3.5 0 0 1 0 7.5Z"/></svg>');}
@@ -353,6 +359,8 @@
       gap: 10px;
     }
     .dayHead.today{background: rgba(78,161,255,.10)}
+    .dayHead.wideToday{flex-basis: 420px; min-width:420px;}
+    .dayCol.wideToday{flex-basis: 420px; min-width:420px;}
 
     /* ✅ #5: Single-line "Wed 30" */
     .dayHead .dLine{
@@ -987,9 +995,11 @@
     </div>
 
     <div class="headerLeft">
-      <button class="btn icon" id="prevBtn" title="Previous"><span class="ico chevL"></span></button>
+      <button class="btn icon" id="prevDayBtn" title="Previous day"><span class="ico chevL"></span></button>
+      <button class="btn icon" id="prevBtn" title="Previous week"><span class="ico chevLL"></span></button>
       <button class="btn icon" id="todayBtn" title="Today"><span class="ico today"></span></button>
-      <button class="btn icon" id="nextBtn" title="Next"><span class="ico chevR"></span></button>
+      <button class="btn icon" id="nextBtn" title="Next week"><span class="ico chevRR"></span></button>
+      <button class="btn icon" id="nextDayBtn" title="Next day"><span class="ico chevR"></span></button>
 
           <div class="pill" id="rangePill">
             <div>
@@ -999,6 +1009,7 @@
           </div>
 
       <select class="select" id="viewSelect" aria-label="View">
+        <option value="day">Day</option>
         <option value="workweek">Mon–Fri</option>
         <option value="week">Week (7 days)</option>
         <option value="2week">2 weeks</option>
@@ -1277,6 +1288,17 @@
         </div>
 
         <div class="field">
+          <label>Highlight today</label>
+          <div class="inlineRow" style="justify-content:space-between;">
+            <div class="help">Make the current day twice as wide in timeline view.</div>
+            <label class="help" style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+              <input id="sWideToday" type="checkbox" />
+              Double width for today
+            </label>
+          </div>
+        </div>
+
+        <div class="field">
           <label>Staff (name + chip color)</label>
           <div class="list" id="staffList"></div>
           <div class="inlineRow">
@@ -1318,6 +1340,29 @@
       const SLOT_MIN = 15;
       const SLOT_MS = SLOT_MIN * 60 * 1000;
       const CURRENT_USER = "Tristan";
+
+      const FIREBASE_CONFIG = {
+        apiKey: "AIzaSyDQFoHRttdQVuFnti1cpd1D_5OTCNvGvEQ",
+        authDomain: "signscheduler-f5e80.firebaseapp.com",
+        databaseURL: "https://signscheduler-f5e80-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "signscheduler-f5e80",
+        storageBucket: "signscheduler-f5e80.firebasestorage.app",
+        messagingSenderId: "536047819614",
+        appId: "1:536047819614:web:cfed13e1a9e62bc4a60dcf",
+        measurementId: "G-W885N8J421"
+      };
+      const FIRESTORE_TASKS_COLLECTION = "scheduleBoardTasks";
+      const FIRESTORE_CONFIG_COLLECTION = "scheduleBoardConfig";
+      const FIRESTORE_CONFIG_DOC = "shared";
+      const FIREBASE_CONFIG_VALID = Object.values(FIREBASE_CONFIG).every(v => typeof v === "string" && v && !v.includes("<YOUR_"));
+      let firestoreDb = null;
+      let unsubscribeTasks = null;
+      let unsubscribeConfig = null;
+      let firestoreReady = false;
+      let applyingRemoteSnapshot = false;
+      let applyingRemoteConfig = false;
+      let bootstrappedFromLocal = false;
+      const pendingFirestoreOps = [];
 
       const $ = (sel, root=document) => root.querySelector(sel);
       const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
@@ -1378,6 +1423,206 @@
       function uniqTokens(arr){
         return Array.from(new Set((arr||[]).map(s=>s.trim()).filter(Boolean)));
       }
+      function enqueueFirestoreOp(fn){
+        pendingFirestoreOps.push(fn);
+        flushFirestoreQueue();
+      }
+      function flushFirestoreQueue(){
+        if(!firestoreReady) return;
+        while(pendingFirestoreOps.length){
+          const op = pendingFirestoreOps.shift();
+          try{
+            op();
+          }catch(err){
+            console.error("Firestore operation failed", err);
+          }
+        }
+      }
+      function tsToIso(v){
+        try{
+          if(!v) return null;
+          if(typeof v === "string"){
+            const d = new Date(v);
+            return Number.isNaN(d.getTime()) ? null : d.toISOString();
+          }
+          if(v.toDate){
+            const d = v.toDate();
+            return Number.isNaN(d.getTime()) ? null : d.toISOString();
+          }
+        }catch(err){
+          console.warn("Failed to parse timestamp", err);
+        }
+        return null;
+      }
+      function numberOrNull(v){
+        if(v == null) return null;
+        if(typeof v === "number" && Number.isFinite(v)) return v;
+        if(v.toMillis){
+          const n = v.toMillis();
+          return Number.isFinite(n) ? n : null;
+        }
+        return null;
+      }
+      function normalizeType(t){
+        if(!t || typeof t !== "object") return null;
+        return {
+          id: (typeof t.id === "string" && t.id) ? t.id : uid(),
+          name: (t.name || "Type").toString(),
+          color: (t.color || randomNiceColor())
+        };
+      }
+      function normalizeStaff(s){
+        if(!s || typeof s !== "object") return null;
+        return {
+          id: (typeof s.id === "string" && s.id) ? s.id : uid(),
+          name: (s.name || "Staff").toString(),
+          color: (s.color || "#4ea1ff")
+        };
+      }
+      function syncConfigToFirestore(){
+        if(!FIREBASE_CONFIG_VALID || applyingRemoteConfig || !window.firebase) return;
+        enqueueFirestoreOp(()=>{
+          if(!firestoreReady || !firestoreDb) return;
+          firestoreDb
+            .collection(FIRESTORE_CONFIG_COLLECTION)
+            .doc(FIRESTORE_CONFIG_DOC)
+            .set({
+              types: state.types,
+              staff: state.staff,
+              updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+              updatedBy: CURRENT_USER
+            }, { merge: true })
+            .catch(err => console.error("Failed to sync config to Firestore", err));
+        });
+      }
+      function subscribeToConfig(){
+        if(!firestoreDb) return;
+        if(unsubscribeConfig) unsubscribeConfig();
+        unsubscribeConfig = firestoreDb
+          .collection(FIRESTORE_CONFIG_COLLECTION)
+          .doc(FIRESTORE_CONFIG_DOC)
+          .onSnapshot(snapshot=>{
+            if(!snapshot || !snapshot.exists){
+              syncConfigToFirestore();
+              return;
+            }
+            const data = snapshot.data() || {};
+            const incomingTypes = Array.isArray(data.types) ? data.types.map(normalizeType).filter(Boolean) : [];
+            const incomingStaff = Array.isArray(data.staff) ? data.staff.map(normalizeStaff).filter(Boolean) : [];
+            if(!incomingTypes.length && !incomingStaff.length){
+              syncConfigToFirestore();
+              return;
+            }
+            applyingRemoteConfig = true;
+            if(incomingTypes.length) state.types = incomingTypes;
+            if(incomingStaff.length) state.staff = incomingStaff;
+            saveState();
+            render();
+            applyingRemoteConfig = false;
+          }, err=>{
+            console.error("Firestore config live sync error", err);
+          });
+      }
+      function touchConfig(){
+        saveState();
+        syncConfigToFirestore();
+      }
+      function normalizeTaskFromFirestore(id, data){
+        const safe = data || {};
+        return {
+          id,
+          title: safe.title || "New task",
+          typeId: safe.typeId || (state.types[0]?.id ?? ""),
+          people: Array.isArray(safe.people) ? safe.people : [],
+          start: tsToIso(safe.start),
+          end: tsToIso(safe.end),
+          notes: safe.notes || "",
+          location: safe.location || "",
+          status: safe.status || "Planned",
+          priority: safe.priority || "Normal",
+          jobNo: safe.jobNo || "",
+          customer: safe.customer || "",
+          contactName: safe.contactName || "",
+          contactPhone: safe.contactPhone || "",
+          customerEmail: safe.customerEmail || "",
+          trackedMs: typeof safe.trackedMs === "number" ? safe.trackedMs : 0,
+          timerStartedAt: numberOrNull(safe.timerStartedAt),
+          promisedInstall: tsToIso(safe.promisedInstall)?.slice(0,10) || (typeof safe.promisedInstall === "string" ? safe.promisedInstall : ""),
+          promisedBy: safe.promisedBy || "",
+          flags: Array.isArray(safe.flags) ? safe.flags : parseTokens(safe.flags || ""),
+          accessFlags: Array.isArray(safe.accessFlags) ? safe.accessFlags : parseTokens(safe.accessFlags || "")
+        };
+      }
+      function syncTaskToFirestore(task){
+        if(!FIREBASE_CONFIG_VALID || applyingRemoteSnapshot || !window.firebase) return;
+        enqueueFirestoreOp(()=>{
+          if(!firestoreReady || !firestoreDb) return;
+          const {id, ...payload} = task;
+          firestoreDb
+            .collection(FIRESTORE_TASKS_COLLECTION)
+            .doc(id)
+            .set({
+              ...payload,
+              updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+              updatedBy: CURRENT_USER
+            }, { merge: true })
+            .catch(err => console.error("Failed to sync task to Firestore", err));
+        });
+      }
+      function deleteTaskFromFirestore(taskId){
+        if(!FIREBASE_CONFIG_VALID || applyingRemoteSnapshot || !window.firebase) return;
+        enqueueFirestoreOp(()=>{
+          if(!firestoreReady || !firestoreDb) return;
+          firestoreDb
+            .collection(FIRESTORE_TASKS_COLLECTION)
+            .doc(taskId)
+            .delete()
+            .catch(err => console.error("Failed to delete task from Firestore", err));
+        });
+      }
+      async function initFirestoreSync(){
+        if(!FIREBASE_CONFIG_VALID || !window.firebase){
+          console.info("Firebase config missing; running in local-only mode.");
+          return;
+        }
+        try{
+          firebase.initializeApp(FIREBASE_CONFIG);
+          firestoreDb = firebase.firestore();
+          try{
+            await firestoreDb.enablePersistence({ synchronizeTabs:true });
+          }catch(err){
+            console.warn("Firestore offline persistence not enabled", err);
+          }
+          firestoreReady = true;
+          flushFirestoreQueue();
+          subscribeToConfig();
+          subscribeToTaskChanges();
+        }catch(err){
+          console.error("Failed to initialize Firebase", err);
+        }
+      }
+      function subscribeToTaskChanges(){
+        if(!firestoreDb) return;
+        if(unsubscribeTasks) unsubscribeTasks();
+        unsubscribeTasks = firestoreDb
+          .collection(FIRESTORE_TASKS_COLLECTION)
+          .onSnapshot(snapshot=>{
+            if(!snapshot) return;
+            if(snapshot.empty && state.tasks.length && !bootstrappedFromLocal){
+              state.tasks.forEach(syncTaskToFirestore);
+              bootstrappedFromLocal = true;
+              return;
+            }
+            const remoteTasks = snapshot.docs.map(doc=> normalizeTaskFromFirestore(doc.id, doc.data()));
+            applyingRemoteSnapshot = true;
+            state.tasks = remoteTasks;
+            saveState();
+            render();
+            applyingRemoteSnapshot = false;
+          }, err=>{
+            console.error("Firestore live sync error", err);
+          });
+      }
 
       function formatTime(dateObj){
         const d = new Date(dateObj);
@@ -1412,7 +1657,8 @@
           startHour: 6,
           endHour: 18,
           timeFormat: "12",
-          showUnassignedPanel: true
+          showUnassignedPanel: true,
+          wideToday: false
         },
         flagOptions: ["Payment needed", "Not confirmed", "Awaiting artwork"],
         accessOptions: ["Spider boom", "Scissor", "Trestles", "Ladders"],
@@ -1446,6 +1692,7 @@
           if(!st.settings || !st.staff || !st.types || !st.tasks || !st.ui) return null;
           if(!st.settings.timeFormat) st.settings.timeFormat = "12";
           if(typeof st.settings.showUnassignedPanel !== "boolean") st.settings.showUnassignedPanel = true;
+          if(typeof st.settings.wideToday !== "boolean") st.settings.wideToday = false;
           if(!Array.isArray(st.flagOptions)) st.flagOptions = ["Payment needed", "Not confirmed", "Awaiting artwork"];
           if(!Array.isArray(st.accessOptions)) st.accessOptions = ["Spider boom", "Scissor", "Trestles", "Ladders"];
           st.tasks.forEach(t=>{
@@ -1502,6 +1749,7 @@
           accessFlags: uniqTokens(Array.isArray(taskLike.accessFlags) ? taskLike.accessFlags : parseTokens(taskLike.accessFlags || ""))
         };
         state.tasks.push(t);
+        syncTaskToFirestore(t);
         if(!silent) toast("Task added", t.title, "var(--accent)");
         saveState();
         render();
@@ -1512,6 +1760,7 @@
         const i = state.tasks.findIndex(t=>t.id===taskId);
         if(i<0) return;
         state.tasks[i] = {...state.tasks[i], ...patch};
+        syncTaskToFirestore(state.tasks[i]);
         if(!silent) toast("Task saved", state.tasks[i].title, "var(--accent)");
         saveState();
         render();
@@ -1522,6 +1771,7 @@
         if(i<0) return;
         const title = state.tasks[i].title || "Task";
         state.tasks.splice(i,1);
+        deleteTaskFromFirestore(taskId);
         saveState();
         toast("Deleted", title, "var(--danger)");
         render();
@@ -1607,7 +1857,10 @@
 
         saveState();
       }
-      seedIfEmpty();
+      if(!FIREBASE_CONFIG_VALID){
+        seedIfEmpty();
+      }
+      initFirestoreSync();
 
       /**********************
        * Auto-scroll helper
@@ -1668,6 +1921,20 @@
       function slotH(){
         return parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--slotH"));
       }
+      function findDayColAtX(daysGridInner, xContent){
+        const dayCols = Array.from(daysGridInner.querySelectorAll(".dayCol"));
+        if(!dayCols.length) return { col:null, index:-1, width:0 };
+        let chosen = dayCols[0];
+        for(const col of dayCols){
+          const left = col.offsetLeft;
+          const width = col.getBoundingClientRect().width || col.offsetWidth || 0;
+          if(xContent >= left && xContent < left + width){
+            chosen = col;
+            break;
+          }
+        }
+        return { col: chosen, index: dayCols.indexOf(chosen), width: chosen.getBoundingClientRect().width || 0 };
+      }
 
       let renderSlotCountOverride = null;
 
@@ -1700,6 +1967,7 @@
       }
 
       function viewLabel(v){
+        if(v==="day") return "Day";
         if(v==="workweek") return "Mon–Fri";
         if(v==="week") return "Week";
         if(v==="2week") return "2 weeks";
@@ -1714,6 +1982,9 @@
 
         if(view === "month") return null;
 
+        if(view === "day"){
+          return [startOfDay(anchor)];
+        }
         if(view === "workweek"){
           const mon = getMonday(anchor);
           return Array.from({length:5}, (_,i)=> addDays(mon, i));
@@ -1802,7 +2073,9 @@
         const days = getViewDays();
         const first = days[0];
         const last = days[days.length-1];
-        const title = `${first.toLocaleDateString(undefined,{month:"short", day:"numeric"})} – ${last.toLocaleDateString(undefined,{month:"short", day:"numeric", year:"numeric"})}`;
+        const title = (view === "day")
+          ? `${first.toLocaleDateString(undefined,{month:"short", day:"numeric", year:"numeric"})}`
+          : `${first.toLocaleDateString(undefined,{month:"short", day:"numeric"})} – ${last.toLocaleDateString(undefined,{month:"short", day:"numeric", year:"numeric"})}`;
         rangeTitle.textContent = title;
         rangeMeta.textContent = `${state.ui.view === "custom" ? `${days.length} days` : viewLabel(view)} • ${SLOT_MIN} min slots`;
       }
@@ -2008,17 +2281,12 @@
             sidePanel.classList.remove("sideDropActive");
 
             if(droppedOnBoard && daysGridInner){
-              const dayCols = Array.from(daysGridInner.querySelectorAll(".dayCol"));
-              if(dayCols.length){
-                const colWidth = dayCols[0].getBoundingClientRect().width || 210;
+              const xContent = (ev.clientX - gridRect.left) + daysGrid.scrollLeft;
+              const yContent = (ev.clientY - gridRect.top) + daysGrid.scrollTop;
 
-                const xContent = (ev.clientX - gridRect.left) + daysGrid.scrollLeft;
-                const yContent = (ev.clientY - gridRect.top) + daysGrid.scrollTop;
-
-                const idx = clamp(Math.floor(xContent / colWidth), 0, dayCols.length - 1);
-                const colTarget = dayCols[idx];
+              const { col: colTarget } = findDayColAtX(daysGridInner, xContent);
+              if(colTarget){
                 const dayIso = colTarget.dataset.day;
-
                 const slot = clamp(Math.floor(yContent / slotH()), 0, totalSlotsInView()-1);
 
                 const day = parseDateInput(dayIso);
@@ -2234,7 +2502,9 @@
 
         days.forEach(d=>{
           const head = document.createElement("div");
-          head.className = "dayHead" + (sameDay(d, today) ? " today" : "");
+          const isToday = sameDay(d, today);
+          const wideTodayEnabled = !!state.settings.wideToday && isToday;
+          head.className = "dayHead" + (isToday ? " today" : "") + (wideTodayEnabled ? " wideToday" : "");
           const count = tasksOverlappingDay(d).length;
 
           // ✅ #5: "Wed 30"
@@ -2309,7 +2579,9 @@
 
         days.forEach((d)=>{
           const col = document.createElement("div");
-          col.className = "dayCol";
+          const isToday = sameDay(d, today);
+          const wideTodayEnabled = !!state.settings.wideToday && isToday;
+          col.className = "dayCol" + (wideTodayEnabled ? " wideToday" : "");
           col.dataset.day = isoDate(d);
 
           for(let s=0; s<=slotCount; s++){
@@ -2473,10 +2745,10 @@
         el.style.height = heightPx + "px";
 
         const people = (task.people || []).map(id => state.staff.find(s=>s.id===id)).filter(Boolean);
-        const peopleChips = people.slice(0,3).map(p=>{
-          return `<span class="badge" title="${escapeHtml(p.name)}"><span class="dot" style="background:${p.color}"></span>${escapeHtml(p.name)}</span>`;
+        const peopleChips = people.map(p=>{
+          const textColor = "#0b0d12";
+          return `<span class="badge" title="${escapeHtml(p.name)}" style="background:${p.color};border-color:${p.color};color:${textColor};font-weight:800;">${escapeHtml(p.name)}</span>`;
         }).join("");
-        const more = people.length>3 ? `<span class="badge">+${people.length-3}</span>` : "";
 
         const segStartStr = formatTime(new Date(segStartMs));
         const segEndStr = formatTime(new Date(segEndMs));
@@ -2524,7 +2796,7 @@
             </div>
 
             <div class="chips">
-              ${peopleChips}${more}
+              ${peopleChips}
             </div>
           </div>
         `;
@@ -2820,9 +3092,6 @@
           const daysGridInner = taskEl.closest(".daysGridInner");
           if(!daysGrid || !daysGridInner) return;
 
-          const dayCols = Array.from(daysGridInner.querySelectorAll(".dayCol"));
-          if(!dayCols.length) return;
-
           const startMs = new Date(task.start).getTime();
           const endMs = new Date(task.end).getTime();
           const dur = endMs - startMs;
@@ -2831,7 +3100,6 @@
           const scroller = createEdgeAutoScroller(daysGrid, { edge: 70, maxSpeed: 26 });
 
           const gridRect = daysGrid.getBoundingClientRect();
-          const colWidth = dayCols[0].getBoundingClientRect().width || 210;
 
           const segTopPx = parseFloat(taskEl.style.top) || 0;
           const downYContent = (e.clientY - gridRect.top) + daysGrid.scrollTop;
@@ -2849,8 +3117,8 @@
 
           const getTargetFromPointer = (clientX, clientY) => {
             const xContent = (clientX - gridRect.left) + daysGrid.scrollLeft;
-            const idx = clamp(Math.floor(xContent / colWidth), 0, dayCols.length - 1);
-            const colTarget = dayCols[idx];
+            const { col: colTarget } = findDayColAtX(daysGridInner, xContent);
+            if(!colTarget) return null;
 
             const yContent = (clientY - gridRect.top) + daysGrid.scrollTop;
             const yTop = yContent - pointerOffsetY;
@@ -2880,7 +3148,9 @@
             const overSide = shouldShowSidePanel() && isPointInside(ev.clientX, ev.clientY, sidePanel.getBoundingClientRect());
             sidePanel.classList.toggle("sideDropActive", overSide);
 
-            const { colTarget, dayIso, slot } = getTargetFromPointer(ev.clientX, ev.clientY);
+            const target = getTargetFromPointer(ev.clientX, ev.clientY);
+            if(!target) return;
+            const { colTarget, dayIso, slot } = target;
 
             const targetDay = parseDateInput(dayIso);
             const start = new Date(targetDay);
@@ -3074,11 +3344,15 @@
           chip.className = "badge";
           chip.style.cursor = "pointer";
           chip.style.userSelect = "none";
-          chip.innerHTML = `<span class="dot" style="background:${s.color}"></span>${escapeHtml(s.name)}`;
+          chip.textContent = s.name;
+          chip.style.background = s.color;
+          chip.style.borderColor = s.color;
+          chip.style.color = "#0b0d12";
+          chip.style.fontWeight = "800";
           const applyOn = ()=>{
             const on = tempPeople.has(s.id);
-            chip.style.background = on ? "rgba(255,255,255,.07)" : "rgba(0,0,0,.18)";
-            chip.style.borderColor = on ? "rgba(78,161,255,.30)" : "rgba(255,255,255,.12)";
+            chip.style.boxShadow = on ? "0 0 0 2px rgba(255,255,255,.6)" : "none";
+            chip.style.opacity = on ? "1" : "0.92";
           };
           chip.addEventListener("click", ()=>{
             if(tempPeople.has(s.id)) tempPeople.delete(s.id);
@@ -3183,7 +3457,7 @@
         }
         const newType = { id: uid(), name, color: randomNiceColor() };
         state.types.push(newType);
-        saveState();
+        touchConfig();
         rebuildTypeSelect();
         fType.value = newType.id;
         fNewType.value = "";
@@ -3481,6 +3755,7 @@
       const sEndHour = $("#sEndHour");
       const sTimeFormat = $("#sTimeFormat");
       const sShowUnassigned = $("#sShowUnassigned");
+      const sWideToday = $("#sWideToday");
 
       const staffList = $("#staffList");
       const newStaffName = $("#newStaffName");
@@ -3499,6 +3774,7 @@
         sEndHour.value = state.settings.endHour;
         sTimeFormat.value = state.settings.timeFormat || "12";
         sShowUnassigned.checked = !!state.settings.showUnassignedPanel;
+        sWideToday.checked = !!state.settings.wideToday;
         renderStaffList();
         renderTypeList();
         settingsModalBack.classList.add("show");
@@ -3520,15 +3796,17 @@
           const colorInp = row.querySelector('input[data-k="color"]');
           const rm = row.querySelector("button");
 
-          nameInp.addEventListener("input", ()=>{ s.name = nameInp.value; });
+          nameInp.addEventListener("input", ()=>{ s.name = nameInp.value; touchConfig(); });
           colorInp.addEventListener("input", ()=>{
             s.color = colorInp.value;
             row.querySelector(".swatch").style.background = s.color;
+            touchConfig();
           });
           rm.addEventListener("click", ()=>{
             state.staff.splice(idx,1);
             state.tasks.forEach(t=>{ t.people = (t.people||[]).filter(pid=>pid!==s.id); });
             renderStaffList();
+            touchConfig();
           });
 
           staffList.appendChild(row);
@@ -3550,10 +3828,11 @@
           const colorInp = row.querySelector('input[data-k="color"]');
           const rm = row.querySelector("button");
 
-          nameInp.addEventListener("input", ()=>{ t.name = nameInp.value; });
+          nameInp.addEventListener("input", ()=>{ t.name = nameInp.value; touchConfig(); });
           colorInp.addEventListener("input", ()=>{
             t.color = colorInp.value;
             row.querySelector(".swatch").style.background = t.color;
+            touchConfig();
           });
           rm.addEventListener("click", ()=>{
             if(state.types.length <= 1){
@@ -3565,6 +3844,7 @@
             const fallbackId = state.types[0].id;
             state.tasks.forEach(task=>{ if(task.typeId === removedId) task.typeId = fallbackId; });
             renderTypeList();
+            touchConfig();
           });
 
           typeList.appendChild(row);
@@ -3577,13 +3857,16 @@
         state.staff.push({ id: uid(), name, color: newStaffColor.value || "#4ea1ff" });
         newStaffName.value = "";
         renderStaffList();
+        touchConfig();
       });
 
       resetDataBtn.addEventListener("click", ()=>{
         if(!confirm("Reset local data? This wipes tasks + settings.")) return;
         localStorage.removeItem(LS_KEY);
         state = defaultState();
-        seedIfEmpty();
+        if(!FIREBASE_CONFIG_VALID){
+          seedIfEmpty();
+        }
         toast("Reset", "Local data wiped", "var(--danger)");
         closeSettings();
         render();
@@ -3605,6 +3888,7 @@
         state.settings.endHour = eh;
         state.settings.timeFormat = sTimeFormat.value || "12";
         state.settings.showUnassignedPanel = !!sShowUnassigned.checked;
+        state.settings.wideToday = !!sWideToday.checked;
 
         saveState();
         toast("Saved", "Settings updated", "var(--accent)");
@@ -3628,13 +3912,24 @@
         render();
       });
 
+      $("#prevDayBtn").addEventListener("click", ()=>{
+        const a = parseDateInput(state.ui.anchorDate);
+        state.ui.anchorDate = isoDate(addDays(a, -1));
+        saveState(); render();
+      });
+
+      $("#nextDayBtn").addEventListener("click", ()=>{
+        const a = parseDateInput(state.ui.anchorDate);
+        state.ui.anchorDate = isoDate(addDays(a, 1));
+        saveState(); render();
+      });
+
       $("#prevBtn").addEventListener("click", ()=>{
         const a = parseDateInput(state.ui.anchorDate);
         if(state.ui.view==="month"){
           state.ui.anchorDate = isoDate(new Date(a.getFullYear(), a.getMonth()-1, 1));
         } else {
-          const days = getViewDays();
-          const step = (state.ui.view==="workweek") ? 7 : days.length;
+          const step = 7;
           state.ui.anchorDate = isoDate(addDays(a, -step));
         }
         saveState(); render();
@@ -3645,8 +3940,7 @@
         if(state.ui.view==="month"){
           state.ui.anchorDate = isoDate(new Date(a.getFullYear(), a.getMonth()+1, 1));
         } else {
-          const days = getViewDays();
-          const step = (state.ui.view==="workweek") ? 7 : days.length;
+          const step = 7;
           state.ui.anchorDate = isoDate(addDays(a, step));
         }
         saveState(); render();
