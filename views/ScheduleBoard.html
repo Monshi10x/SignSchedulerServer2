@@ -105,6 +105,7 @@
       background: rgba(255,78,106,.12);
     }
     .btn.icon{width:36px;padding:0}
+    .cardBtn.done:hover{ background: rgba(46,229,157,.22); border-color: rgba(46,229,157,.55); color:#eafff7; box-shadow: 0 8px 18px rgba(46,229,157,.35); }
 
     .btn .ico{
       width:18px;height:18px; display:inline-block;
@@ -516,10 +517,21 @@
     .task.resizing::before{ top:0; }
     .task.dragging::after,
     .task.resizing::after{ bottom:0; }
+    @keyframes whooshComplete{
+      0%{ transform: translateX(0) scale(1); opacity:1; }
+      35%{ transform: translateX(12px) scale(1.03); opacity:0.96; }
+      65%{ transform: translateX(20px) scale(1.02); opacity:0.8; }
+      100%{ transform: translateX(0) scale(1); opacity:1; }
+    }
+    .task.justCompleted{
+      animation: whooshComplete .65s ease-out;
+      box-shadow: 0 16px 32px rgba(46,229,157,.35);
+      border-color: rgba(46,229,157,.5);
+    }
     .task .band{
       position:absolute;
       top:0; left:0;
-      width:6px; height:100%;
+      width:10px; height:100%;
       background: var(--accent);
       opacity:.95;
       z-index: 1;
@@ -956,7 +968,7 @@
       overflow:hidden;
       opacity:.95;
     }
-    .dragGhost .band{width:6px; height:100%; position:absolute; left:0; top:0; opacity:.95}
+    .dragGhost .band{width:10px; height:100%; position:absolute; left:0; top:0; opacity:.95}
     .dragGhost .inner{padding:10px 10px 10px 14px; display:flex; flex-direction:column; gap:6px}
     .dragGhost .t{font-weight:950;font-size:13px; line-height:1.2; overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
     .dragGhost .c{font-weight:900;font-size:12px; color: rgba(233,238,252,.70); overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -1665,8 +1677,13 @@
         staff: [
           { id: uid(), name: "Tristan", color: "#4ea1ff" },
           { id: uid(), name: "Aidan", color: "#ffb020" },
-          { id: uid(), name: "Melanie", color: "#7c5cff" },
-          { id: uid(), name: "Ben", color: "#2ee59d" },
+          { id: uid(), name: "Daniel", color: "#7c5cff" },
+          { id: uid(), name: "Jake", color: "#2ee59d" },
+          { id: uid(), name: "Patrick", color: "#e86dff" },
+          { id: uid(), name: "Peter", color: "#ff9f4e" },
+          { id: uid(), name: "Pearl", color: "#5cd1b2" },
+          { id: uid(), name: "Leandri", color: "#6bdcff" },
+          { id: uid(), name: "Darren", color: "#ff5c8a" },
         ],
         types: [
           { id: uid(), name: "Install", color: "#4ea1ff" },
@@ -1985,25 +2002,21 @@
         if(view === "day"){
           return [startOfDay(anchor)];
         }
+        const base = startOfDay(anchor);
         if(view === "workweek"){
-          const mon = getMonday(anchor);
-          return Array.from({length:5}, (_,i)=> addDays(mon, i));
+          return Array.from({length:5}, (_,i)=> addDays(base, i));
         }
         if(view === "week"){
-          const mon = getMonday(anchor);
-          return Array.from({length:7}, (_,i)=> addDays(mon, i));
+          return Array.from({length:7}, (_,i)=> addDays(base, i));
         }
         if(view === "2week"){
-          const mon = getMonday(anchor);
-          return Array.from({length:14}, (_,i)=> addDays(mon, i));
+          return Array.from({length:14}, (_,i)=> addDays(base, i));
         }
         if(view === "custom"){
-          const mon = getMonday(anchor);
           const n = clamp(state.ui.customDays|0, 1, 21);
-          return Array.from({length:n}, (_,i)=> addDays(mon, i));
+          return Array.from({length:n}, (_,i)=> addDays(base, i));
         }
-        const mon = getMonday(anchor);
-        return Array.from({length:7}, (_,i)=> addDays(mon, i));
+        return Array.from({length:7}, (_,i)=> addDays(base, i));
       }
 
       const boardWrap = $("#boardWrap");
@@ -2084,6 +2097,16 @@
         if(nowLineTimer){
           clearInterval(nowLineTimer);
           nowLineTimer = null;
+        }
+      }
+
+      function shiftViewByDays(delta){
+        const days = getViewDays();
+        if(days && days.length){
+          state.ui.anchorDate = isoDate(addDays(days[0], delta));
+        }else{
+          const a = parseDateInput(state.ui.anchorDate);
+          state.ui.anchorDate = isoDate(addDays(a, delta));
         }
       }
 
@@ -2739,6 +2762,7 @@
         el.className = "task";
         if((task.priority || "").toLowerCase() === "urgent") el.classList.add("urgent");
         if((task.status || "").toLowerCase() === "done") el.classList.add("done");
+        if(justCompletedTasks.has(task.id)) el.classList.add("justCompleted");
         el.dataset.taskId = task.id;
 
         el.style.top = topPx + "px";
@@ -3250,10 +3274,16 @@
       function markTaskDone(taskId){
         const t = state.tasks.find(x=>x.id===taskId);
         if(!t) return;
+        justCompletedTasks.add(taskId);
         updateTask(taskId, { status: "Done" }, {silent:true});
         if(editingTaskId === taskId){
           fStatus.value = "Done";
         }
+        setTimeout(()=>{
+          justCompletedTasks.delete(taskId);
+          const el = document.querySelector(`.task[data-task-id="${taskId}"]`);
+          if(el) el.classList.remove("justCompleted");
+        }, 1200);
       }
 
       function maybeNotifyActiveTasks(now){
@@ -3325,6 +3355,7 @@
       let initialPromised = { date:"", by:"" };
       let createdTaskId = null;
       const activeBeginNotifs = new Set();
+      const justCompletedTasks = new Set();
 
       function randomNiceColor(){
         const hues = [205, 35, 265, 150, 95, 320, 15, 190];
@@ -3912,14 +3943,12 @@
       });
 
       $("#prevDayBtn").addEventListener("click", ()=>{
-        const a = parseDateInput(state.ui.anchorDate);
-        state.ui.anchorDate = isoDate(addDays(a, -1));
+        shiftViewByDays(-1);
         saveState(); render();
       });
 
       $("#nextDayBtn").addEventListener("click", ()=>{
-        const a = parseDateInput(state.ui.anchorDate);
-        state.ui.anchorDate = isoDate(addDays(a, 1));
+        shiftViewByDays(1);
         saveState(); render();
       });
 
