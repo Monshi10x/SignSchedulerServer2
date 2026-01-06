@@ -1312,6 +1312,11 @@
         <div class="field">
           <label>Task types (name + band color)</label>
           <div class="list" id="typeList"></div>
+          <div class="inlineRow">
+            <input id="newTypeName" type="text" placeholder="Add task type" style="flex:1" />
+            <input id="newTypeColor" type="color" value="#4ea1ff" />
+            <button class="btn" id="addTypeBtn">Add Type</button>
+          </div>
         </div>
 
         <div class="field">
@@ -3782,6 +3787,9 @@
       const addStaffBtn2 = $("#addStaffBtn2");
 
       const typeList = $("#typeList");
+      const newTypeName = $("#newTypeName");
+      const newTypeColor = $("#newTypeColor");
+      const addTypeBtn = $("#addTypeBtn");
 
       settingsBtn.addEventListener("click", openSettings);
       settingsClose.addEventListener("click", closeSettings);
@@ -3877,6 +3885,17 @@
         newStaffName.value = "";
         renderStaffList();
         touchConfig();
+      });
+
+      addTypeBtn.addEventListener("click", ()=>{
+        const name = (newTypeName.value||"").trim();
+        if(!name) return;
+        state.types.push({ id: uid(), name, color: newTypeColor.value || randomNiceColor() });
+        newTypeName.value = "";
+        renderTypeList();
+        touchConfig();
+        rebuildTypeSelect();
+        render();
       });
 
       resetDataBtn.addEventListener("click", ()=>{
