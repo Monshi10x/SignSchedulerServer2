@@ -2745,10 +2745,10 @@
         el.style.height = heightPx + "px";
 
         const people = (task.people || []).map(id => state.staff.find(s=>s.id===id)).filter(Boolean);
-        const peopleChips = people.slice(0,3).map(p=>{
-          return `<span class="badge" title="${escapeHtml(p.name)}"><span class="dot" style="background:${p.color}"></span>${escapeHtml(p.name)}</span>`;
+        const peopleChips = people.map(p=>{
+          const textColor = "#0b0d12";
+          return `<span class="badge" title="${escapeHtml(p.name)}" style="background:${p.color};border-color:${p.color};color:${textColor};font-weight:800;">${escapeHtml(p.name)}</span>`;
         }).join("");
-        const more = people.length>3 ? `<span class="badge">+${people.length-3}</span>` : "";
 
         const segStartStr = formatTime(new Date(segStartMs));
         const segEndStr = formatTime(new Date(segEndMs));
@@ -2796,7 +2796,7 @@
             </div>
 
             <div class="chips">
-              ${peopleChips}${more}
+              ${peopleChips}
             </div>
           </div>
         `;
@@ -3344,11 +3344,15 @@
           chip.className = "badge";
           chip.style.cursor = "pointer";
           chip.style.userSelect = "none";
-          chip.innerHTML = `<span class="dot" style="background:${s.color}"></span>${escapeHtml(s.name)}`;
+          chip.textContent = s.name;
+          chip.style.background = s.color;
+          chip.style.borderColor = s.color;
+          chip.style.color = "#0b0d12";
+          chip.style.fontWeight = "800";
           const applyOn = ()=>{
             const on = tempPeople.has(s.id);
-            chip.style.background = on ? "rgba(255,255,255,.07)" : "rgba(0,0,0,.18)";
-            chip.style.borderColor = on ? "rgba(78,161,255,.30)" : "rgba(255,255,255,.12)";
+            chip.style.boxShadow = on ? "0 0 0 2px rgba(255,255,255,.6)" : "none";
+            chip.style.opacity = on ? "1" : "0.92";
           };
           chip.addEventListener("click", ()=>{
             if(tempPeople.has(s.id)) tempPeople.delete(s.id);
