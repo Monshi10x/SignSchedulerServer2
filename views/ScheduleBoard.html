@@ -517,25 +517,31 @@
     .task.resizing::before{ top:0; }
     .task.dragging::after,
     .task.resizing::after{ bottom:0; }
-    @keyframes twinkleComplete{
-      0%{ transform: scale(1); box-shadow: 0 8px 18px rgba(46,229,157,.15); opacity:1; }
-      25%{ transform: scale(1.02); box-shadow: 0 14px 26px rgba(46,229,157,.35); opacity:0.95; }
-      50%{ transform: scale(0.99); box-shadow: 0 10px 22px rgba(255,255,255,.32); opacity:0.9; }
-      75%{ transform: scale(1.02); box-shadow: 0 14px 26px rgba(46,229,157,.35); opacity:0.95; }
-      100%{ transform: scale(1); box-shadow: 0 8px 18px rgba(46,229,157,.15); opacity:1; }
-    }
-    .task.justCompleted{
-      animation: twinkleComplete .8s ease-out;
-      box-shadow: 0 16px 32px rgba(46,229,157,.35);
-      border-color: rgba(46,229,157,.5);
-    }
     .task .band{
       position:absolute;
       top:0; left:0;
-      width:10px; height:100%;
+      width:14px; height:100%;
       background: var(--accent);
       opacity:.95;
       z-index: 1;
+      display:flex;
+      justify-content:flex-start;
+      align-items:flex-start;
+      overflow:visible;
+    }
+    .task .bandLabel{
+      position:absolute;
+      top:6px;
+      right:14px;
+      transform: rotate(-90deg);
+      transform-origin: top right;
+      font-size:10px;
+      font-weight:850;
+      color:#0b0d12;
+      letter-spacing:0.2px;
+      white-space:nowrap;
+      text-shadow: 0 1px 2px rgba(0,0,0,.25);
+      opacity:0.9;
     }
 
     /* ✅ #3: Urgent animation now becomes the CARD BACKGROUND (not border) */
@@ -576,17 +582,17 @@
 
     .taskInner{
       position:relative;
-      padding:10px 10px 10px 14px;
+      padding:50px 12px 12px 20px;
       display:flex;
       flex-direction:column;
       gap:8px;
       z-index: 2;
     }
     .task.done{
-      filter: grayscale(.4);
-      opacity: .78;
-      background: rgba(16,18,26,.9);
-      border-color: rgba(255,255,255,.08);
+      filter: grayscale(.55);
+      opacity: .6;
+      background: rgba(16,18,26,.6);
+      border-color: rgba(255,255,255,.06);
     }
     .task.done::before{
       content:"";
@@ -595,14 +601,14 @@
       z-index:1;
       background-image: repeating-linear-gradient(135deg, rgba(255,255,255,.08) 0 8px, transparent 8px 16px);
       pointer-events:none;
-      opacity:.55;
+      opacity:.25;
     }
 
     /* Buttons top-right, icon only */
     .taskTopRow{
       position:absolute;
       top:8px;
-      left:10px;
+      left:18px;
       right:8px;
       display:flex;
       align-items:center;
@@ -610,18 +616,7 @@
       gap:8px;
       z-index: 3;
     }
-    .taskTopRow .taskTypeChip{
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
-      padding:6px 10px;
-      border-radius:12px;
-      border:1px solid rgba(255,255,255,.12);
-      background: rgba(0,0,0,.20);
-      box-shadow: var(--btnShadow);
-      max-width: 60%;
-      pointer-events:none;
-    }
+    .taskTopRow .taskTitle{ min-width:0; }
     .taskTopRow .taskActions{
       display:flex;
       gap:8px;
@@ -637,15 +632,15 @@
 
     .taskTitle{
       font-weight:950;
-      font-size:13px;
+      font-size:14px;
       line-height:1.2;
       width:100%;
       overflow:hidden;
       text-overflow:ellipsis;
       display:-webkit-box;
-      -webkit-line-clamp: 2;
+      -webkit-line-clamp: 1;
       -webkit-box-orient: vertical;
-      margin-top:42px; /* space under top row */
+      margin:0;
       padding-right: 0;
     }
 
@@ -819,6 +814,49 @@
     }
     .field textarea{min-height: 84px; resize: vertical}
 
+    .floatGroup{
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
+    .floatField{
+      position:relative;
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+    }
+    .floatField input,
+    .floatField select,
+    .floatField textarea{
+      width:100%;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.20);
+      color: var(--text);
+      padding: 18px 10px 8px;
+      outline:none;
+      box-shadow: var(--insetShadow);
+    }
+    .floatField textarea{min-height: 84px; resize: vertical}
+    .floatField label{
+      position:absolute;
+      left:12px;
+      top:50%;
+      transform: translateY(-50%);
+      font-size:12px;
+      color: var(--muted);
+      font-weight:800;
+      pointer-events:none;
+      transition: transform .12s ease, top .12s ease, font-size .12s ease, color .12s ease;
+    }
+    .floatField.filled label,
+    .floatField:focus-within label{
+      top:6px;
+      transform: translateY(0);
+      font-size:10px;
+      color: rgba(154,166,195,.9);
+    }
+
     .modalFooter{
       padding: 12px 14px;
       border-top:1px solid rgba(255,255,255,.08);
@@ -919,7 +957,14 @@
     .cardBtn .ico{ width:16px; height:16px; background: currentColor; mask-size: contain; mask-repeat:no-repeat; mask-position:center; -webkit-mask-size:contain; -webkit-mask-repeat:no-repeat; -webkit-mask-position:center; }
     .cardBtn.edit{ border-color: rgba(78,161,255,.30); background: rgba(78,161,255,.10); }
     .cardBtn.delete{ border-color: rgba(255,78,106,.32); background: rgba(255,78,106,.12); color:#ffd3db; }
-    .cardBtn.done{ border-color: rgba(46,229,157,.4); background: rgba(46,229,157,.14); color:#c7ffea; }
+    .cardBtn.done{
+      width:30px;
+      height:26px;
+      border-color: rgba(46,229,157,.4);
+      background: rgba(46,229,157,.14);
+      color:#c7ffea;
+    }
+    .cardBtn.done .ico{ width:14px; height:14px; }
     .trackIndicator{
       width:30px; height:30px;
       border-radius:12px;
@@ -1092,15 +1137,20 @@
       </div>
       <div class="modalBody">
         <div class="grid2">
-          <div class="field">
-            <label>Task name</label>
-            <input id="fTitle" type="text" placeholder="e.g. Install ACM sign - Springwood" />
+          <div class="floatField">
+            <input id="fTitle" type="text" placeholder=" " />
+            <label for="fTitle">Task name</label>
           </div>
-          <div class="field">
-            <label>Task type</label>
+          <div class="floatGroup">
             <div class="inlineRow">
-              <select id="fType" style="flex:1"></select>
-              <input id="fNewType" type="text" placeholder="Add type (e.g. Painting)" style="flex:1" />
+              <div class="floatField" style="flex:1">
+                <select id="fType"></select>
+                <label for="fType">Task type</label>
+              </div>
+              <div class="floatField" style="flex:1">
+                <input id="fNewType" type="text" placeholder=" " />
+                <label for="fNewType">Add type</label>
+              </div>
               <button class="btn" id="addTypeOnFlyBtn" title="Add task type">Add</button>
             </div>
             <div class="help">Task type controls the left color band. You can add a new type on the fly.</div>
@@ -1108,28 +1158,28 @@
         </div>
 
         <div class="grid2">
-          <div class="field">
-            <label>Job #</label>
-            <input id="fJob" type="text" placeholder="Optional" />
+          <div class="floatField">
+            <input id="fJob" type="text" placeholder=" " />
+            <label for="fJob">Job #</label>
           </div>
-          <div class="field">
-            <label>Customer name</label>
-            <input id="fCustomer" type="text" placeholder="e.g. John Smith / ACME Pty Ltd" />
+          <div class="floatField">
+            <input id="fCustomer" type="text" placeholder=" " />
+            <label for="fCustomer">Customer name</label>
           </div>
         </div>
 
         <div class="grid3">
-          <div class="field">
-            <label>Contact name</label>
-            <input id="fContactName" type="text" placeholder="Customer contact" />
+          <div class="floatField">
+            <input id="fContactName" type="text" placeholder=" " />
+            <label for="fContactName">Contact name</label>
           </div>
-          <div class="field">
-            <label>Contact phone</label>
-            <input id="fContactPhone" type="text" placeholder="Phone" />
+          <div class="floatField">
+            <input id="fContactPhone" type="text" placeholder=" " />
+            <label for="fContactPhone">Contact phone</label>
           </div>
-          <div class="field">
-            <label>Customer email</label>
-            <input id="fCustomerEmail" type="email" placeholder="Email" />
+          <div class="floatField">
+            <input id="fCustomerEmail" type="email" placeholder=" " />
+            <label for="fCustomerEmail">Customer email</label>
           </div>
         </div>
 
@@ -1151,54 +1201,66 @@
         </div>
 
         <div class="grid2">
-          <div class="field">
-            <label>Start date</label>
+          <div class="floatField">
             <input id="fStartDate" type="date" />
+            <label for="fStartDate">Start date</label>
           </div>
-          <div class="field">
-            <label>Start time</label>
+          <div class="floatField">
             <input id="fStartTime" type="time" step="900" />
+            <label for="fStartTime">Start time</label>
           </div>
         </div>
 
         <div class="grid2">
-        <div class="field">
-          <label>End date</label>
-          <input id="fEndDate" type="date" />
+          <div class="floatField">
+            <input id="fEndDate" type="date" />
+            <label for="fEndDate">End date</label>
+          </div>
+          <div class="floatField">
+            <input id="fEndTime" type="time" step="900" />
+            <label for="fEndTime">End time</label>
+          </div>
         </div>
-        <div class="field">
-          <label>End time</label>
-          <input id="fEndTime" type="time" step="900" />
-        </div>
-      </div>
 
-        <div class="field">
-          <label>Promised install date</label>
-          <input id="fPromisedDate" type="date" />
+        <div class="floatGroup">
+          <div class="floatField">
+            <input id="fPromisedDate" type="date" />
+            <label for="fPromisedDate">Promised install date</label>
+          </div>
           <div class="subtleNote" id="promisedBy">Saved by: —</div>
         </div>
 
         <div class="grid2">
-          <div class="field">
-            <label>Flags</label>
+          <div class="floatGroup">
             <div class="inlineRow">
-              <select id="flagSelect" style="flex:1"></select>
+              <div class="floatField" style="flex:1">
+                <select id="flagSelect"></select>
+                <label for="flagSelect">Flags</label>
+              </div>
               <button class="btn icon" id="addFlagPreset" title="Add flag"><span class="ico plus"></span></button>
             </div>
             <div class="inlineRow">
-              <input id="fFlagTokens" type="text" placeholder="e.g. payment needed, not confirmed" style="flex:1" />
+              <div class="floatField" style="flex:1">
+                <input id="fFlagTokens" type="text" placeholder=" " />
+                <label for="fFlagTokens">Add custom flags</label>
+              </div>
               <button class="btn" id="addFlagCustom" title="Add custom flag"><span class="ico plusCircle"></span> Add</button>
             </div>
             <div class="help">Pick a preset or add a custom flag. Comma-separated list is saved with the task.</div>
           </div>
-          <div class="field">
-            <label>Access equipment flags</label>
+          <div class="floatGroup">
             <div class="inlineRow">
-              <select id="accessSelect" style="flex:1"></select>
+              <div class="floatField" style="flex:1">
+                <select id="accessSelect"></select>
+                <label for="accessSelect">Access equipment flags</label>
+              </div>
               <button class="btn icon" id="addAccessPreset" title="Add access flag"><span class="ico plus"></span></button>
             </div>
             <div class="inlineRow">
-              <input id="fAccessTokens" type="text" placeholder="e.g. spider boom, scissor, trestles" style="flex:1" />
+              <div class="floatField" style="flex:1">
+                <input id="fAccessTokens" type="text" placeholder=" " />
+                <label for="fAccessTokens">Add custom access flags</label>
+              </div>
               <button class="btn" id="addAccessCustom" title="Add custom access flag"><span class="ico plusCircle"></span> Add</button>
             </div>
             <div class="help">Pick a preset or add custom equipment notes; they stay in the task details.</div>
@@ -1217,33 +1279,33 @@
         </div>
 
         <div class="grid3">
-          <div class="field">
-            <label>Status</label>
+          <div class="floatField">
             <select id="fStatus">
               <option value="Planned">Planned</option>
               <option value="In progress">In progress</option>
               <option value="Done">Done</option>
               <option value="Blocked">Blocked</option>
             </select>
+            <label for="fStatus">Status</label>
           </div>
-          <div class="field">
-            <label>Priority</label>
+          <div class="floatField">
             <select id="fPriority">
               <option value="Normal">Normal</option>
               <option value="High">High</option>
               <option value="Urgent">Urgent</option>
               <option value="Low">Low</option>
             </select>
+            <label for="fPriority">Priority</label>
           </div>
-          <div class="field">
-            <label>Location</label>
-            <input id="fLocation" type="text" placeholder="Optional (site address / suburb)" />
+          <div class="floatField">
+            <input id="fLocation" type="text" placeholder=" " />
+            <label for="fLocation">Location</label>
           </div>
         </div>
 
-        <div class="field">
-          <label>Notes</label>
-          <textarea id="fNotes" placeholder="Notes..."></textarea>
+        <div class="floatField">
+          <textarea id="fNotes" placeholder=" "></textarea>
+          <label for="fNotes">Notes</label>
         </div>
 
         <div class="help">
@@ -1324,6 +1386,11 @@
         <div class="field">
           <label>Task types (name + band color)</label>
           <div class="list" id="typeList"></div>
+          <div class="inlineRow">
+            <input id="newTypeName" type="text" placeholder="Add task type" style="flex:1" />
+            <input id="newTypeColor" type="color" value="#4ea1ff" />
+            <button class="btn" id="addTypeBtn">Add Type</button>
+          </div>
         </div>
 
         <div class="field">
@@ -1352,6 +1419,8 @@
       const LS_KEY = "schedule_board_v1";
       const SLOT_MIN = 15;
       const SLOT_MS = SLOT_MIN * 60 * 1000;
+      const LONG_PRESS_MS = 350;
+      const LONG_PRESS_MOVE_PX = 6;
       const CURRENT_USER = "Tristan";
 
       const FIREBASE_CONFIG = {
@@ -1376,6 +1445,7 @@
       let applyingRemoteConfig = false;
       let bootstrappedFromLocal = false;
       const pendingFirestoreOps = [];
+      let pendingConfigSync = false;
 
       const $ = (sel, root=document) => root.querySelector(sel);
       const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
@@ -1493,9 +1563,14 @@
         };
       }
       function syncConfigToFirestore(){
-        if(!FIREBASE_CONFIG_VALID || applyingRemoteConfig || !window.firebase) return;
+        if(!FIREBASE_CONFIG_VALID || !window.firebase) return;
+        if(applyingRemoteConfig){
+          pendingConfigSync = true;
+          return;
+        }
         enqueueFirestoreOp(()=>{
           if(!firestoreReady || !firestoreDb) return;
+          pendingConfigSync = false;
           firestoreDb
             .collection(FIRESTORE_CONFIG_COLLECTION)
             .doc(FIRESTORE_CONFIG_DOC)
@@ -1532,6 +1607,9 @@
             saveState();
             render();
             applyingRemoteConfig = false;
+            if(pendingConfigSync){
+              syncConfigToFirestore();
+            }
           }, err=>{
             console.error("Firestore config live sync error", err);
           });
@@ -2763,7 +2841,6 @@
         el.className = "task";
         if((task.priority || "").toLowerCase() === "urgent") el.classList.add("urgent");
         if((task.status || "").toLowerCase() === "done") el.classList.add("done");
-        if(justCompletedTasks.has(task.id)) el.classList.add("justCompleted");
         el.dataset.taskId = task.id;
 
         el.style.top = topPx + "px";
@@ -2790,15 +2867,15 @@
         const customerText = (task.customer || "").trim();
 
         el.innerHTML = `
-          <div class="band" style="background:${type.color}"></div>
+          <div class="band" style="background:${type.color}">
+            <div class="bandLabel">${escapeHtml(type.name)}</div>
+          </div>
 
           <div class="resizeHandle top" data-handle="top"><div class="resizeGrip"></div></div>
           <div class="resizeHandle bottom" data-handle="bottom"><div class="resizeGrip"></div></div>
 
           <div class="taskTopRow">
-            <div class="taskTypeChip" title="${escapeHtml(type.name)}" style="background:${type.color};border-color:${type.color};color:#0b0d12;">
-              <span class="taskTypeName">${escapeHtml(type.name)}</span>
-            </div>
+            <div class="taskTitle">${escapeHtml(task.title || "(untitled)")}</div>
             <div class="taskActions">
               ${timerBtn}
               <button class="cardBtn done" data-action="done" title="Mark done">
@@ -2808,7 +2885,6 @@
           </div>
 
           <div class="taskInner">
-            <div class="taskTitle">${escapeHtml(task.title || "(untitled)")}</div>
             ${customerText ? `<div class="taskCustomer">${escapeHtml(customerText)}</div>` : ``}
 
             <div class="taskMeta">
@@ -3098,10 +3174,59 @@
           daysGrid.addEventListener("pointercancel", up);
         };
 
-        topHandle.addEventListener("pointerdown", (e)=> startResize("top", e));
-        bottomHandle.addEventListener("pointerdown", (e)=> startResize("bottom", e));
+        const startResizeLongPress = (handle, e)=>{
+          if(e.pointerType === "mouse"){
+            startResize(handle, e);
+            return;
+          }
+          const handleEl = e.currentTarget;
+          const pointerId = e.pointerId;
+          const startX = e.clientX;
+          const startY = e.clientY;
+          let latestEvent = e;
+          let activated = false;
 
-        taskEl.addEventListener("pointerdown", (e)=>{
+          const cleanup = ()=>{
+            handleEl.removeEventListener("pointermove", onMove);
+            handleEl.removeEventListener("pointerup", onUp);
+            handleEl.removeEventListener("pointercancel", onUp);
+            try{ handleEl.releasePointerCapture(pointerId); } catch {}
+          };
+
+          const onMove = (ev)=>{
+            if(ev.pointerId !== pointerId) return;
+            latestEvent = ev;
+            if(activated) return;
+            const dx = Math.abs(ev.clientX - startX);
+            const dy = Math.abs(ev.clientY - startY);
+            if(Math.max(dx, dy) > LONG_PRESS_MOVE_PX){
+              clearTimeout(timer);
+              cleanup();
+            }
+          };
+
+          const onUp = (ev)=>{
+            if(ev.pointerId !== pointerId) return;
+            clearTimeout(timer);
+            cleanup();
+          };
+
+          const timer = setTimeout(()=>{
+            activated = true;
+            cleanup();
+            startResize(handle, latestEvent);
+          }, LONG_PRESS_MS);
+
+          try{ handleEl.setPointerCapture(pointerId); } catch {}
+          handleEl.addEventListener("pointermove", onMove);
+          handleEl.addEventListener("pointerup", onUp);
+          handleEl.addEventListener("pointercancel", onUp);
+        };
+
+        topHandle.addEventListener("pointerdown", (e)=> startResizeLongPress("top", e));
+        bottomHandle.addEventListener("pointerdown", (e)=> startResizeLongPress("bottom", e));
+
+        const beginDrag = (e, { autoStart=false } = {})=>{
           if(e.target.closest(".resizeHandle")) return;
           if(e.target.closest("[data-action]")) return;
           if(e.pointerType === "mouse" && e.button !== 0) return;
@@ -3131,12 +3256,15 @@
           const pointerId = e.pointerId;
           const startX = e.clientX;
           const startY = e.clientY;
-          let dragging = false;
+          let dragging = !!autoStart;
           daysGrid.setPointerCapture(pointerId);
 
           const prevPointerEvents = taskEl.style.pointerEvents;
           taskEl.style.pointerEvents = "none";
           taskEl.classList.add("dragging");
+          if(dragging){
+            scroller.start();
+          }
 
           const getTargetFromPointer = (clientX, clientY) => {
             const xContent = (clientX - gridRect.left) + daysGrid.scrollLeft;
@@ -3245,10 +3373,69 @@
           };
 
           scroller.setPointer(e.clientX, e.clientY);
-          scroller.start();
+          if(dragging){
+            scroller.start();
+          }
           daysGrid.addEventListener("pointermove", move);
           daysGrid.addEventListener("pointerup", endDrag);
           daysGrid.addEventListener("pointercancel", endDrag);
+        };
+
+        taskEl.addEventListener("pointerdown", (e)=>{
+          if(e.target.closest(".resizeHandle")) return;
+          if(e.target.closest("[data-action]")) return;
+          if(e.pointerType === "mouse"){
+            beginDrag(e);
+            return;
+          }
+
+          const pointerId = e.pointerId;
+          const startX = e.clientX;
+          const startY = e.clientY;
+          let latestEvent = e;
+          let activated = false;
+          let canceled = false;
+
+          const cleanup = ()=>{
+            taskEl.removeEventListener("pointermove", onMove);
+            taskEl.removeEventListener("pointerup", onUp);
+            taskEl.removeEventListener("pointercancel", onUp);
+            try{ taskEl.releasePointerCapture(pointerId); } catch {}
+          };
+
+          const onMove = (ev)=>{
+            if(ev.pointerId !== pointerId) return;
+            latestEvent = ev;
+            if(activated) return;
+            const dx = Math.abs(ev.clientX - startX);
+            const dy = Math.abs(ev.clientY - startY);
+            if(Math.max(dx, dy) > LONG_PRESS_MOVE_PX){
+              canceled = true;
+              clearTimeout(timer);
+              cleanup();
+            }
+          };
+
+          const onUp = (ev)=>{
+            if(ev.pointerId !== pointerId) return;
+            clearTimeout(timer);
+            cleanup();
+            if(!activated && !canceled){
+              openTaskModal(id);
+              ev.preventDefault();
+            }
+          };
+
+          const timer = setTimeout(()=>{
+            activated = true;
+            cleanup();
+            beginDrag(latestEvent, { autoStart: true });
+          }, LONG_PRESS_MS);
+
+          try{ taskEl.setPointerCapture(pointerId); } catch {}
+          taskEl.addEventListener("pointermove", onMove);
+          taskEl.addEventListener("pointerup", onUp);
+          taskEl.addEventListener("pointercancel", onUp);
         });
       }
 
@@ -3274,16 +3461,10 @@
       function markTaskDone(taskId){
         const t = state.tasks.find(x=>x.id===taskId);
         if(!t) return;
-        justCompletedTasks.add(taskId);
         updateTask(taskId, { status: "Done" }, {silent:true});
         if(editingTaskId === taskId){
           fStatus.value = "Done";
         }
-        setTimeout(()=>{
-          justCompletedTasks.delete(taskId);
-          const el = document.querySelector(`.task[data-task-id="${taskId}"]`);
-          if(el) el.classList.remove("justCompleted");
-        }, 1200);
       }
 
       function maybeNotifyActiveTasks(now){
@@ -3355,7 +3536,24 @@
       let initialPromised = { date:"", by:"" };
       let createdTaskId = null;
       const activeBeginNotifs = new Set();
-      const justCompletedTasks = new Set();
+
+      const floatFieldEls = $$(".floatField input, .floatField select, .floatField textarea");
+      function syncFloatField(el){
+        const wrap = el.closest(".floatField");
+        if(!wrap) return;
+        const hasValue = (el.value || "").toString().trim() !== "";
+        wrap.classList.toggle("filled", hasValue);
+      }
+      function refreshFloatFields(root=document){
+        $$(".floatField input, .floatField select, .floatField textarea", root).forEach(syncFloatField);
+      }
+      floatFieldEls.forEach(el=>{
+        const handler = ()=> syncFloatField(el);
+        el.addEventListener("input", handler);
+        el.addEventListener("change", handler);
+        el.addEventListener("blur", handler);
+        handler();
+      });
 
       function randomNiceColor(){
         const hues = [205, 35, 265, 150, 95, 320, 15, 190];
@@ -3482,6 +3680,7 @@
         if(exists){
           fType.value = exists.id;
           fNewType.value = "";
+          refreshFloatFields(taskModalBack);
           toast("Already exists", `Using "${exists.name}"`, "var(--accent)");
           return;
         }
@@ -3491,6 +3690,7 @@
         rebuildTypeSelect();
         fType.value = newType.id;
         fNewType.value = "";
+        refreshFloatFields(taskModalBack);
         toast("Type added", name, "var(--accent)");
       });
 
@@ -3624,6 +3824,7 @@
         }
 
         rebuildPeoplePick();
+        refreshFloatFields(taskModalBack);
         taskModalBack.classList.add("show");
       }
 
@@ -3793,6 +3994,9 @@
       const addStaffBtn2 = $("#addStaffBtn2");
 
       const typeList = $("#typeList");
+      const newTypeName = $("#newTypeName");
+      const newTypeColor = $("#newTypeColor");
+      const addTypeBtn = $("#addTypeBtn");
 
       settingsBtn.addEventListener("click", openSettings);
       settingsClose.addEventListener("click", closeSettings);
@@ -3888,6 +4092,17 @@
         newStaffName.value = "";
         renderStaffList();
         touchConfig();
+      });
+
+      addTypeBtn.addEventListener("click", ()=>{
+        const name = (newTypeName.value||"").trim();
+        if(!name) return;
+        state.types.push({ id: uid(), name, color: newTypeColor.value || randomNiceColor() });
+        newTypeName.value = "";
+        renderTypeList();
+        touchConfig();
+        rebuildTypeSelect();
+        render();
       });
 
       resetDataBtn.addEventListener("click", ()=>{
