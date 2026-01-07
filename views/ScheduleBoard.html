@@ -532,7 +532,7 @@
     .task .bandLabel{
       position:absolute;
       top:6px;
-      right:2px;
+      right:14px;
       transform: rotate(-90deg);
       transform-origin: top right;
       font-size:10px;
@@ -814,6 +814,49 @@
     }
     .field textarea{min-height: 84px; resize: vertical}
 
+    .floatGroup{
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
+    .floatField{
+      position:relative;
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+    }
+    .floatField input,
+    .floatField select,
+    .floatField textarea{
+      width:100%;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.20);
+      color: var(--text);
+      padding: 18px 10px 8px;
+      outline:none;
+      box-shadow: var(--insetShadow);
+    }
+    .floatField textarea{min-height: 84px; resize: vertical}
+    .floatField label{
+      position:absolute;
+      left:12px;
+      top:50%;
+      transform: translateY(-50%);
+      font-size:12px;
+      color: var(--muted);
+      font-weight:800;
+      pointer-events:none;
+      transition: transform .12s ease, top .12s ease, font-size .12s ease, color .12s ease;
+    }
+    .floatField.filled label,
+    .floatField:focus-within label{
+      top:6px;
+      transform: translateY(0);
+      font-size:10px;
+      color: rgba(154,166,195,.9);
+    }
+
     .modalFooter{
       padding: 12px 14px;
       border-top:1px solid rgba(255,255,255,.08);
@@ -1094,15 +1137,20 @@
       </div>
       <div class="modalBody">
         <div class="grid2">
-          <div class="field">
-            <label>Task name</label>
-            <input id="fTitle" type="text" placeholder="e.g. Install ACM sign - Springwood" />
+          <div class="floatField">
+            <input id="fTitle" type="text" placeholder=" " />
+            <label for="fTitle">Task name</label>
           </div>
-          <div class="field">
-            <label>Task type</label>
+          <div class="floatGroup">
             <div class="inlineRow">
-              <select id="fType" style="flex:1"></select>
-              <input id="fNewType" type="text" placeholder="Add type (e.g. Painting)" style="flex:1" />
+              <div class="floatField" style="flex:1">
+                <select id="fType"></select>
+                <label for="fType">Task type</label>
+              </div>
+              <div class="floatField" style="flex:1">
+                <input id="fNewType" type="text" placeholder=" " />
+                <label for="fNewType">Add type</label>
+              </div>
               <button class="btn" id="addTypeOnFlyBtn" title="Add task type">Add</button>
             </div>
             <div class="help">Task type controls the left color band. You can add a new type on the fly.</div>
@@ -1110,28 +1158,28 @@
         </div>
 
         <div class="grid2">
-          <div class="field">
-            <label>Job #</label>
-            <input id="fJob" type="text" placeholder="Optional" />
+          <div class="floatField">
+            <input id="fJob" type="text" placeholder=" " />
+            <label for="fJob">Job #</label>
           </div>
-          <div class="field">
-            <label>Customer name</label>
-            <input id="fCustomer" type="text" placeholder="e.g. John Smith / ACME Pty Ltd" />
+          <div class="floatField">
+            <input id="fCustomer" type="text" placeholder=" " />
+            <label for="fCustomer">Customer name</label>
           </div>
         </div>
 
         <div class="grid3">
-          <div class="field">
-            <label>Contact name</label>
-            <input id="fContactName" type="text" placeholder="Customer contact" />
+          <div class="floatField">
+            <input id="fContactName" type="text" placeholder=" " />
+            <label for="fContactName">Contact name</label>
           </div>
-          <div class="field">
-            <label>Contact phone</label>
-            <input id="fContactPhone" type="text" placeholder="Phone" />
+          <div class="floatField">
+            <input id="fContactPhone" type="text" placeholder=" " />
+            <label for="fContactPhone">Contact phone</label>
           </div>
-          <div class="field">
-            <label>Customer email</label>
-            <input id="fCustomerEmail" type="email" placeholder="Email" />
+          <div class="floatField">
+            <input id="fCustomerEmail" type="email" placeholder=" " />
+            <label for="fCustomerEmail">Customer email</label>
           </div>
         </div>
 
@@ -1153,54 +1201,66 @@
         </div>
 
         <div class="grid2">
-          <div class="field">
-            <label>Start date</label>
+          <div class="floatField">
             <input id="fStartDate" type="date" />
+            <label for="fStartDate">Start date</label>
           </div>
-          <div class="field">
-            <label>Start time</label>
+          <div class="floatField">
             <input id="fStartTime" type="time" step="900" />
+            <label for="fStartTime">Start time</label>
           </div>
         </div>
 
         <div class="grid2">
-        <div class="field">
-          <label>End date</label>
-          <input id="fEndDate" type="date" />
+          <div class="floatField">
+            <input id="fEndDate" type="date" />
+            <label for="fEndDate">End date</label>
+          </div>
+          <div class="floatField">
+            <input id="fEndTime" type="time" step="900" />
+            <label for="fEndTime">End time</label>
+          </div>
         </div>
-        <div class="field">
-          <label>End time</label>
-          <input id="fEndTime" type="time" step="900" />
-        </div>
-      </div>
 
-        <div class="field">
-          <label>Promised install date</label>
-          <input id="fPromisedDate" type="date" />
+        <div class="floatGroup">
+          <div class="floatField">
+            <input id="fPromisedDate" type="date" />
+            <label for="fPromisedDate">Promised install date</label>
+          </div>
           <div class="subtleNote" id="promisedBy">Saved by: —</div>
         </div>
 
         <div class="grid2">
-          <div class="field">
-            <label>Flags</label>
+          <div class="floatGroup">
             <div class="inlineRow">
-              <select id="flagSelect" style="flex:1"></select>
+              <div class="floatField" style="flex:1">
+                <select id="flagSelect"></select>
+                <label for="flagSelect">Flags</label>
+              </div>
               <button class="btn icon" id="addFlagPreset" title="Add flag"><span class="ico plus"></span></button>
             </div>
             <div class="inlineRow">
-              <input id="fFlagTokens" type="text" placeholder="e.g. payment needed, not confirmed" style="flex:1" />
+              <div class="floatField" style="flex:1">
+                <input id="fFlagTokens" type="text" placeholder=" " />
+                <label for="fFlagTokens">Add custom flags</label>
+              </div>
               <button class="btn" id="addFlagCustom" title="Add custom flag"><span class="ico plusCircle"></span> Add</button>
             </div>
             <div class="help">Pick a preset or add a custom flag. Comma-separated list is saved with the task.</div>
           </div>
-          <div class="field">
-            <label>Access equipment flags</label>
+          <div class="floatGroup">
             <div class="inlineRow">
-              <select id="accessSelect" style="flex:1"></select>
+              <div class="floatField" style="flex:1">
+                <select id="accessSelect"></select>
+                <label for="accessSelect">Access equipment flags</label>
+              </div>
               <button class="btn icon" id="addAccessPreset" title="Add access flag"><span class="ico plus"></span></button>
             </div>
             <div class="inlineRow">
-              <input id="fAccessTokens" type="text" placeholder="e.g. spider boom, scissor, trestles" style="flex:1" />
+              <div class="floatField" style="flex:1">
+                <input id="fAccessTokens" type="text" placeholder=" " />
+                <label for="fAccessTokens">Add custom access flags</label>
+              </div>
               <button class="btn" id="addAccessCustom" title="Add custom access flag"><span class="ico plusCircle"></span> Add</button>
             </div>
             <div class="help">Pick a preset or add custom equipment notes; they stay in the task details.</div>
@@ -1219,33 +1279,33 @@
         </div>
 
         <div class="grid3">
-          <div class="field">
-            <label>Status</label>
+          <div class="floatField">
             <select id="fStatus">
               <option value="Planned">Planned</option>
               <option value="In progress">In progress</option>
               <option value="Done">Done</option>
               <option value="Blocked">Blocked</option>
             </select>
+            <label for="fStatus">Status</label>
           </div>
-          <div class="field">
-            <label>Priority</label>
+          <div class="floatField">
             <select id="fPriority">
               <option value="Normal">Normal</option>
               <option value="High">High</option>
               <option value="Urgent">Urgent</option>
               <option value="Low">Low</option>
             </select>
+            <label for="fPriority">Priority</label>
           </div>
-          <div class="field">
-            <label>Location</label>
-            <input id="fLocation" type="text" placeholder="Optional (site address / suburb)" />
+          <div class="floatField">
+            <input id="fLocation" type="text" placeholder=" " />
+            <label for="fLocation">Location</label>
           </div>
         </div>
 
-        <div class="field">
-          <label>Notes</label>
-          <textarea id="fNotes" placeholder="Notes..."></textarea>
+        <div class="floatField">
+          <textarea id="fNotes" placeholder=" "></textarea>
+          <label for="fNotes">Notes</label>
         </div>
 
         <div class="help">
@@ -3477,6 +3537,24 @@
       let createdTaskId = null;
       const activeBeginNotifs = new Set();
 
+      const floatFieldEls = $$(".floatField input, .floatField select, .floatField textarea");
+      function syncFloatField(el){
+        const wrap = el.closest(".floatField");
+        if(!wrap) return;
+        const hasValue = (el.value || "").toString().trim() !== "";
+        wrap.classList.toggle("filled", hasValue);
+      }
+      function refreshFloatFields(root=document){
+        $$(".floatField input, .floatField select, .floatField textarea", root).forEach(syncFloatField);
+      }
+      floatFieldEls.forEach(el=>{
+        const handler = ()=> syncFloatField(el);
+        el.addEventListener("input", handler);
+        el.addEventListener("change", handler);
+        el.addEventListener("blur", handler);
+        handler();
+      });
+
       function randomNiceColor(){
         const hues = [205, 35, 265, 150, 95, 320, 15, 190];
         const h = hues[Math.floor(Math.random()*hues.length)];
@@ -3602,6 +3680,7 @@
         if(exists){
           fType.value = exists.id;
           fNewType.value = "";
+          refreshFloatFields(taskModalBack);
           toast("Already exists", `Using "${exists.name}"`, "var(--accent)");
           return;
         }
@@ -3611,6 +3690,7 @@
         rebuildTypeSelect();
         fType.value = newType.id;
         fNewType.value = "";
+        refreshFloatFields(taskModalBack);
         toast("Type added", name, "var(--accent)");
       });
 
@@ -3744,6 +3824,7 @@
         }
 
         rebuildPeoplePick();
+        refreshFloatFields(taskModalBack);
         taskModalBack.classList.add("show");
       }
 
