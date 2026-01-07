@@ -48,6 +48,11 @@
       font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
       overflow:hidden;
     }
+    @media (max-width: 900px){
+      body{
+        padding-bottom: var(--headerH);
+      }
+    }
 
     /* Header */
     .appHeader{
@@ -61,6 +66,24 @@
       backdrop-filter: blur(10px);
       border-bottom:1px solid rgba(255,255,255,.06);
       z-index:50;
+    }
+    @media (max-width: 900px){
+      .appHeader{
+        position:fixed;
+        top:auto;
+        bottom:0;
+        width:100%;
+        border-bottom:none;
+        border-top:1px solid rgba(255,255,255,.06);
+        overflow-x:auto;
+        scrollbar-width: none;
+      }
+      .appHeader::-webkit-scrollbar{display:none}
+      .headerLeft,
+      .headerRight{
+        flex:0 0 auto;
+        white-space:nowrap;
+      }
     }
     .brand{display:flex; align-items:center; gap:10px; min-width: 170px;}
     .brandBadge{
@@ -176,6 +199,11 @@
       display:flex;
       flex-direction:column;
       overflow:hidden;
+    }
+    @media (max-width: 900px){
+      .appBody{
+        height: calc(100vh - var(--headerH));
+      }
     }
 
     /* Layout: main + unassigned panel */
@@ -427,6 +455,9 @@
       scrollbar-width: thin;
       scrollbar-color: rgba(255,255,255,.12) transparent;
       touch-action: pan-x pan-y;
+      user-select:none;
+      -webkit-user-select:none;
+      -webkit-touch-callout:none;
     }
     .daysGrid::-webkit-scrollbar{height:10px;width:10px}
     .daysGrid::-webkit-scrollbar-thumb{background: rgba(255,255,255,.12); border-radius:20px}
@@ -445,6 +476,8 @@
       border-right:1px solid rgba(255,255,255,.06);
       background: linear-gradient(to bottom, rgba(255,255,255,.03), rgba(255,255,255,.00) 22%);
       user-select:none;
+      -webkit-user-select:none;
+      -webkit-touch-callout:none;
     }
 
     .slotLine{
@@ -487,6 +520,9 @@
       box-shadow: 0 10px 24px rgba(0,0,0,.30);
       overflow:hidden;
       touch-action:none;
+      user-select:none;
+      -webkit-user-select:none;
+      -webkit-touch-callout:none;
     }
     .task.dragging{
       cursor: grabbing;
@@ -689,6 +725,9 @@
       z-index:4;
       cursor: ns-resize;
       touch-action:none;
+      user-select:none;
+      -webkit-user-select:none;
+      -webkit-touch-callout:none;
     }
     .resizeHandle.top{top:-2px}
     .resizeHandle.bottom{bottom:-2px}
@@ -2997,10 +3036,7 @@
       function attachCreateDrag(col){
         let creating = null;
 
-        col.addEventListener("pointerdown", (e)=>{
-          if(e.target.closest(".task")) return;
-          if(e.pointerType === "mouse" && e.button !== 0) return;
-
+        const beginCreate = (e)=>{
           const colRect = col.getBoundingClientRect();
           const y = e.clientY - colRect.top;
           const startSlot = clamp(Math.floor(y / slotH()), 0, totalSlotsInView()-1);
@@ -3013,6 +3049,61 @@
 
           creating = { pointerId: e.pointerId, dayIso: col.dataset.day, startSlot, ghost, moved:false };
           col.setPointerCapture(e.pointerId);
+        };
+
+        col.addEventListener("pointerdown", (e)=>{
+          if(e.target.closest(".task")) return;
+          if(e.pointerType === "mouse" && e.button !== 0) return;
+
+          if(e.pointerType === "mouse"){
+            beginCreate(e);
+            return;
+          }
+
+          const pointerId = e.pointerId;
+          const startX = e.clientX;
+          const startY = e.clientY;
+          let latestEvent = e;
+          let activated = false;
+          let canceled = false;
+
+          const cleanup = ()=>{
+            col.removeEventListener("pointermove", onMove);
+            col.removeEventListener("pointerup", onUp);
+            col.removeEventListener("pointercancel", onUp);
+            try{ col.releasePointerCapture(pointerId); } catch {}
+          };
+
+          const onMove = (ev)=>{
+            if(ev.pointerId !== pointerId) return;
+            latestEvent = ev;
+            if(activated) return;
+            const dx = Math.abs(ev.clientX - startX);
+            const dy = Math.abs(ev.clientY - startY);
+            if(Math.max(dx, dy) > LONG_PRESS_MOVE_PX){
+              canceled = true;
+              clearTimeout(timer);
+              cleanup();
+            }
+          };
+
+          const onUp = (ev)=>{
+            if(ev.pointerId !== pointerId) return;
+            clearTimeout(timer);
+            cleanup();
+          };
+
+          const timer = setTimeout(()=>{
+            if(canceled) return;
+            activated = true;
+            cleanup();
+            beginCreate(latestEvent);
+          }, LONG_PRESS_MS);
+
+          try{ col.setPointerCapture(pointerId); } catch {}
+          col.addEventListener("pointermove", onMove);
+          col.addEventListener("pointerup", onUp);
+          col.addEventListener("pointercancel", onUp);
         });
 
         col.addEventListener("pointermove", (e)=>{
