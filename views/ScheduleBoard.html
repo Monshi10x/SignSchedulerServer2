@@ -532,9 +532,9 @@
     .task .bandLabel{
       position:absolute;
       top:6px;
-      left:50%;
-      transform: translate(-50%, 0) rotate(-90deg);
-      transform-origin: center;
+      right:2px;
+      transform: rotate(-90deg);
+      transform-origin: top right;
       font-size:10px;
       font-weight:850;
       color:#0b0d12;
@@ -914,7 +914,14 @@
     .cardBtn .ico{ width:16px; height:16px; background: currentColor; mask-size: contain; mask-repeat:no-repeat; mask-position:center; -webkit-mask-size:contain; -webkit-mask-repeat:no-repeat; -webkit-mask-position:center; }
     .cardBtn.edit{ border-color: rgba(78,161,255,.30); background: rgba(78,161,255,.10); }
     .cardBtn.delete{ border-color: rgba(255,78,106,.32); background: rgba(255,78,106,.12); color:#ffd3db; }
-    .cardBtn.done{ border-color: rgba(46,229,157,.4); background: rgba(46,229,157,.14); color:#c7ffea; }
+    .cardBtn.done{
+      width:30px;
+      height:26px;
+      border-color: rgba(46,229,157,.4);
+      background: rgba(46,229,157,.14);
+      color:#c7ffea;
+    }
+    .cardBtn.done .ico{ width:14px; height:14px; }
     .trackIndicator{
       width:30px; height:30px;
       border-radius:12px;
