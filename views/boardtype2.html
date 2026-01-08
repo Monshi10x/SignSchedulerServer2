@@ -237,14 +237,14 @@
       gap:12px;
       flex:1;
       min-height:0;
-      padding:8px 12px 4px;
+      padding:5px 2px;
     }
     .task .body{
       flex:1;
       display:flex;
       align-items:center;
       gap:10px;
-      padding:0 10px;
+      padding:0;
       min-width:0;
       justify-content:flex-start;
     }
@@ -298,6 +298,12 @@
 
     .task .right{
       width: var(--actionsW);
+      display:flex;
+      align-items:center;
+      gap:6px;
+      justify-content:flex-end;
+    }
+    .assignees-card{
       display:flex;
       align-items:center;
       gap:6px;
@@ -444,7 +450,7 @@
       left: var(--left, 0px);
       width: var(--w, 0px);
       border-radius: 0;          /* removed rounded */
-      background: var(--c, #4aa3ff);
+      background: #1d1f25;
       box-shadow: 0 10px 24px rgba(0,0,0,.25);
       cursor:pointer;
       display:flex;
@@ -503,8 +509,8 @@
     /* Rotated time labels outside bar, not clipped */
     .time-label{
       position:absolute;
-      top:50%;
-      transform: translateY(-50%) rotate(-90deg);
+      top:-22px;
+      transform: rotate(90deg);
       transform-origin: center;
       color: rgba(255,255,255,.95);
       font-weight:1000;
@@ -513,13 +519,27 @@
       text-shadow: 0 2px 10px rgba(0,0,0,.55);
       pointer-events:none;
       z-index:6;
-      background: transparent;
-      border: none;
-      padding: 0;
+      background: rgba(15,18,26,.9);
+      border:1px solid rgba(255,255,255,.22);
+      padding: 4px 6px;
+      border-radius:6px;
       white-space:nowrap;
     }
-    .time-label.start{ left: -18px; }
-    .time-label.end{ right: -18px; }
+    .time-label.start{ left: -8px; }
+    .time-label.end{ right: -8px; }
+    .time-label::after{
+      content:"";
+      position:absolute;
+      bottom:-6px;
+      left:50%;
+      transform: translateX(-50%);
+      width:0;
+      height:0;
+      border-left:6px solid transparent;
+      border-right:6px solid transparent;
+      border-top:6px solid rgba(15,18,26,.9);
+      filter: drop-shadow(0 -1px 0 rgba(255,255,255,.22));
+    }
 
     /* MODAL */
     .modal-backdrop{
@@ -1288,6 +1308,71 @@
       chip.textContent = name;
       assigneesWrap.appendChild(chip);
     }
+
+    actions.innerHTML=`
+      <div class="iconbtn" title="Edit">${iconPencil()}</div>
+      <div class="iconbtn danger" title="Delete">${iconTrash()}</div>
+      <div class="completebtn" title="Complete">${iconCheck()}</div>
+    `;
+
+    const main=document.createElement('div');
+    main.className='task-main';
+    main.appendChild(meta);
+    main.appendChild(document.createElement('div'));
+    main.appendChild(actions);
+
+    actions.prepend(assigneesWrap);
+
+    el.appendChild(typeBar);
+    el.appendChild(main);
+    el.appendChild(timeline);
+
+    actions.querySelector('.iconbtn').addEventListener('click', (e)=>{ e.stopPropagation(); openModal(dayKey, task.id); });
+    actions.querySelector('.iconbtn.danger').addEventListener('click', (e)=>{ e.stopPropagation(); deleteTask(dayKey, task.id); });
+    actions.querySelector('.completebtn').addEventListener('click', (e)=>{ e.stopPropagation(); toggleComplete(dayKey, task.id); });
+
+    const descInput = meta.querySelector('.task-desc-input');
+    const updateDescWidth = () => {
+      const length = Math.max(2, descInput.value.length + 1);
+      descInput.style.width = `${Math.max(20, length * 8)}px`;
+    };
+    updateDescWidth();
+    descInput.addEventListener('pointerdown', (e)=> e.stopPropagation());
+    descInput.addEventListener('click', (e)=> e.stopPropagation());
+    descInput.addEventListener('input', updateDescWidth);
+    descInput.addEventListener('change', () => {
+      updateTask(dayKey, task.id, { desc: descInput.value.trim() || "Task" });
+    });
+    descInput.addEventListener('keydown', (e) => {
+      if(e.key === 'Enter'){
+        e.preventDefault();
+        descInput.blur();
+      }
+    });
+
+    const typeInput = typeBar.querySelector('.task-type-input');
+    const updateTypeWidth = () => {
+      const length = Math.max(2, typeInput.value.length + 1);
+      typeInput.style.width = `${Math.max(20, length * 7)}px`;
+    };
+    updateTypeWidth();
+    typeInput.addEventListener('click', (e)=> e.stopPropagation());
+    typeInput.addEventListener('input', updateTypeWidth);
+    typeInput.addEventListener('change', () => {
+      updateTask(dayKey, task.id, { type: typeInput.value.trim() || task.type });
+    });
+    typeInput.addEventListener('keydown', (e)=>{
+      if(e.key === 'Enter'){
+        e.preventDefault();
+        typeInput.blur();
+      }
+    });
+
+    const actions=document.createElement('div');
+    actions.className='right';
+
+    return el;
+  }
 
     actions.innerHTML=`
       <div class="iconbtn" title="Edit">${iconPencil()}</div>
