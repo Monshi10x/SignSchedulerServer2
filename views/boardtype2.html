@@ -1,0 +1,2167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Two-Column Day Task Board</title>
+  <style>
+    :root{
+      --bg:#0b0f17;
+      --text:#e8eefc;
+      --muted:#9fb0d0;
+      --line:rgba(255,255,255,.10);
+      --line2:rgba(255,255,255,.06);
+
+      --leftW: 360px;
+      --splitW: 10px;
+
+      --taskH: 70px;            /* was 50px */
+      --dayHeaderH: 34px;
+      --dayFooterH: 28px;
+
+      /* timeline */
+      --timelineHeaderH: 44px;
+      --slotW: 28px; /* 15-minute slot width */
+      --startMin: 360; /* 6:00 */
+      --endMin: 1020;  /* 17:00 */
+      --timelineW: calc(((var(--endMin) - var(--startMin)) / 15) * var(--slotW)); /* 44 slots */
+
+      /* left color bar */
+      --barW: 12px; /* double the old 6px */
+    }
+
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      background: radial-gradient(1200px 800px at 30% 10%, #15213a 0%, var(--bg) 60%);
+      color:var(--text);
+      overflow:hidden;
+    }
+
+    .topbar{
+      height:56px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:0 14px;
+      border-bottom:1px solid var(--line);
+      background: linear-gradient(180deg, rgba(16,24,38,.95), rgba(16,24,38,.75));
+      backdrop-filter: blur(10px);
+      position:sticky;
+      top:0;
+      z-index:100;
+    }
+    .brand{ display:flex; gap:10px; align-items:center; font-weight:800; }
+    .pill{
+      font-size:12px; color:var(--muted);
+      padding:4px 8px; border:1px solid var(--line);
+      border-radius:999px; background:rgba(255,255,255,.04);
+      font-weight:700;
+    }
+    .actions{ display:flex; gap:8px; align-items:center; }
+    button{
+      appearance:none; border:1px solid var(--line);
+      background: rgba(255,255,255,.05);
+      color:var(--text); padding:9px 10px;
+      border-radius:10px; cursor:pointer; font-weight:700;
+    }
+    button:hover{ background: rgba(255,255,255,.08); }
+    button:active{ transform: translateY(1px); }
+
+    .board-scroll{
+      height: calc(100vh - 56px);
+      overflow:auto;
+    }
+
+    .board-grid{
+      display:grid;
+      grid-template-columns: var(--leftW) var(--splitW) 1fr;
+      min-height:100%;
+    }
+
+    /* LEFT COLUMN */
+    .left-col{
+      border-right:1px solid var(--line);
+      background: linear-gradient(180deg, rgba(16,24,38,.65), rgba(16,24,38,.35));
+      padding:10px 10px 40px;
+    }
+
+    .left-header-spacer{
+      height: var(--timelineHeaderH);
+      border:1px solid var(--line);
+      border-radius:14px;
+      background: rgba(255,255,255,.02);
+      margin-bottom:10px;
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      backdrop-filter: blur(10px);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:0 12px;
+    }
+    .left-header-spacer .hint{
+      font-size:12px; color: rgba(159,176,208,.9); font-weight:800;
+    }
+
+    .day{
+      border:1px solid var(--line);
+      border-radius:14px;
+      background: rgba(255,255,255,.03);
+      margin-bottom:10px;
+      overflow:hidden;
+      min-height: 120px;
+    }
+    .day-header{
+      height: var(--dayHeaderH);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:0 10px;
+      border-bottom:1px solid var(--line2);
+      background: rgba(255,255,255,.02);
+      font-weight:800;
+    }
+    .day-header .sub{
+      font-weight:700; color:var(--muted);
+      font-size:12px;
+    }
+
+    .tasks{
+      padding:8px 8px 0;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
+
+    .task{
+      height: var(--taskH);
+      border:1px solid var(--line);
+      border-radius:12px;
+      background: rgba(255,255,255,.035);
+      display:flex;
+      align-items:stretch;
+      overflow:hidden;
+      position:relative;
+      user-select:none;
+    }
+    .task.completed{ opacity:.45; filter:saturate(.6); }
+
+    .task .colorbar{
+      width: var(--barW);
+      height:100%;
+      background: var(--c, #4aa3ff);
+      position:relative;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+    .task .type-rot{
+      position:absolute;
+      left:50%;
+      top:50%;
+      transform: translate(-50%,-50%) rotate(-90deg);
+      transform-origin:center;
+      font-size:11px;
+      font-weight:1000;
+      letter-spacing:.3px;
+      color: rgba(255,255,255,.95);
+      text-shadow: 0 2px 10px rgba(0,0,0,.55);
+      white-space:nowrap;
+      pointer-events:none;
+    }
+
+    .task .body{
+      flex:1;
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding:0 10px;
+      min-width:0;
+    }
+
+    /* task name centered and can be 2 lines with ellipsis on last line */
+    .desc{
+      flex:1;
+      min-width:0;
+      font-weight:800;
+      text-align:center;
+
+      display:-webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
+      overflow:hidden;
+      line-height:1.15;
+      max-height: calc(1.15em * 2);
+    }
+
+    .chip{
+      font-size:12px;
+      font-weight:900;
+      padding:6px 8px;
+      border-radius:10px;
+      border:1px solid var(--line);
+      background: rgba(0,0,0,.18);
+      white-space:nowrap;
+      cursor:pointer;
+      flex:0 0 auto;
+    }
+    .task .right{
+      display:flex;
+      align-items:center;
+      gap:6px;
+      padding-right:8px;
+    }
+    .iconbtn{
+      width:32px; height:32px;
+      border-radius:10px;
+      display:grid; place-items:center;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.05);
+      cursor:pointer;
+      flex:0 0 auto;
+    }
+    .iconbtn:hover{ background: rgba(255,255,255,.09); }
+    .iconbtn svg{ width:16px; height:16px; }
+    .iconbtn.danger{
+      border-color: rgba(255,77,77,.35);
+      background: rgba(255,77,77,.10);
+    }
+    .iconbtn.danger:hover{ background: rgba(255,77,77,.18); }
+
+    .completebtn{
+      width:34px; height:34px;
+      border-radius:12px;
+      border:1px solid rgba(140,255,185,.25);
+      background: rgba(140,255,185,.12);
+      display:grid; place-items:center;
+      cursor:pointer;
+      flex:0 0 auto;
+    }
+    .completebtn:hover{ background: rgba(140,255,185,.18); }
+    .completebtn svg{ width:18px; height:18px; }
+
+    .task.dragging{
+      opacity:.9;
+      box-shadow: 0 12px 30px rgba(0,0,0,.35);
+      transform: scale(1.01);
+      z-index:5;
+      position:relative;
+    }
+    .task.placeholder{
+      border:1px dashed rgba(255,255,255,.25);
+      background: rgba(255,255,255,.02);
+    }
+
+    .add-area{
+      height: var(--dayFooterH);
+      margin:8px;
+      border-radius:12px;
+      border:1px dashed rgba(255,255,255,.20);
+      background: rgba(255,255,255,.02);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      color: rgba(232,238,252,.75);
+      font-weight:800;
+      cursor:pointer;
+    }
+    .add-area:hover{ background: rgba(255,255,255,.05); }
+
+    /* SPLITTER */
+    .splitter{
+      width: var(--splitW);
+      cursor: col-resize;
+      position: sticky;
+      top: 0;
+      z-index: 60;
+      background: rgba(255,255,255,.02);
+      border-left:1px solid var(--line2);
+      border-right:1px solid var(--line2);
+    }
+    .splitter::after{
+      content:"";
+      display:block;
+      width:4px;
+      height:140px;
+      border-radius:999px;
+      margin: 16px auto 0;
+      background: rgba(255,255,255,.10);
+      box-shadow: 0 0 0 1px rgba(255,255,255,.06);
+    }
+
+    /* RIGHT COLUMN */
+    .right-col{
+      padding:10px 10px 40px;
+      position:relative;
+    }
+
+    .timeline-sticky-header{
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      height: var(--timelineHeaderH);
+      border:1px solid var(--line);
+      border-radius:14px;
+      background: linear-gradient(180deg, rgba(16,24,38,.95), rgba(16,24,38,.78));
+      backdrop-filter: blur(10px);
+      overflow: hidden;
+      margin-bottom:10px;
+    }
+
+    .timeline-header-scroll{
+      height: 100%;
+      overflow-x:auto;
+      overflow-y:hidden;
+    }
+    .timeline-header-inner{
+      width: var(--timelineW);
+      min-width: var(--timelineW);
+      height: 100%;
+      position:relative;
+    }
+
+    .hours{
+      position:absolute;
+      inset:0;
+      display:block;
+    }
+    .hours .label{
+      position:absolute;
+      bottom:6px;
+      transform: translateX(-50%);
+      font-size:12px;
+      font-weight:900;
+      color: rgba(232,238,252,.85);
+      white-space:nowrap;
+      pointer-events:none;
+    }
+
+    /* More visible vertical lines: hour (strong) + 15-min (light) */
+    .grid-bg{
+      position:absolute;
+      inset:0;
+      background:
+        linear-gradient(to right, rgba(255,255,255,.22) 1px, transparent 1px) 0 0 / calc(var(--slotW) * 4) 100%, /* hour */
+        linear-gradient(to right, rgba(255,255,255,.10) 1px, transparent 1px) 0 0 / var(--slotW) 100%;          /* 15-min */
+      pointer-events:none;
+      opacity:1;
+    }
+
+    .timeline-body-scroll{
+      overflow-x:auto;
+      overflow-y:visible;
+      border-radius:14px;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.02);
+    }
+
+    .timeline-body-inner{
+      width: var(--timelineW);
+      min-width: var(--timelineW);
+      padding: 0;
+      position:relative;
+    }
+
+    #timelineDays{
+      padding: 0;
+      margin: 0;
+    }
+
+    .timeline-day{
+      border:1px solid var(--line);
+      border-radius:14px;
+      background: rgba(0,0,0,.12);
+      margin: 0 10px 10px;
+      overflow:hidden;
+      min-height: 120px;
+      position:relative;
+    }
+
+    /* Invisible spacer to align with left day header */
+    .timeline-day-topspacer{
+      height: var(--dayHeaderH);
+      background: transparent;
+    }
+
+    .timeline-day-body{
+      padding:8px 8px 0;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      position:relative;
+    }
+
+    .timeline-row{
+      height: var(--taskH);
+      border-radius:12px;
+      position:relative;
+      overflow:visible; /* labels can hang out */
+      border:1px solid rgba(255,255,255,.06);
+      background: rgba(255,255,255,.015);
+    }
+    .timeline-row.completed{ opacity:.45; filter:saturate(.6); }
+
+    /* Put grid lines also behind each row (visible while scrolling) */
+    .timeline-row::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      background:
+        linear-gradient(to right, rgba(255,255,255,.22) 1px, transparent 1px) 0 0 / calc(var(--slotW) * 4) 100%,
+        linear-gradient(to right, rgba(255,255,255,.10) 1px, transparent 1px) 0 0 / var(--slotW) 100%;
+      pointer-events:none;
+      opacity:1;
+      border-radius:12px;
+    }
+
+    /* TIME BAR (right column) — square edges (no rounded) */
+    .bar{
+      position:absolute;
+      top:8px;
+      bottom:8px;
+      left: var(--left, 0px);
+      width: var(--w, 0px);
+      border-radius: 0;          /* removed rounded */
+      background: var(--c, #4aa3ff);
+      box-shadow: 0 10px 24px rgba(0,0,0,.25);
+      cursor:pointer;
+      display:flex;
+      align-items:center;
+      gap:6px;
+      padding:0 10px;
+      overflow: visible;          /* IMPORTANT: allow time labels outside */
+      z-index:2;
+    }
+
+    .bar .handle{
+      position:absolute;
+      top:50%;
+      transform: translateY(-50%);
+      width:14px;
+      height:22px;
+      border-radius:9px;
+      background: rgba(255,255,255,.18);
+      border:1px solid rgba(255,255,255,.30);
+      cursor: ew-resize;
+      z-index:5;
+    }
+    .bar .handle.left{ left:-6px; }
+    .bar .handle.right{ right:-6px; }
+    .bar .handle::before{
+      content:"";
+      position:absolute;
+      left:50%; top:50%;
+      width:2px; height:12px;
+      transform: translate(-50%,-50%);
+      background: rgba(255,255,255,.65);
+      box-shadow: 4px 0 0 rgba(255,255,255,.45), -4px 0 0 rgba(255,255,255,.45);
+      border-radius:2px;
+      opacity:.8;
+    }
+
+    .assignees{
+      display:flex;
+      gap:6px;
+      align-items:center;
+      flex:1;
+      min-width:0;
+      z-index:4;
+    }
+    .person-chip{
+      font-size:11px;
+      font-weight:900;
+      padding:4px 8px;
+      border-radius:999px;
+      background: var(--p, rgba(255,255,255,.15));
+      border:1px solid rgba(255,255,255,.25);
+      white-space:nowrap;
+      flex:0 0 auto;
+    }
+
+    /* Rotated time labels outside bar, not clipped */
+    .time-label{
+      position:absolute;
+      top:50%;
+      transform: translateY(-50%) rotate(-90deg);
+      transform-origin: center;
+      color: rgba(255,255,255,.95);
+      font-weight:1000;
+      font-size:11px;
+      letter-spacing:.2px;
+      text-shadow: 0 2px 10px rgba(0,0,0,.55);
+      pointer-events:none;
+      z-index:6;
+      background: transparent;
+      border: none;
+      padding: 0;
+      white-space:nowrap;
+    }
+    .time-label.start{ left: -18px; }
+    .time-label.end{ right: -18px; }
+
+    .timeline-add-spacer{
+      height: var(--dayFooterH);
+      margin:8px;
+      border-radius:12px;
+      border:1px dashed rgba(255,255,255,.12);
+      background: rgba(255,255,255,.01);
+    }
+
+    /* MODAL */
+    .modal-backdrop{
+      position:fixed;
+      inset:0;
+      background: rgba(0,0,0,.55);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:20px;
+      z-index:200;
+    }
+    .modal-backdrop.show{ display:flex; }
+    .modal{
+      width:min(640px, 100%);
+      border-radius:16px;
+      border:1px solid var(--line);
+      background: linear-gradient(180deg, rgba(16,24,38,.98), rgba(16,24,38,.92));
+      box-shadow: 0 30px 80px rgba(0,0,0,.55);
+      overflow:hidden;
+    }
+    .modal-head{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:12px 14px;
+      border-bottom:1px solid var(--line);
+    }
+    .modal-title{ font-weight:900; }
+    .modal-body{ padding:14px; display:grid; gap:10px; }
+    .row{
+      display:grid;
+      grid-template-columns: 130px 1fr;
+      gap:10px;
+      align-items:start;
+    }
+    .row label{
+      font-size:12px;
+      color: var(--muted);
+      font-weight:900;
+      letter-spacing:.2px;
+      padding-top:10px;
+    }
+    input, select{
+      width:100%;
+      border-radius:12px;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.05);
+      color: var(--text);
+      padding:10px 10px;
+      font-weight:700;
+      outline:none;
+    }
+    .assignee-grid{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      padding:10px;
+      border-radius:12px;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.03);
+    }
+    .assignee-pill{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      border:1px solid var(--line2);
+      background: rgba(255,255,255,.04);
+      border-radius:999px;
+      padding:6px 10px;
+      cursor:pointer;
+      user-select:none;
+      font-weight:900;
+      font-size:12px;
+    }
+    .assignee-pill input{ width:auto; }
+    .dot{
+      width:10px; height:10px;
+      border-radius:999px;
+      background: var(--p);
+      box-shadow: 0 0 0 2px rgba(0,0,0,.25);
+    }
+
+    .modal-foot{
+      display:flex;
+      gap:8px;
+      justify-content:flex-end;
+      padding:12px 14px;
+      border-top:1px solid var(--line);
+    }
+    .hint{
+      font-size:12px;
+      color: rgba(159,176,208,.85);
+      line-height:1.35;
+    }
+
+    /* SETTINGS POPOVER */
+    .settings-panel{
+      position:fixed;
+      top:64px;
+      right:14px;
+      width:320px;
+      border-radius:16px;
+      border:1px solid var(--line);
+      background: linear-gradient(180deg, rgba(16,24,38,.98), rgba(16,24,38,.92));
+      box-shadow: 0 30px 80px rgba(0,0,0,.55);
+      padding:12px;
+      display:none;
+      z-index:300;
+    }
+    .settings-panel.show{ display:block; }
+    .settings-panel h4{ margin:0 0 10px; font-size:13px; }
+    .settings-panel .srow{
+      display:grid;
+      grid-template-columns: 1fr 90px;
+      gap:8px;
+      align-items:center;
+      margin-bottom:8px;
+    }
+    .settings-panel .srow span{
+      font-size:12px;
+      color: var(--muted);
+      font-weight:900;
+    }
+
+    .tiny{ font-size:11px; color: rgba(159,176,208,.82); }
+
+    @media (max-width: 900px){
+      body{ overflow:auto; }
+      .board-scroll{ height:auto; overflow:visible; }
+      .board-grid{ grid-template-columns: 1fr; }
+      .splitter{ display:none; }
+      .right-col{ border-top:1px solid var(--line); }
+      .timeline-sticky-header{ top:56px; }
+      .left-header-spacer{ top:56px; }
+      .timeline-day{ margin: 0 0 10px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="brand">
+      <span>Task Board</span>
+      <span class="pill">2-column day + timeline</span>
+    </div>
+    <div class="actions">
+      <button id="btnToday">Jump to Today</button>
+      <button id="btnSettings">Settings</button>
+    </div>
+  </div>
+
+  <div id="settingsPanel" class="settings-panel">
+    <h4>Settings</h4>
+    <div class="srow">
+      <span>Days visible (min height)</span>
+      <input id="daysVisibleInput" type="number" min="3" max="14" step="1" />
+    </div>
+    <div class="tiny">
+      Controls the <b>minimum</b> height of each day (days can grow taller with tasks).
+    </div>
+    <div style="height:10px"></div>
+    <div class="srow">
+      <span>Left column width (px)</span>
+      <input id="leftWidthInput" type="number" min="240" max="700" step="10" />
+    </div>
+    <div class="tiny">You can also drag the divider.</div>
+    <div style="height:10px"></div>
+    <button id="btnCloseSettings" style="width:100%;">Close</button>
+  </div>
+
+  <div id="boardScroll" class="board-scroll">
+    <div class="board-grid">
+      <div class="left-col" id="leftCol">
+        <div class="left-header-spacer">
+          <div class="hint">Days</div>
+          <div class="hint">↕ Scroll</div>
+        </div>
+      </div>
+
+      <div class="splitter" id="splitter" title="Drag to resize columns"></div>
+
+      <div class="right-col">
+        <div class="timeline-sticky-header">
+          <div class="timeline-header-scroll" id="timelineHeaderScroll">
+            <div class="timeline-header-inner" id="timelineHeaderInner">
+              <div class="grid-bg"></div>
+              <div class="hours" id="hours"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="timeline-body-scroll" id="timelineBodyScroll">
+          <div class="timeline-body-inner" id="timelineBodyInner">
+            <div id="timelineDays"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div class="modal-backdrop" id="modalBackdrop">
+    <div class="modal">
+      <div class="modal-head">
+        <div class="modal-title" id="modalTitle">Edit Task</div>
+        <button id="modalClose">Close</button>
+      </div>
+      <div class="modal-body">
+        <div class="row">
+          <label>Task type</label>
+          <select id="mType"></select>
+        </div>
+        <div class="row">
+          <label>Description</label>
+          <input id="mDesc" type="text" placeholder="Short description"/>
+        </div>
+        <div class="row">
+          <label>Colour</label>
+          <input id="mColor" type="color" />
+        </div>
+        <div class="row">
+          <label>Time from</label>
+          <select id="mStart"></select>
+        </div>
+        <div class="row">
+          <label>Time to</label>
+          <select id="mEnd"></select>
+        </div>
+        <div class="row">
+          <label>Assignees</label>
+          <div class="assignee-grid" id="mAssignees"></div>
+        </div>
+        <div class="hint">
+          Click a timeline bar to edit assignees (and other fields). Drag bar to move time. Drag handles to resize.
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button id="modalSave">Save</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+(() => {
+  const TASK_TYPES = [
+    { key: "Design", color: "#4aa3ff" },
+    { key: "Print", color: "#ffcc33" },
+    { key: "CNC", color: "#22c55e" },
+    { key: "Install", color: "#fb7185" },
+    { key: "Admin", color: "#a78bfa" },
+  ];
+
+  const PEOPLE = [
+    { name: "Tristan", color: "#22c55e" },
+    { name: "Leandri", color: "#4aa3ff" },
+    { name: "Ben", color: "#ffcc33" },
+    { name: "Mel", color: "#fb7185" },
+    { name: "Anton", color: "#a78bfa" },
+  ];
+
+  const START_MIN = 360;
+  const END_MIN = 1020;
+  const SLOT = 15;
+  const DEFAULT_START = 540;
+  const DEFAULT_DUR = 60;
+
+  const STORAGE_KEY = "twoColBoard_v4";
+
+  const state = {
+    settings: { daysVisible: 5, leftW: 360 },
+    tasksByDate: {},
+    render: { startDate: null, endDate: null, days: [] },
+    modal: { open:false, dateKey:null, taskId:null }
+  };
+
+  const boardScroll = document.getElementById('boardScroll');
+  const leftCol = document.getElementById('leftCol');
+  const timelineDays = document.getElementById('timelineDays');
+
+  const timelineHeaderScroll = document.getElementById('timelineHeaderScroll');
+  const timelineBodyScroll = document.getElementById('timelineBodyScroll');
+  const hours = document.getElementById('hours');
+
+  const btnToday = document.getElementById('btnToday');
+  const btnSettings = document.getElementById('btnSettings');
+
+  const settingsPanel = document.getElementById('settingsPanel');
+  const daysVisibleInput = document.getElementById('daysVisibleInput');
+  const leftWidthInput = document.getElementById('leftWidthInput');
+  const btnCloseSettings = document.getElementById('btnCloseSettings');
+
+  const splitter = document.getElementById('splitter');
+
+  const modalBackdrop = document.getElementById('modalBackdrop');
+  const modalClose = document.getElementById('modalClose');
+  const modalSave = document.getElementById('modalSave');
+  const modalTitle = document.getElementById('modalTitle');
+
+  const mType = document.getElementById('mType');
+  const mDesc = document.getElementById('mDesc');
+  const mColor = document.getElementById('mColor');
+  const mStart = document.getElementById('mStart');
+  const mEnd = document.getElementById('mEnd');
+  const mAssignees = document.getElementById('mAssignees');
+
+  const pad2 = (n) => String(n).padStart(2,'0');
+  const slotW = () => parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--slotW'));
+  function clamp(n,a,b){ return Math.max(a, Math.min(b,n)); }
+  function snapToSlot(mins){ return Math.round(mins / SLOT) * SLOT; }
+
+  function toDateKey(d){
+    const y=d.getFullYear(), m=pad2(d.getMonth()+1), da=pad2(d.getDate());
+    return `${y}-${m}-${da}`;
+  }
+  function fromDateKey(key){
+    const [y,m,d]=key.split('-').map(Number);
+    return new Date(y,m-1,d);
+  }
+  function addDays(date,n){
+    const d=new Date(date);
+    d.setDate(d.getDate()+n);
+    return d;
+  }
+  function formatDayHeader(dateKey){
+    const d=fromDateKey(dateKey);
+    const days=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+    const months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    return `${days[d.getDay()]} ${d.getDate()} ${months[d.getMonth()]}`;
+  }
+
+  function minsToLeftPx(mins){
+    const delta = mins - START_MIN;
+    return (delta / SLOT) * slotW();
+  }
+  function pxToMins(px){
+    const slots = px / slotW();
+    return START_MIN + Math.round(slots) * SLOT;
+  }
+  function minsToLabel(mins){
+    const h24=Math.floor(mins/60), m=mins%60;
+    const ampm=h24>=12?"pm":"am";
+    const h12=((h24+11)%12)+1;
+    return `${h12}:${pad2(m)}${ampm}`;
+  }
+  function timeChipText(task){ return minsToLabel(task.startMin); }
+
+  function ensureTasks(dateKey){
+    if(!state.tasksByDate[dateKey]) state.tasksByDate[dateKey]=[];
+  }
+  function uid(){ return Math.random().toString(16).slice(2) + Math.random().toString(16).slice(2); }
+  function getTask(dateKey, taskId){
+    const arr=state.tasksByDate[dateKey]||[];
+    return arr.find(t=>t.id===taskId)||null;
+  }
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  function load(){
+    try{
+      const raw=localStorage.getItem(STORAGE_KEY);
+      if(!raw) return;
+      const parsed=JSON.parse(raw);
+      if(parsed?.settings){
+        if(parsed.settings.daysVisible) state.settings.daysVisible=parsed.settings.daysVisible;
+        if(parsed.settings.leftW) state.settings.leftW=parsed.settings.leftW;
+      }
+      if(parsed?.tasksByDate && typeof parsed.tasksByDate==='object'){
+        state.tasksByDate=parsed.tasksByDate;
+      }
+    }catch(e){ console.warn("load failed", e); }
+  }
+  function save(){
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      settings: state.settings,
+      tasksByDate: state.tasksByDate
+    }));
+  }
+
+  function applySettings(){
+    const vis = clamp(parseInt(state.settings.daysVisible,10)||5, 3, 14);
+    state.settings.daysVisible=vis;
+    daysVisibleInput.value=vis;
+
+    const lw = clamp(parseInt(state.settings.leftW,10)||360, 240, 700);
+    state.settings.leftW = lw;
+    leftWidthInput.value = lw;
+    document.documentElement.style.setProperty('--leftW', `${lw}px`);
+  }
+
+  function renderTimelineHeader(){
+    hours.innerHTML = "";
+    const totalHours = (END_MIN - START_MIN) / 60;
+    for(let i=0;i<=totalHours;i++){
+      const mins = START_MIN + i*60;
+      const x = minsToLeftPx(mins);
+      const lab = document.createElement('div');
+      lab.className = 'label';
+      lab.style.left = `${x}px`;
+      lab.textContent = minsToLabel(mins).replace(":00","");
+      hours.appendChild(lab);
+    }
+  }
+
+  function syncHorizontalScroll(){
+    let lock=false;
+    timelineBodyScroll.addEventListener('scroll', () => {
+      if(lock) return;
+      lock=true;
+      timelineHeaderScroll.scrollLeft = timelineBodyScroll.scrollLeft;
+      lock=false;
+    }, {passive:true});
+    timelineHeaderScroll.addEventListener('scroll', () => {
+      if(lock) return;
+      lock=true;
+      timelineBodyScroll.scrollLeft = timelineHeaderScroll.scrollLeft;
+      lock=false;
+    }, {passive:true});
+  }
+
+  function initRange(){
+    const today=new Date();
+    state.render.startDate = addDays(today, -20);
+    state.render.endDate = addDays(today, 20);
+    rebuildDaysArray();
+  }
+  function rebuildDaysArray(){
+    const days=[];
+    let d=new Date(state.render.startDate);
+    const end=state.render.endDate;
+    while(d<=end){
+      days.push(toDateKey(d));
+      d=addDays(d,1);
+    }
+    state.render.days=days;
+  }
+
+  function extendBottom(n=20){
+    const oldEnd = new Date(state.render.endDate);
+    state.render.endDate = addDays(oldEnd, n);
+    const startCount = state.render.days.length;
+    let d = addDays(oldEnd, 1);
+    for(let i=0;i<n;i++){
+      state.render.days.push(toDateKey(d));
+      d = addDays(d,1);
+    }
+    for(let i=startCount;i<state.render.days.length;i++){
+      renderDayPair(state.render.days[i], false);
+    }
+  }
+
+  function extendTop(n=20){
+    const oldStart = new Date(state.render.startDate);
+    const newStart = addDays(oldStart, -n);
+    state.render.startDate = newStart;
+
+    const newDays=[];
+    let d=new Date(newStart);
+    for(let i=0;i<n;i++){
+      newDays.push(toDateKey(d));
+      d=addDays(d,1);
+    }
+
+    const firstKey = state.render.days[0];
+    const firstEl = document.querySelector(`.day[data-day="${firstKey}"]`);
+    const beforeTop = firstEl ? firstEl.getBoundingClientRect().top : null;
+
+    state.render.days = [...newDays, ...state.render.days];
+
+    for(let i=newDays.length-1;i>=0;i--){
+      renderDayPair(newDays[i], true);
+    }
+
+    if(firstEl && beforeTop !== null){
+      const afterTop = firstEl.getBoundingClientRect().top;
+      boardScroll.scrollTop += (afterTop - beforeTop);
+    }
+  }
+
+  function addTask(dateKey){
+    ensureTasks(dateKey);
+    const base = TASK_TYPES[0];
+    const t = {
+      id: uid(),
+      type: base.key,
+      color: base.color,
+      desc: "New task",
+      startMin: DEFAULT_START,
+      durMin: DEFAULT_DUR,
+      completed: false,
+      assignees: ["Tristan"]
+    };
+    state.tasksByDate[dateKey].push(t);
+    save();
+    rerenderDay(dateKey);
+  }
+
+  function deleteTask(dateKey, taskId){
+    ensureTasks(dateKey);
+    state.tasksByDate[dateKey] = (state.tasksByDate[dateKey]||[]).filter(t => t.id !== taskId);
+    save();
+    rerenderDay(dateKey);
+  }
+
+  function toggleComplete(dateKey, taskId){
+    const t=getTask(dateKey, taskId);
+    if(!t) return;
+    t.completed = !t.completed;
+    save();
+    rerenderDay(dateKey);
+  }
+
+  function updateTask(dateKey, taskId, patch){
+    const t=getTask(dateKey, taskId);
+    if(!t) return;
+
+    Object.assign(t, patch);
+    t.startMin = snapToSlot(clamp(t.startMin, START_MIN, END_MIN - SLOT));
+    t.durMin = snapToSlot(clamp(t.durMin, SLOT, END_MIN - t.startMin));
+
+    save();
+    rerenderDay(dateKey);
+  }
+
+  function buildTypeOptions(){
+    mType.innerHTML="";
+    for(const t of TASK_TYPES){
+      const opt=document.createElement('option');
+      opt.value=t.key;
+      opt.textContent=t.key;
+      mType.appendChild(opt);
+    }
+  }
+  function buildTimeOptions(selectEl){
+    selectEl.innerHTML="";
+    for(let mins=START_MIN; mins<=END_MIN; mins+=SLOT){
+      const opt=document.createElement('option');
+      opt.value=mins;
+      opt.textContent=minsToLabel(mins);
+      selectEl.appendChild(opt);
+    }
+  }
+  function buildAssignees(task){
+    mAssignees.innerHTML="";
+    const selected = new Set(task.assignees || []);
+    for(const p of PEOPLE){
+      const pill=document.createElement('label');
+      pill.className="assignee-pill";
+      pill.style.setProperty('--p', p.color);
+      pill.innerHTML = `
+        <input type="checkbox" ${selected.has(p.name) ? "checked" : ""} data-person="${escapeHtml(p.name)}"/>
+        <span class="dot" style="--p:${p.color}"></span>
+        <span>${escapeHtml(p.name)}</span>
+      `;
+      mAssignees.appendChild(pill);
+    }
+  }
+
+  function openModal(dateKey, taskId, focusAssignees=false){
+    const t=getTask(dateKey, taskId);
+    if(!t) return;
+    state.modal.open=true;
+    state.modal.dateKey=dateKey;
+    state.modal.taskId=taskId;
+
+    buildTypeOptions();
+    buildTimeOptions(mStart);
+    buildTimeOptions(mEnd);
+
+    mType.value=t.type;
+    mDesc.value=t.desc;
+    mColor.value=t.color;
+
+    mStart.value=t.startMin;
+    const endMin = clamp(t.startMin + t.durMin, START_MIN + SLOT, END_MIN);
+    mEnd.value=endMin;
+
+    buildAssignees(t);
+
+    modalTitle.textContent = focusAssignees ? "Edit Assignees" : "Edit Task";
+    modalBackdrop.classList.add('show');
+
+    if(focusAssignees){
+      // no-op (just helps mentally)
+    }
+  }
+  function closeModal(){
+    state.modal.open=false;
+    state.modal.dateKey=null;
+    state.modal.taskId=null;
+    modalBackdrop.classList.remove('show');
+  }
+  function saveModal(){
+    const dateKey=state.modal.dateKey;
+    const taskId=state.modal.taskId;
+    const t=getTask(dateKey, taskId);
+    if(!t) return closeModal();
+
+    const type=mType.value;
+    const desc=(mDesc.value||"").trim() || "Task";
+    const color=mColor.value || t.color;
+
+    const start=parseInt(mStart.value,10);
+    const end=parseInt(mEnd.value,10);
+    let dur=end-start;
+    if(dur < SLOT) dur=SLOT;
+
+    const assignees=[...mAssignees.querySelectorAll('input[type="checkbox"]:checked')]
+      .map(x => x.getAttribute('data-person'))
+      .filter(Boolean);
+
+    updateTask(dateKey, taskId, { type, desc, color, startMin:start, durMin:dur, assignees: assignees.length ? assignees : [] });
+    closeModal();
+  }
+
+  modalClose.addEventListener('click', closeModal);
+  modalBackdrop.addEventListener('click', (e)=>{ if(e.target===modalBackdrop) closeModal(); });
+  modalSave.addEventListener('click', saveModal);
+
+  mStart.addEventListener('change', ()=>{
+    const s=parseInt(mStart.value,10);
+    let e=parseInt(mEnd.value,10);
+    if(e <= s) e = clamp(s + SLOT, START_MIN + SLOT, END_MIN);
+    mEnd.value=e;
+  });
+  mEnd.addEventListener('change', ()=>{
+    const s=parseInt(mStart.value,10);
+    let e=parseInt(mEnd.value,10);
+    if(e <= s) e = clamp(s + SLOT, START_MIN + SLOT, END_MIN);
+    mEnd.value=e;
+  });
+
+  function clearAll(){
+    const spacer = leftCol.querySelector('.left-header-spacer');
+    leftCol.innerHTML="";
+    leftCol.appendChild(spacer);
+    timelineDays.innerHTML="";
+  }
+
+  function renderAll(){
+    clearAll();
+    for(const dayKey of state.render.days){
+      renderDayPair(dayKey, false);
+    }
+  }
+
+  function renderDayPair(dayKey, prepend){
+    const left = renderLeftDay(dayKey);
+    const right = renderRightDay(dayKey);
+
+    if(prepend){
+      leftCol.insertBefore(left, leftCol.children[1] || null);
+      timelineDays.insertBefore(right, timelineDays.firstChild);
+    }else{
+      leftCol.appendChild(left);
+      timelineDays.appendChild(right);
+    }
+  }
+
+  function rerenderDay(dayKey){
+    const left = document.querySelector(`.day[data-day="${dayKey}"]`);
+    const right = document.querySelector(`.timeline-day[data-day="${dayKey}"]`);
+    if(left) left.replaceWith(renderLeftDay(dayKey));
+    if(right) right.replaceWith(renderRightDay(dayKey));
+  }
+
+  function renderLeftDay(dayKey){
+    ensureTasks(dayKey);
+    const day=document.createElement('div');
+    day.className='day';
+    day.dataset.day=dayKey;
+    day.id=`day-${dayKey}`;
+
+    const head=document.createElement('div');
+    head.className='day-header';
+    head.innerHTML=`
+      <div>${formatDayHeader(dayKey)}</div>
+      <div class="sub">${(state.tasksByDate[dayKey]||[]).length} tasks</div>
+    `;
+    day.appendChild(head);
+
+    const tasks=document.createElement('div');
+    tasks.className='tasks';
+    tasks.dataset.tasksFor=dayKey;
+
+    for(const t of (state.tasksByDate[dayKey]||[])){
+      tasks.appendChild(renderTaskCard(dayKey, t));
+    }
+    day.appendChild(tasks);
+
+    const addArea=document.createElement('div');
+    addArea.className='add-area';
+    addArea.textContent='+ Add task';
+    addArea.addEventListener('click', ()=>addTask(dayKey));
+    day.appendChild(addArea);
+
+    enableTaskReorder(tasks, dayKey);
+
+    return day;
+  }
+
+  function renderTaskCard(dayKey, task){
+    const el=document.createElement('div');
+    el.className='task'+(task.completed?' completed':'');
+    el.dataset.taskId=task.id;
+    el.dataset.day=dayKey;
+    el.style.setProperty('--c', task.color);
+
+    el.innerHTML=`
+      <div class="colorbar">
+        <div class="type-rot">${escapeHtml(task.type)}</div>
+      </div>
+      <div class="body">
+        <div class="desc" title="${escapeHtml(task.desc)}">${escapeHtml(task.desc)}</div>
+        <div class="chip" title="Click to edit time">${escapeHtml(timeChipText(task))}</div>
+      </div>
+      <div class="right">
+        <div class="iconbtn" title="Edit">${iconPencil()}</div>
+        <div class="iconbtn danger" title="Delete">${iconTrash()}</div>
+        <div class="completebtn" title="Complete">${iconCheck()}</div>
+      </div>
+    `;
+
+    el.querySelector('.chip').addEventListener('click', (e)=>{ e.stopPropagation(); openModal(dayKey, task.id); });
+    el.querySelector('.iconbtn').addEventListener('click', (e)=>{ e.stopPropagation(); openModal(dayKey, task.id); });
+    el.querySelector('.iconbtn.danger').addEventListener('click', (e)=>{ e.stopPropagation(); deleteTask(dayKey, task.id); });
+    el.querySelector('.completebtn').addEventListener('click', (e)=>{ e.stopPropagation(); toggleComplete(dayKey, task.id); });
+
+    return el;
+  }
+
+  function renderRightDay(dayKey){
+    ensureTasks(dayKey);
+    const day=document.createElement('div');
+    day.className='timeline-day';
+    day.dataset.day=dayKey;
+
+    const topSpacer=document.createElement('div');
+    topSpacer.className='timeline-day-topspacer';
+    day.appendChild(topSpacer);
+
+    const body=document.createElement('div');
+    body.className='timeline-day-body';
+
+    for(const t of (state.tasksByDate[dayKey]||[])){
+      body.appendChild(renderTimelineRow(dayKey, t));
+    }
+    day.appendChild(body);
+
+    const spacer=document.createElement('div');
+    spacer.className='timeline-add-spacer';
+    day.appendChild(spacer);
+
+    return day;
+  }
+
+  function renderTimelineRow(dayKey, task){
+    const row=document.createElement('div');
+    row.className='timeline-row'+(task.completed?' completed':'');
+    row.dataset.taskId=task.id;
+    row.dataset.day=dayKey;
+
+    const left=minsToLeftPx(task.startMin);
+    const w=minsToLeftPx(task.startMin + task.durMin) - left;
+
+    const bar=document.createElement('div');
+    bar.className='bar';
+    bar.style.setProperty('--c', task.color);
+    bar.style.setProperty('--left', `${left}px`);
+    bar.style.setProperty('--w', `${Math.max(0,w)}px`);
+
+    // time labels outside
+    const tStart=document.createElement('div');
+    tStart.className='time-label start';
+    tStart.textContent = minsToLabel(task.startMin);
+
+    const tEnd=document.createElement('div');
+    tEnd.className='time-label end';
+    tEnd.textContent = minsToLabel(task.startMin + task.durMin);
+
+    bar.appendChild(tStart);
+    bar.appendChild(tEnd);
+
+    // people chips inside bar
+    const assigneesWrap=document.createElement('div');
+    assigneesWrap.className='assignees';
+    const assignees = (task.assignees || []);
+    for(const name of assignees){
+      const person = PEOPLE.find(p => p.name === name);
+      const chip=document.createElement('div');
+      chip.className='person-chip';
+      chip.style.setProperty('--p', person?.color || 'rgba(255,255,255,.15)');
+      chip.textContent = name;
+      assigneesWrap.appendChild(chip);
+    }
+    bar.appendChild(assigneesWrap);
+
+    // handles
+    const hL=document.createElement('div');
+    hL.className='handle left';
+    hL.title="Resize start";
+    const hR=document.createElement('div');
+    hR.className='handle right';
+    hR.title="Resize end";
+    bar.appendChild(hL);
+    bar.appendChild(hR);
+
+    // click bar => modal focused on assignees
+    bar.addEventListener('click', (e)=>{
+      if(e.target.classList.contains('handle')) return;
+      e.stopPropagation();
+      openModal(dayKey, task.id, true);
+    });
+
+    row.appendChild(bar);
+
+    enableBarDrag(bar, dayKey, task.id);
+    enableBarResizeRight(hR, bar, dayKey, task.id);
+    enableBarResizeLeft(hL, bar, dayKey, task.id);
+
+    return row;
+  }
+
+  function setBarTimes(barEl, startMin, durMin){
+    const start = barEl.querySelector('.time-label.start');
+    const end = barEl.querySelector('.time-label.end');
+    if(start) start.textContent = minsToLabel(startMin);
+    if(end) end.textContent = minsToLabel(startMin + durMin);
+  }
+
+  function enableBarDrag(barEl, dayKey, taskId){
+    let dragging=false, startX=0, startLeftPx=0;
+
+    barEl.addEventListener('pointerdown', (e)=>{
+      if(e.target.classList.contains('handle')) return;
+      e.preventDefault();
+      dragging=true;
+      barEl.setPointerCapture(e.pointerId);
+      startX=e.clientX;
+
+      const t=getTask(dayKey, taskId);
+      if(!t) return;
+      startLeftPx = minsToLeftPx(t.startMin);
+    });
+
+    barEl.addEventListener('pointermove', (e)=>{
+      if(!dragging) return;
+      const t=getTask(dayKey, taskId);
+      if(!t) return;
+
+      const dx=e.clientX - startX;
+      const rawLeft = startLeftPx + dx;
+      const rawMins = pxToMins(rawLeft);
+      const snapped = snapToSlot(rawMins);
+
+      const maxStart = END_MIN - t.durMin;
+      const newStart = clamp(snapped, START_MIN, maxStart);
+
+      barEl.style.setProperty('--left', `${minsToLeftPx(newStart)}px`);
+      setBarTimes(barEl, newStart, t.durMin);
+
+      const chip=document.querySelector(`.task[data-day="${dayKey}"][data-task-id="${taskId}"] .chip`);
+      if(chip) chip.textContent = minsToLabel(newStart);
+    });
+
+    barEl.addEventListener('pointerup', ()=>{
+      if(!dragging) return;
+      dragging=false;
+
+      const t=getTask(dayKey, taskId);
+      if(!t) return;
+
+      const cssLeft = parseFloat(getComputedStyle(barEl).getPropertyValue('--left')) || 0;
+      const newStart = snapToSlot(pxToMins(cssLeft));
+      const maxStart = END_MIN - t.durMin;
+      updateTask(dayKey, taskId, { startMin: clamp(newStart, START_MIN, maxStart) });
+    });
+
+    barEl.addEventListener('pointercancel', ()=> dragging=false);
+  }
+
+  function enableBarResizeRight(handleEl, barEl, dayKey, taskId){
+    let resizing=false, startX=0, startW=0;
+
+    handleEl.addEventListener('pointerdown', (e)=>{
+      e.preventDefault(); e.stopPropagation();
+      resizing=true;
+      handleEl.setPointerCapture(e.pointerId);
+      startX=e.clientX;
+      startW = parseFloat(getComputedStyle(barEl).getPropertyValue('--w')) || 0;
+    });
+
+    handleEl.addEventListener('pointermove', (e)=>{
+      if(!resizing) return;
+      const t=getTask(dayKey, taskId);
+      if(!t) return;
+
+      const dx=e.clientX - startX;
+      const rawW = startW + dx;
+      const slots = Math.max(1, Math.round(rawW / slotW()));
+      let dur = slots * SLOT;
+      dur = snapToSlot(clamp(dur, SLOT, END_MIN - t.startMin));
+
+      const left = minsToLeftPx(t.startMin);
+      const w = minsToLeftPx(t.startMin + dur) - left;
+      barEl.style.setProperty('--w', `${Math.max(0,w)}px`);
+      setBarTimes(barEl, t.startMin, dur);
+    });
+
+    handleEl.addEventListener('pointerup', ()=>{
+      if(!resizing) return;
+      resizing=false;
+
+      const t=getTask(dayKey, taskId);
+      if(!t) return;
+
+      const wPx = parseFloat(getComputedStyle(barEl).getPropertyValue('--w')) || 0;
+      const slots = Math.max(1, Math.round(wPx / slotW()));
+      let dur = slots * SLOT;
+      dur = snapToSlot(clamp(dur, SLOT, END_MIN - t.startMin));
+      updateTask(dayKey, taskId, { durMin: dur });
+    });
+
+    handleEl.addEventListener('pointercancel', ()=> resizing=false);
+  }
+
+  function enableBarResizeLeft(handleEl, barEl, dayKey, taskId){
+    let resizing=false, startX=0, startLeft=0, startEndMin=0;
+
+    handleEl.addEventListener('pointerdown', (e)=>{
+      e.preventDefault(); e.stopPropagation();
+      resizing=true;
+      handleEl.setPointerCapture(e.pointerId);
+      startX=e.clientX;
+
+      const t=getTask(dayKey, taskId);
+      if(!t) return;
+
+      startLeft = minsToLeftPx(t.startMin);
+      startEndMin = t.startMin + t.durMin;
+    });
+
+    handleEl.addEventListener('pointermove', (e)=>{
+      if(!resizing) return;
+      const t=getTask(dayKey, taskId);
+      if(!t) return;
+
+      const dx = e.clientX - startX;
+      const rawLeft = startLeft + dx;
+      let newStart = snapToSlot(pxToMins(rawLeft));
+
+      newStart = clamp(newStart, START_MIN, startEndMin - SLOT);
+      const newDur = snapToSlot(clamp(startEndMin - newStart, SLOT, END_MIN - newStart));
+
+      barEl.style.setProperty('--left', `${minsToLeftPx(newStart)}px`);
+      barEl.style.setProperty('--w', `${minsToLeftPx(newStart + newDur) - minsToLeftPx(newStart)}px`);
+      setBarTimes(barEl, newStart, newDur);
+
+      const chip=document.querySelector(`.task[data-day="${dayKey}"][data-task-id="${taskId}"] .chip`);
+      if(chip) chip.textContent = minsToLabel(newStart);
+    });
+
+    handleEl.addEventListener('pointerup', ()=>{
+      if(!resizing) return;
+      resizing=false;
+
+      const cssLeft = parseFloat(getComputedStyle(barEl).getPropertyValue('--left')) || 0;
+      let newStart = snapToSlot(pxToMins(cssLeft));
+      newStart = clamp(newStart, START_MIN, startEndMin - SLOT);
+
+      const newDur = snapToSlot(clamp(startEndMin - newStart, SLOT, END_MIN - newStart));
+      updateTask(dayKey, taskId, { startMin: newStart, durMin: newDur });
+    });
+
+    handleEl.addEventListener('pointercancel', ()=> resizing=false);
+  }
+
+  function enableTaskReorder(tasksContainer, dayKey){
+    let draggingEl=null, placeholder=null, pointerId=null, offsetY=0;
+
+    tasksContainer.addEventListener('pointerdown', (e)=>{
+      const taskEl = e.target.closest('.task');
+      if(!taskEl) return;
+      if(e.target.closest('.iconbtn') || e.target.closest('.completebtn') || e.target.closest('.chip')) return;
+
+      e.preventDefault();
+      draggingEl = taskEl;
+      pointerId = e.pointerId;
+      draggingEl.setPointerCapture(pointerId);
+
+      const rect = draggingEl.getBoundingClientRect();
+      offsetY = e.clientY - rect.top;
+
+      placeholder = document.createElement('div');
+      placeholder.className='task placeholder';
+      placeholder.style.height = rect.height + "px";
+
+      draggingEl.classList.add('dragging');
+      draggingEl.style.width = rect.width + "px";
+
+      tasksContainer.insertBefore(placeholder, draggingEl.nextSibling);
+      moveDragging(e.clientY);
+    });
+
+    tasksContainer.addEventListener('pointermove', (e)=>{
+      if(!draggingEl || e.pointerId !== pointerId) return;
+      moveDragging(e.clientY);
+
+      const items=[...tasksContainer.querySelectorAll('.task:not(.dragging):not(.placeholder)')];
+      const y=e.clientY;
+
+      let insertBefore=null;
+      for(const it of items){
+        const r=it.getBoundingClientRect();
+        const mid=r.top + r.height/2;
+        if(y < mid){ insertBefore=it; break; }
+      }
+      if(insertBefore) tasksContainer.insertBefore(placeholder, insertBefore);
+      else tasksContainer.appendChild(placeholder);
+    });
+
+    tasksContainer.addEventListener('pointerup', (e)=>{
+      if(!draggingEl || e.pointerId !== pointerId) return;
+      finish(false);
+    });
+    tasksContainer.addEventListener('pointercancel', (e)=>{
+      if(!draggingEl || e.pointerId !== pointerId) return;
+      finish(true);
+    });
+
+    function moveDragging(clientY){
+      const containerRect = tasksContainer.getBoundingClientRect();
+      const localY = (clientY - offsetY) - containerRect.top;
+      draggingEl.style.transform = `translateY(${localY}px)`;
+    }
+
+    function finish(cancel){
+      draggingEl.classList.remove('dragging');
+      draggingEl.style.transform='';
+      draggingEl.style.width='';
+
+      tasksContainer.insertBefore(draggingEl, placeholder);
+      placeholder.remove();
+
+      if(!cancel){
+        const ids=[...tasksContainer.querySelectorAll('.task')].map(el=>el.dataset.taskId);
+        const current=state.tasksByDate[dayKey]||[];
+        const byId=new Map(current.map(t=>[t.id,t]));
+        state.tasksByDate[dayKey]=ids.map(id=>byId.get(id)).filter(Boolean);
+        save();
+      }
+      rerenderDay(dayKey);
+
+      draggingEl=null; placeholder=null; pointerId=null;
+    }
+  }
+
+  function handleInfiniteScroll(){
+    const top=boardScroll.scrollTop;
+    const height=boardScroll.scrollHeight;
+    const view=boardScroll.clientHeight;
+    if(top + view > height - 800) extendBottom(20);
+    if(top < 300) extendTop(20);
+  }
+
+  function jumpToToday(){
+    const key=toDateKey(new Date());
+    const el=document.getElementById(`day-${key}`);
+    if(el) el.scrollIntoView({block:'start', behavior:'smooth'});
+  }
+
+  btnSettings.addEventListener('click', ()=>{
+    settingsPanel.classList.toggle('show');
+    daysVisibleInput.focus();
+  });
+  btnCloseSettings.addEventListener('click', ()=> settingsPanel.classList.remove('show'));
+  daysVisibleInput.addEventListener('change', ()=>{
+    state.settings.daysVisible = clamp(parseInt(daysVisibleInput.value,10)||5,3,14);
+    save();
+    applySettings();
+  });
+  leftWidthInput.addEventListener('change', ()=>{
+    state.settings.leftW = clamp(parseInt(leftWidthInput.value,10)||360, 240, 700);
+    save();
+    applySettings();
+  });
+  btnToday.addEventListener('click', jumpToToday);
+
+  function enableSplitter(){
+    let dragging=false;
+    let startX=0;
+    let startW=0;
+
+    splitter.addEventListener('pointerdown', (e)=>{
+      e.preventDefault();
+      dragging=true;
+      splitter.setPointerCapture(e.pointerId);
+      startX=e.clientX;
+      startW=state.settings.leftW;
+      document.body.style.cursor='col-resize';
+    });
+
+    splitter.addEventListener('pointermove', (e)=>{
+      if(!dragging) return;
+      const dx=e.clientX - startX;
+      const newW = clamp(startW + dx, 240, 700);
+      state.settings.leftW = newW;
+      document.documentElement.style.setProperty('--leftW', `${newW}px`);
+      leftWidthInput.value = Math.round(newW);
+    });
+
+    splitter.addEventListener('pointerup', ()=>{
+      if(!dragging) return;
+      dragging=false;
+      document.body.style.cursor='';
+      save();
+    });
+
+    splitter.addEventListener('pointercancel', ()=>{
+      dragging=false;
+      document.body.style.cursor='';
+    });
+  }
+
+  function iconCheck(){
+    return `<svg viewBox="0 0 24 24" fill="none">
+      <path d="M20 7L10.5 16.5L4 10" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>`;
+  }
+  function iconTrash(){
+    return `<svg viewBox="0 0 24 24" fill="none">
+      <path d="M3 6h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      <path d="M8 6V4h8v2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      <path d="M6 6l1 16h10l1-16" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+      <path d="M10 11v6M14 11v6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    </svg>`;
+  }
+  function iconPencil(){
+    return `<svg viewBox="0 0 24 24" fill="none">
+      <path d="M12 20h9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4 11.5-11.5Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+    </svg>`;
+  }
+
+  function clearAll(){
+    const spacer = leftCol.querySelector('.left-header-spacer');
+    leftCol.innerHTML="";
+    leftCol.appendChild(spacer);
+    timelineDays.innerHTML="";
+  }
+
+  function renderAll(){
+    clearAll();
+    for(const dayKey of state.render.days){
+      renderDayPair(dayKey, false);
+    }
+  }
+
+  function renderDayPair(dayKey, prepend){
+    const left = renderLeftDay(dayKey);
+    const right = renderRightDay(dayKey);
+
+    if(prepend){
+      leftCol.insertBefore(left, leftCol.children[1] || null);
+      timelineDays.insertBefore(right, timelineDays.firstChild);
+    }else{
+      leftCol.appendChild(left);
+      timelineDays.appendChild(right);
+    }
+  }
+
+  function rerenderDay(dayKey){
+    const left = document.querySelector(`.day[data-day="${dayKey}"]`);
+    const right = document.querySelector(`.timeline-day[data-day="${dayKey}"]`);
+    if(left) left.replaceWith(renderLeftDay(dayKey));
+    if(right) right.replaceWith(renderRightDay(dayKey));
+  }
+
+  function renderLeftDay(dayKey){
+    ensureTasks(dayKey);
+    const day=document.createElement('div');
+    day.className='day';
+    day.dataset.day=dayKey;
+    day.id=`day-${dayKey}`;
+
+    const head=document.createElement('div');
+    head.className='day-header';
+    head.innerHTML=`
+      <div>${formatDayHeader(dayKey)}</div>
+      <div class="sub">${(state.tasksByDate[dayKey]||[]).length} tasks</div>
+    `;
+    day.appendChild(head);
+
+    const tasks=document.createElement('div');
+    tasks.className='tasks';
+    tasks.dataset.tasksFor=dayKey;
+
+    for(const t of (state.tasksByDate[dayKey]||[])){
+      tasks.appendChild(renderTaskCard(dayKey, t));
+    }
+    day.appendChild(tasks);
+
+    const addArea=document.createElement('div');
+    addArea.className='add-area';
+    addArea.textContent='+ Add task';
+    addArea.addEventListener('click', ()=>addTask(dayKey));
+    day.appendChild(addArea);
+
+    enableTaskReorder(tasks, dayKey);
+
+    return day;
+  }
+
+  function renderTaskCard(dayKey, task){
+    const el=document.createElement('div');
+    el.className='task'+(task.completed?' completed':'');
+    el.dataset.taskId=task.id;
+    el.dataset.day=dayKey;
+    el.style.setProperty('--c', task.color);
+
+    el.innerHTML=`
+      <div class="colorbar">
+        <div class="type-rot">${escapeHtml(task.type)}</div>
+      </div>
+      <div class="body">
+        <div class="desc" title="${escapeHtml(task.desc)}">${escapeHtml(task.desc)}</div>
+        <div class="chip" title="Click to edit time">${escapeHtml(timeChipText(task))}</div>
+      </div>
+      <div class="right">
+        <div class="iconbtn" title="Edit">${iconPencil()}</div>
+        <div class="iconbtn danger" title="Delete">${iconTrash()}</div>
+        <div class="completebtn" title="Complete">${iconCheck()}</div>
+      </div>
+    `;
+
+    el.querySelector('.chip').addEventListener('click', (e)=>{ e.stopPropagation(); openModal(dayKey, task.id); });
+    el.querySelector('.iconbtn').addEventListener('click', (e)=>{ e.stopPropagation(); openModal(dayKey, task.id); });
+    el.querySelector('.iconbtn.danger').addEventListener('click', (e)=>{ e.stopPropagation(); deleteTask(dayKey, task.id); });
+    el.querySelector('.completebtn').addEventListener('click', (e)=>{ e.stopPropagation(); toggleComplete(dayKey, task.id); });
+
+    return el;
+  }
+
+  function renderRightDay(dayKey){
+    ensureTasks(dayKey);
+    const day=document.createElement('div');
+    day.className='timeline-day';
+    day.dataset.day=dayKey;
+
+    const topSpacer=document.createElement('div');
+    topSpacer.className='timeline-day-topspacer';
+    day.appendChild(topSpacer);
+
+    const body=document.createElement('div');
+    body.className='timeline-day-body';
+
+    for(const t of (state.tasksByDate[dayKey]||[])){
+      body.appendChild(renderTimelineRow(dayKey, t));
+    }
+    day.appendChild(body);
+
+    const spacer=document.createElement('div');
+    spacer.className='timeline-add-spacer';
+    day.appendChild(spacer);
+
+    return day;
+  }
+
+  function renderTimelineRow(dayKey, task){
+    const row=document.createElement('div');
+    row.className='timeline-row'+(task.completed?' completed':'');
+    row.dataset.taskId=task.id;
+    row.dataset.day=dayKey;
+
+    const left=minsToLeftPx(task.startMin);
+    const w=minsToLeftPx(task.startMin + task.durMin) - left;
+
+    const bar=document.createElement('div');
+    bar.className='bar';
+    bar.style.setProperty('--c', task.color);
+    bar.style.setProperty('--left', `${left}px`);
+    bar.style.setProperty('--w', `${Math.max(0,w)}px`);
+
+    const tStart=document.createElement('div');
+    tStart.className='time-label start';
+    tStart.textContent = minsToLabel(task.startMin);
+
+    const tEnd=document.createElement('div');
+    tEnd.className='time-label end';
+    tEnd.textContent = minsToLabel(task.startMin + task.durMin);
+
+    bar.appendChild(tStart);
+    bar.appendChild(tEnd);
+
+    const assigneesWrap=document.createElement('div');
+    assigneesWrap.className='assignees';
+    const assignees = (task.assignees || []);
+    for(const name of assignees){
+      const person = PEOPLE.find(p => p.name === name);
+      const chip=document.createElement('div');
+      chip.className='person-chip';
+      chip.style.setProperty('--p', person?.color || 'rgba(255,255,255,.15)');
+      chip.textContent = name;
+      assigneesWrap.appendChild(chip);
+    }
+    bar.appendChild(assigneesWrap);
+
+    const hL=document.createElement('div');
+    hL.className='handle left';
+    hL.title="Resize start";
+    const hR=document.createElement('div');
+    hR.className='handle right';
+    hR.title="Resize end";
+    bar.appendChild(hL);
+    bar.appendChild(hR);
+
+    bar.addEventListener('click', (e)=>{
+      if(e.target.classList.contains('handle')) return;
+      e.stopPropagation();
+      openModal(dayKey, task.id, true);
+    });
+
+    row.appendChild(bar);
+
+    enableBarDrag(bar, dayKey, task.id);
+    enableBarResizeRight(hR, bar, dayKey, task.id);
+    enableBarResizeLeft(hL, bar, dayKey, task.id);
+
+    return row;
+  }
+
+  function setBarTimes(barEl, startMin, durMin){
+    const start = barEl.querySelector('.time-label.start');
+    const end = barEl.querySelector('.time-label.end');
+    if(start) start.textContent = minsToLabel(startMin);
+    if(end) end.textContent = minsToLabel(startMin + durMin);
+  }
+
+  function enableBarDrag(barEl, dayKey, taskId){
+    let dragging=false, startX=0, startLeftPx=0;
+
+    barEl.addEventListener('pointerdown', (e)=>{
+      if(e.target.classList.contains('handle')) return;
+      e.preventDefault();
+      dragging=true;
+      barEl.setPointerCapture(e.pointerId);
+      startX=e.clientX;
+
+      const t=getTask(dayKey, taskId);
+      if(!t) return;
+      startLeftPx = minsToLeftPx(t.startMin);
+    });
+
+    barEl.addEventListener('pointermove', (e)=>{
+      if(!dragging) return;
+      const t=getTask(dayKey, taskId);
+      if(!t) return;
+
+      const dx=e.clientX - startX;
+      const rawLeft = startLeftPx + dx;
+      const rawMins = pxToMins(rawLeft);
+      const snapped = snapToSlot(rawMins);
+
+      const maxStart = END_MIN - t.durMin;
+      const newStart = clamp(snapped, START_MIN, maxStart);
+
+      barEl.style.setProperty('--left', `${minsToLeftPx(newStart)}px`);
+      setBarTimes(barEl, newStart, t.durMin);
+
+      const chip=document.querySelector(`.task[data-day="${dayKey}"][data-task-id="${taskId}"] .chip`);
+      if(chip) chip.textContent = minsToLabel(newStart);
+    });
+
+    barEl.addEventListener('pointerup', ()=>{
+      if(!dragging) return;
+      dragging=false;
+
+      const t=getTask(dayKey, taskId);
+      if(!t) return;
+
+      const cssLeft = parseFloat(getComputedStyle(barEl).getPropertyValue('--left')) || 0;
+      const newStart = snapToSlot(pxToMins(cssLeft));
+      const maxStart = END_MIN - t.durMin;
+      updateTask(dayKey, taskId, { startMin: clamp(newStart, START_MIN, maxStart) });
+    });
+
+    barEl.addEventListener('pointercancel', ()=> dragging=false);
+  }
+
+  function enableBarResizeRight(handleEl, barEl, dayKey, taskId){
+    let resizing=false, startX=0, startW=0;
+
+    handleEl.addEventListener('pointerdown', (e)=>{
+      e.preventDefault(); e.stopPropagation();
+      resizing=true;
+      handleEl.setPointerCapture(e.pointerId);
+      startX=e.clientX;
+      startW = parseFloat(getComputedStyle(barEl).getPropertyValue('--w')) || 0;
+    });
+
+    handleEl.addEventListener('pointermove', (e)=>{
+      if(!resizing) return;
+      const t=getTask(dayKey, taskId);
+      if(!t) return;
+
+      const dx=e.clientX - startX;
+      const rawW = startW + dx;
+      const slots = Math.max(1, Math.round(rawW / slotW()));
+      let dur = slots * SLOT;
+      dur = snapToSlot(clamp(dur, SLOT, END_MIN - t.startMin));
+
+      const left = minsToLeftPx(t.startMin);
+      const w = minsToLeftPx(t.startMin + dur) - left;
+      barEl.style.setProperty('--w', `${Math.max(0,w)}px`);
+      setBarTimes(barEl, t.startMin, dur);
+    });
+
+    handleEl.addEventListener('pointerup', ()=>{
+      if(!resizing) return;
+      resizing=false;
+
+      const t=getTask(dayKey, taskId);
+      if(!t) return;
+
+      const wPx = parseFloat(getComputedStyle(barEl).getPropertyValue('--w')) || 0;
+      const slots = Math.max(1, Math.round(wPx / slotW()));
+      let dur = slots * SLOT;
+      dur = snapToSlot(clamp(dur, SLOT, END_MIN - t.startMin));
+      updateTask(dayKey, taskId, { durMin: dur });
+    });
+
+    handleEl.addEventListener('pointercancel', ()=> resizing=false);
+  }
+
+  function enableBarResizeLeft(handleEl, barEl, dayKey, taskId){
+    let resizing=false, startX=0, startLeft=0, startEndMin=0;
+
+    handleEl.addEventListener('pointerdown', (e)=>{
+      e.preventDefault(); e.stopPropagation();
+      resizing=true;
+      handleEl.setPointerCapture(e.pointerId);
+      startX=e.clientX;
+
+      const t=getTask(dayKey, taskId);
+      if(!t) return;
+
+      startLeft = minsToLeftPx(t.startMin);
+      startEndMin = t.startMin + t.durMin;
+    });
+
+    handleEl.addEventListener('pointermove', (e)=>{
+      if(!resizing) return;
+      const t=getTask(dayKey, taskId);
+      if(!t) return;
+
+      const dx = e.clientX - startX;
+      const rawLeft = startLeft + dx;
+      let newStart = snapToSlot(pxToMins(rawLeft));
+
+      newStart = clamp(newStart, START_MIN, startEndMin - SLOT);
+      const newDur = snapToSlot(clamp(startEndMin - newStart, SLOT, END_MIN - newStart));
+
+      barEl.style.setProperty('--left', `${minsToLeftPx(newStart)}px`);
+      barEl.style.setProperty('--w', `${minsToLeftPx(newStart + newDur) - minsToLeftPx(newStart)}px`);
+      setBarTimes(barEl, newStart, newDur);
+
+      const chip=document.querySelector(`.task[data-day="${dayKey}"][data-task-id="${taskId}"] .chip`);
+      if(chip) chip.textContent = minsToLabel(newStart);
+    });
+
+    handleEl.addEventListener('pointerup', ()=>{
+      if(!resizing) return;
+      resizing=false;
+
+      const cssLeft = parseFloat(getComputedStyle(barEl).getPropertyValue('--left')) || 0;
+      let newStart = snapToSlot(pxToMins(cssLeft));
+      newStart = clamp(newStart, START_MIN, startEndMin - SLOT);
+
+      const newDur = snapToSlot(clamp(startEndMin - newStart, SLOT, END_MIN - newStart));
+      updateTask(dayKey, taskId, { startMin: newStart, durMin: newDur });
+    });
+
+    handleEl.addEventListener('pointercancel', ()=> resizing=false);
+  }
+
+  function enableTaskReorder(tasksContainer, dayKey){
+    let draggingEl=null, placeholder=null, pointerId=null, offsetY=0;
+
+    tasksContainer.addEventListener('pointerdown', (e)=>{
+      const taskEl = e.target.closest('.task');
+      if(!taskEl) return;
+      if(e.target.closest('.iconbtn') || e.target.closest('.completebtn') || e.target.closest('.chip')) return;
+
+      e.preventDefault();
+      draggingEl = taskEl;
+      pointerId = e.pointerId;
+      draggingEl.setPointerCapture(pointerId);
+
+      const rect = draggingEl.getBoundingClientRect();
+      offsetY = e.clientY - rect.top;
+
+      placeholder = document.createElement('div');
+      placeholder.className='task placeholder';
+      placeholder.style.height = rect.height + "px";
+
+      draggingEl.classList.add('dragging');
+      draggingEl.style.width = rect.width + "px";
+
+      tasksContainer.insertBefore(placeholder, draggingEl.nextSibling);
+      moveDragging(e.clientY);
+    });
+
+    tasksContainer.addEventListener('pointermove', (e)=>{
+      if(!draggingEl || e.pointerId !== pointerId) return;
+      moveDragging(e.clientY);
+
+      const items=[...tasksContainer.querySelectorAll('.task:not(.dragging):not(.placeholder)')];
+      const y=e.clientY;
+
+      let insertBefore=null;
+      for(const it of items){
+        const r=it.getBoundingClientRect();
+        const mid=r.top + r.height/2;
+        if(y < mid){ insertBefore=it; break; }
+      }
+      if(insertBefore) tasksContainer.insertBefore(placeholder, insertBefore);
+      else tasksContainer.appendChild(placeholder);
+    });
+
+    tasksContainer.addEventListener('pointerup', (e)=>{
+      if(!draggingEl || e.pointerId !== pointerId) return;
+      finish(false);
+    });
+    tasksContainer.addEventListener('pointercancel', (e)=>{
+      if(!draggingEl || e.pointerId !== pointerId) return;
+      finish(true);
+    });
+
+    function moveDragging(clientY){
+      const containerRect = tasksContainer.getBoundingClientRect();
+      const localY = (clientY - offsetY) - containerRect.top;
+      draggingEl.style.transform = `translateY(${localY}px)`;
+    }
+
+    function finish(cancel){
+      draggingEl.classList.remove('dragging');
+      draggingEl.style.transform='';
+      draggingEl.style.width='';
+
+      tasksContainer.insertBefore(draggingEl, placeholder);
+      placeholder.remove();
+
+      if(!cancel){
+        const ids=[...tasksContainer.querySelectorAll('.task')].map(el=>el.dataset.taskId);
+        const current=state.tasksByDate[dayKey]||[];
+        const byId=new Map(current.map(t=>[t.id,t]));
+        state.tasksByDate[dayKey]=ids.map(id=>byId.get(id)).filter(Boolean);
+        save();
+      }
+      rerenderDay(dayKey);
+
+      draggingEl=null; placeholder=null; pointerId=null;
+    }
+  }
+
+  btnToday.addEventListener('click', jumpToToday);
+
+  function enableSplitter(){
+    let dragging=false;
+    let startX=0;
+    let startW=0;
+
+    splitter.addEventListener('pointerdown', (e)=>{
+      e.preventDefault();
+      dragging=true;
+      splitter.setPointerCapture(e.pointerId);
+      startX=e.clientX;
+      startW=state.settings.leftW;
+      document.body.style.cursor='col-resize';
+    });
+
+    splitter.addEventListener('pointermove', (e)=>{
+      if(!dragging) return;
+      const dx=e.clientX - startX;
+      const newW = clamp(startW + dx, 240, 700);
+      state.settings.leftW = newW;
+      document.documentElement.style.setProperty('--leftW', `${newW}px`);
+      leftWidthInput.value = Math.round(newW);
+    });
+
+    splitter.addEventListener('pointerup', ()=>{
+      if(!dragging) return;
+      dragging=false;
+      document.body.style.cursor='';
+      save();
+    });
+
+    splitter.addEventListener('pointercancel', ()=>{
+      dragging=false;
+      document.body.style.cursor='';
+    });
+  }
+
+  function clearAll(){
+    const spacer = leftCol.querySelector('.left-header-spacer');
+    leftCol.innerHTML="";
+    leftCol.appendChild(spacer);
+    timelineDays.innerHTML="";
+  }
+
+  function renderAll(){
+    clearAll();
+    for(const dayKey of state.render.days){
+      renderDayPair(dayKey, false);
+    }
+  }
+
+  function renderDayPair(dayKey, prepend){
+    const left = renderLeftDay(dayKey);
+    const right = renderRightDay(dayKey);
+
+    if(prepend){
+      leftCol.insertBefore(left, leftCol.children[1] || null);
+      timelineDays.insertBefore(right, timelineDays.firstChild);
+    }else{
+      leftCol.appendChild(left);
+      timelineDays.appendChild(right);
+    }
+  }
+
+  function init(){
+    load();
+    applySettings();
+    renderTimelineHeader();
+    syncHorizontalScroll();
+    enableSplitter();
+
+    initRange();
+    renderAll();
+
+    boardScroll.addEventListener('scroll', handleInfiniteScroll, {passive:true});
+    window.addEventListener('resize', ()=>{
+      applySettings();
+      renderTimelineHeader();
+      renderAll();
+    });
+
+    requestAnimationFrame(() => jumpToToday());
+  }
+
+  init();
+})();
+</script>
+</body>
+</html>
