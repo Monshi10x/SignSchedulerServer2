@@ -15,7 +15,7 @@
       --metaW: 320px;
       --actionsW: 140px;
 
-      --taskH: 70px;            /* was 50px */
+      --taskH: 90px;            /* was 50px */
       --dayHeaderH: 34px;
       --dayFooterH: 28px;
 
@@ -88,7 +88,7 @@
     }
 
     .left-header-spacer{
-      height: var(--timelineHeaderH);
+      height: calc(var(--timelineHeaderH) + 19px);
       border:1px solid var(--line);
       border-radius:14px;
       background: rgba(255,255,255,.02);
@@ -98,14 +98,20 @@
       z-index: 20;
       backdrop-filter: blur(10px);
       display:grid;
-      grid-template-columns: var(--metaW) var(--timelineW) var(--actionsW);
+      grid-template-rows: 1fr 15px;
       align-items:center;
-      gap:12px;
-      padding:0 12px;
-      min-width: calc(var(--metaW) + var(--timelineW) + var(--actionsW) + 24px);
+      gap:6px;
+      padding:6px 12px 8px;
+      min-width: 100%;
     }
     .left-header-spacer .hint{
       font-size:12px; color: rgba(159,176,208,.9); font-weight:800;
+    }
+    .left-header-top{
+      display:grid;
+      grid-template-columns: var(--metaW) 1fr var(--actionsW);
+      align-items:center;
+      gap:12px;
     }
     .left-header-actions{
       text-align:right;
@@ -115,8 +121,8 @@
       position:relative;
     }
     .timeline-header-inner{
-      width: var(--timelineW);
-      min-width: var(--timelineW);
+      width: 100%;
+      min-width: 100%;
       height: 100%;
       position:relative;
     }
@@ -128,7 +134,7 @@
       margin-bottom:10px;
       overflow:hidden;
       min-height: 120px;
-      min-width: calc(var(--metaW) + var(--timelineW) + var(--actionsW) + 24px);
+      min-width: 100%;
     }
     .day-header{
       height: var(--dayHeaderH);
@@ -157,13 +163,13 @@
       border:1px solid var(--line);
       border-radius:12px;
       background: rgba(255,255,255,.035);
-      display:grid;
-      grid-template-columns: var(--metaW) var(--timelineW) var(--actionsW);
-      align-items:stretch;
-      gap:12px;
+      display:flex;
+      flex-direction:column;
+      gap:4px;
       overflow:hidden;
       position:relative;
       user-select:none;
+      padding:8px 12px 8px;
     }
     .task.completed{ opacity:.45; filter:saturate(.6); }
 
@@ -173,6 +179,14 @@
       min-width:0;
     }
 
+    .task-main{
+      display:grid;
+      grid-template-columns: var(--metaW) 1fr var(--actionsW);
+      align-items:center;
+      gap:12px;
+      flex:1;
+      min-height:0;
+    }
     .task .colorbar{
       width: var(--barW);
       height:100%;
@@ -226,7 +240,6 @@
       display:flex;
       align-items:center;
       gap:6px;
-      padding-right:8px;
       justify-content:flex-end;
     }
     .iconbtn{
@@ -314,15 +327,16 @@
 
     .task-timeline{
       display:flex;
-      align-items:stretch;
-      padding:8px 0;
+      align-items:flex-end;
+      height:15px;
+      width:100%;
     }
     .task-timeline-inner{
-      width: var(--timelineW);
-      min-width: var(--timelineW);
+      width: 100%;
+      min-width: 100%;
       height: 100%;
       position:relative;
-      border-radius:12px;
+      border-radius:10px;
       border:1px solid rgba(255,255,255,.06);
       background: rgba(255,255,255,.015);
       overflow: visible;
@@ -332,8 +346,8 @@
     /* TIME BAR (right column) — square edges (no rounded) */
     .bar{
       position:absolute;
-      top:8px;
-      bottom:8px;
+      top:0;
+      bottom:0;
       left: var(--left, 0px);
       width: var(--w, 0px);
       border-radius: 0;          /* removed rounded */
@@ -352,8 +366,8 @@
       position:absolute;
       top:50%;
       transform: translateY(-50%);
-      width:14px;
-      height:22px;
+      width:12px;
+      height:16px;
       border-radius:9px;
       background: rgba(255,255,255,.18);
       border:1px solid rgba(255,255,255,.30);
@@ -576,14 +590,17 @@
     <div class="board-grid">
       <div class="left-col" id="leftCol">
         <div class="left-header-spacer">
-          <div class="hint">Days</div>
+          <div class="left-header-top">
+            <div class="hint">Days</div>
+            <div></div>
+            <div class="hint left-header-actions">Actions</div>
+          </div>
           <div class="timeline-header-inline">
             <div class="timeline-header-inner">
               <div class="grid-bg"></div>
               <div class="hours" id="timelineHours"></div>
             </div>
           </div>
-          <div class="hint left-header-actions">Actions</div>
         </div>
       </div>
     </div>
@@ -736,6 +753,14 @@
   }
   function escapeHtml(s){
     return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+  function updateTimelineScale(){
+    const totalSlots = (END_MIN - START_MIN) / SLOT;
+    const taskWidth = leftCol.querySelector('.task')?.getBoundingClientRect().width
+      || Math.max(0, leftCol.getBoundingClientRect().width - 20);
+    const slotWidth = Math.max(12, taskWidth / totalSlots);
+    document.documentElement.style.setProperty('--slotW', `${slotWidth}px`);
+    document.documentElement.style.setProperty('--timelineW', `${slotWidth * totalSlots}px`);
   }
 
   function load(){
@@ -999,6 +1024,7 @@
   }
 
   function renderAll(){
+    updateTimelineScale();
     clearAll();
     for(const dayKey of state.render.days){
       leftCol.appendChild(renderLeftDay(dayKey));
@@ -1129,9 +1155,14 @@
       <div class="completebtn" title="Complete">${iconCheck()}</div>
     `;
 
-    el.appendChild(meta);
+    const main=document.createElement('div');
+    main.className='task-main';
+    main.appendChild(meta);
+    main.appendChild(document.createElement('div'));
+    main.appendChild(actions);
+
+    el.appendChild(main);
     el.appendChild(timeline);
-    el.appendChild(actions);
 
     actions.querySelector('.iconbtn').addEventListener('click', (e)=>{ e.stopPropagation(); openModal(dayKey, task.id); });
     actions.querySelector('.iconbtn.danger').addEventListener('click', (e)=>{ e.stopPropagation(); deleteTask(dayKey, task.id); });
@@ -1422,6 +1453,7 @@
   function init(){
     load();
     applySettings();
+    updateTimelineScale();
     renderTimelineHeader();
 
     initRange();
@@ -1429,6 +1461,7 @@
 
     boardScroll.addEventListener('scroll', handleInfiniteScroll, {passive:true});
     window.addEventListener('resize', ()=>{
+      updateTimelineScale();
       renderTimelineHeader();
       renderAll();
     });
