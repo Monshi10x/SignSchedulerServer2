@@ -237,14 +237,14 @@
       gap:12px;
       flex:1;
       min-height:0;
-      padding:5px 2px;
+      padding:8px 12px 4px;
     }
     .task .body{
       flex:1;
       display:flex;
       align-items:center;
       gap:10px;
-      padding:0;
+      padding:0 10px;
       min-width:0;
       justify-content:flex-start;
     }
@@ -444,7 +444,7 @@
       left: var(--left, 0px);
       width: var(--w, 0px);
       border-radius: 0;          /* removed rounded */
-      background: #1d1f25;
+      background: var(--c, #4aa3ff);
       box-shadow: 0 10px 24px rgba(0,0,0,.25);
       cursor:pointer;
       display:flex;
@@ -503,8 +503,8 @@
     /* Rotated time labels outside bar, not clipped */
     .time-label{
       position:absolute;
-      top:-22px;
-      transform: rotate(90deg);
+      top:50%;
+      transform: translateY(-50%) rotate(-90deg);
       transform-origin: center;
       color: rgba(255,255,255,.95);
       font-weight:1000;
@@ -513,27 +513,13 @@
       text-shadow: 0 2px 10px rgba(0,0,0,.55);
       pointer-events:none;
       z-index:6;
-      background: rgba(15,18,26,.9);
-      border:1px solid rgba(255,255,255,.22);
-      padding: 4px 6px;
-      border-radius:6px;
+      background: transparent;
+      border: none;
+      padding: 0;
       white-space:nowrap;
     }
-    .time-label.start{ left: -8px; }
-    .time-label.end{ right: -8px; }
-    .time-label::after{
-      content:"";
-      position:absolute;
-      bottom:-6px;
-      left:50%;
-      transform: translateX(-50%);
-      width:0;
-      height:0;
-      border-left:6px solid transparent;
-      border-right:6px solid transparent;
-      border-top:6px solid rgba(15,18,26,.9);
-      filter: drop-shadow(0 -1px 0 rgba(255,255,255,.22));
-    }
+    .time-label.start{ left: -18px; }
+    .time-label.end{ right: -18px; }
 
     /* MODAL */
     .modal-backdrop{
@@ -889,8 +875,7 @@
   }
   function updateTimelineScale(){
     const totalSlots = (END_MIN - START_MIN) / SLOT;
-    const firstTask = daysGrid.querySelector('.task');
-    const taskWidth = (firstTask ? firstTask.getBoundingClientRect().width : 0)
+    const taskWidth = daysGrid.querySelector('.task')?.getBoundingClientRect().width
       || Math.max(0, leftCol.getBoundingClientRect().width - 20);
     const slotWidth = Math.max(12, taskWidth / totalSlots);
     document.documentElement.style.setProperty('--slotW', `${slotWidth}px`);
@@ -1363,55 +1348,114 @@
       }
     });
 
-    const actions=document.createElement('div');
-    actions.className='right';
+    enableBarDrag(bar, dayKey, task.id);
+    enableBarResizeRight(hR, bar, dayKey, task.id);
+    enableBarResizeLeft(hL, bar, dayKey, task.id);
 
     return el;
   }
 
-    actions.innerHTML=`
-      <div class="iconbtn" title="Edit">${iconPencil()}</div>
-      <div class="iconbtn danger" title="Delete">${iconTrash()}</div>
-      <div class="completebtn" title="Complete">${iconCheck()}</div>
-    `;
+  function setBarTimes(barEl, startMin, durMin){
+    const start = barEl.querySelector('.time-label.start');
+    const end = barEl.querySelector('.time-label.end');
+    if(start) start.textContent = minsToLabel(startMin);
+    if(end) end.textContent = minsToLabel(startMin + durMin);
+  }
 
-    const main=document.createElement('div');
-    main.className='task-main';
-    main.appendChild(meta);
-    main.appendChild(document.createElement('div'));
-    main.appendChild(actions);
+  function enableBarDrag(barEl, dayKey, taskId){
+    let dragging=false, startX=0, startLeftPx=0;
 
-    actions.prepend(assigneesWrap);
+    barEl.addEventListener('pointerdown', (e)=>{
+      if(e.target.classList.contains('handle')) return;
+      e.preventDefault();
+      dragging=true;
+      barEl.setPointerCapture(e.pointerId);
+      startX=e.clientX;
+
+      const t=getTask(dayKey, taskId);
+      if(!t) return;
+      startLeftPx = minsToLeftPx(t.startMin);
+    });
+
+    barEl.addEventListener('pointermove', (e)=>{
+      if(!dragging) return;
+      const t=getTask(dayKey, taskId);
+      if(!t) return;
+
+      const dx=e.clientX - startX;
+      const rawLeft = startLeftPx + dx;
+      const rawMins = pxToMins(rawLeft);
+      const snapped = snapToSlot(rawMins);
+
+      const maxStart = END_MIN - t.durMin;
+      const newStart = clamp(snapped, START_MIN, maxStart);
+
+      barEl.style.setProperty('--left', `${minsToLeftPx(newStart)}px`);
+      setBarTimes(barEl, newStart, t.durMin);
 
     });
 
-    actions.querySelector('.iconbtn').addEventListener('click', (e)=>{ e.stopPropagation(); openModal(dayKey, task.id); });
-    actions.querySelector('.iconbtn.danger').addEventListener('click', (e)=>{ e.stopPropagation(); deleteTask(dayKey, task.id); });
-    actions.querySelector('.completebtn').addEventListener('click', (e)=>{ e.stopPropagation(); toggleComplete(dayKey, task.id); });
+    barEl.addEventListener('pointerup', ()=>{
+      if(!dragging) return;
+      dragging=false;
 
-    const descInput = meta.querySelector('.task-desc-input');
-    const updateDescWidth = () => {
-      const length = Math.max(2, descInput.value.length + 1);
-      descInput.style.width = `${Math.max(20, length * 8)}px`;
-    };
-    updateDescWidth();
-    descInput.addEventListener('pointerdown', (e)=> e.stopPropagation());
-    descInput.addEventListener('click', (e)=> e.stopPropagation());
-    descInput.addEventListener('input', updateDescWidth);
-    descInput.addEventListener('change', () => {
-      updateTask(dayKey, task.id, { desc: descInput.value.trim() || "Task" });
+      const t=getTask(dayKey, taskId);
+      if(!t) return;
+
+      const cssLeft = parseFloat(getComputedStyle(barEl).getPropertyValue('--left')) || 0;
+      const newStart = snapToSlot(pxToMins(cssLeft));
+      const maxStart = END_MIN - t.durMin;
+      updateTask(dayKey, taskId, { startMin: clamp(newStart, START_MIN, maxStart) });
     });
-    descInput.addEventListener('keydown', (e) => {
-      if(e.key === 'Enter'){
-        e.preventDefault();
-        descInput.blur();
-      }
+
+    barEl.addEventListener('pointercancel', ()=> dragging=false);
+  }
+
+  function enableBarResizeRight(handleEl, barEl, dayKey, taskId){
+    let resizing=false, startX=0, startW=0;
+
+    handleEl.addEventListener('pointerdown', (e)=>{
+      e.preventDefault(); e.stopPropagation();
+      resizing=true;
+      handleEl.setPointerCapture(e.pointerId);
+      startX=e.clientX;
+      startW = parseFloat(getComputedStyle(barEl).getPropertyValue('--w')) || 0;
+    });
+
+    handleEl.addEventListener('pointermove', (e)=>{
+      if(!resizing) return;
+      const t=getTask(dayKey, taskId);
+      if(!t) return;
+
+      const dx=e.clientX - startX;
+      const rawW = startW + dx;
+      const slots = Math.max(1, Math.round(rawW / slotW()));
+      let dur = slots * SLOT;
+      dur = snapToSlot(clamp(dur, SLOT, END_MIN - t.startMin));
+
+      const left = minsToLeftPx(t.startMin);
+      const w = minsToLeftPx(t.startMin + dur) - left;
+      barEl.style.setProperty('--w', `${Math.max(0,w)}px`);
+      setBarTimes(barEl, t.startMin, dur);
+    });
+
+    handleEl.addEventListener('pointerup', ()=>{
+      if(!resizing) return;
+      resizing=false;
+
+      const t=getTask(dayKey, taskId);
+      if(!t) return;
+
+      const wPx = parseFloat(getComputedStyle(barEl).getPropertyValue('--w')) || 0;
+      const slots = Math.max(1, Math.round(wPx / slotW()));
+      let dur = slots * SLOT;
+      dur = snapToSlot(clamp(dur, SLOT, END_MIN - t.startMin));
+      updateTask(dayKey, taskId, { durMin: dur });
     });
 
     handleEl.addEventListener('pointercancel', ()=> resizing=false);
   }
 
-  // Resize from the left edge of the timeline bar.
   function enableBarResizeLeft(handleEl, barEl, dayKey, taskId){
     let resizing=false, startX=0, startLeft=0, startEndMin=0;
 
@@ -1446,11 +1490,19 @@
 
     });
 
-    enableBarDrag(bar, dayKey, task.id);
-    enableBarResizeRight(hR, bar, dayKey, task.id);
-    enableBarResizeLeft(hL, bar, dayKey, task.id);
+    handleEl.addEventListener('pointerup', ()=>{
+      if(!resizing) return;
+      resizing=false;
 
-    return el;
+      const cssLeft = parseFloat(getComputedStyle(barEl).getPropertyValue('--left')) || 0;
+      let newStart = snapToSlot(pxToMins(cssLeft));
+      newStart = clamp(newStart, START_MIN, startEndMin - SLOT);
+
+      const newDur = snapToSlot(clamp(startEndMin - newStart, SLOT, END_MIN - newStart));
+      updateTask(dayKey, taskId, { startMin: newStart, durMin: newDur });
+    });
+
+    handleEl.addEventListener('pointercancel', ()=> resizing=false);
   }
 
   function initSortable(tasksContainer, dayKey){
@@ -1468,14 +1520,13 @@
       handle: '.task-main, .task-typebar',
       filter: '.iconbtn, .completebtn, .bar, .handle, .task-desc-input, .task-type-input',
       onMove: (evt) => {
-        const target = evt.originalEvent ? evt.originalEvent.target : null;
-        if(target && target.closest && target.closest('.bar, .handle')) return false;
+        if(evt.originalEvent?.target?.closest('.bar, .handle')) return false;
         return true;
       },
       onAdd: (evt) => {
-        const fromDay = evt.from && evt.from.dataset ? evt.from.dataset.tasksFor : null;
-        const toDay = evt.to && evt.to.dataset ? evt.to.dataset.tasksFor : null;
-        const taskId = evt.item && evt.item.dataset ? evt.item.dataset.taskId : null;
+        const fromDay = evt.from?.dataset?.tasksFor;
+        const toDay = evt.to?.dataset?.tasksFor;
+        const taskId = evt.item?.dataset?.taskId;
         if(!fromDay || !toDay || !taskId) return;
 
         const fromTasks = state.tasksByDate[fromDay] || [];
@@ -1498,17 +1549,19 @@
     });
   }
 
-    actions.innerHTML=`
-      <div class="iconbtn" title="Edit">${iconPencil()}</div>
-      <div class="iconbtn danger" title="Delete">${iconTrash()}</div>
-      <div class="completebtn" title="Complete">${iconCheck()}</div>
-    `;
+  function handleInfiniteScroll(){
+    const top=boardScroll.scrollTop;
+    const height=boardScroll.scrollHeight;
+    const view=boardScroll.clientHeight;
+    if(top + view > height - 800) extendBottom(20);
+    if(top < 300) extendTop(20);
+  }
 
-    const main=document.createElement('div');
-    main.className='task-main';
-    main.appendChild(meta);
-    main.appendChild(document.createElement('div'));
-    main.appendChild(actions);
+  function jumpToToday(){
+    const key=toDateKey(new Date());
+    const el=document.getElementById(`day-${key}`);
+    if(el) el.scrollIntoView({block:'start', behavior:'smooth'});
+  }
 
   btnSettings.addEventListener('click', ()=>{
     settingsPanel.classList.toggle('show');
