@@ -87,6 +87,23 @@
       background: linear-gradient(180deg, rgba(16,24,38,.65), rgba(16,24,38,.35));
       padding:10px 10px 40px;
     }
+    .days-grid{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+    .days-grid.view-5,
+    .days-grid.view-7{
+      display:grid;
+      gap:10px;
+      align-items:start;
+    }
+    .days-grid.view-5{
+      grid-template-columns: repeat(5, minmax(260px, 1fr));
+    }
+    .days-grid.view-7{
+      grid-template-columns: repeat(7, minmax(240px, 1fr));
+    }
 
     .left-header-spacer{
       height: calc(var(--timelineHeaderH) + 19px);
@@ -234,6 +251,23 @@
       padding:0 10px;
       min-width:0;
     }
+    .task-desc-input{
+      width:100%;
+      background: transparent;
+      border:1px solid transparent;
+      color: var(--text);
+      font-weight:800;
+      text-align:center;
+      font-family: inherit;
+      font-size:14px;
+      padding:4px 6px;
+      border-radius:8px;
+    }
+    .task-desc-input:focus{
+      outline:none;
+      border-color: rgba(255,255,255,.25);
+      background: rgba(0,0,0,.15);
+    }
 
     /* task name centered and can be 2 lines with ellipsis on last line */
     .desc{
@@ -252,6 +286,12 @@
 
     .task .right{
       width: var(--actionsW);
+      display:flex;
+      align-items:center;
+      gap:6px;
+      justify-content:flex-end;
+    }
+    .assignees-card{
       display:flex;
       align-items:center;
       gap:6px;
@@ -591,6 +631,11 @@
       <span class="pill">2-column day + timeline</span>
     </div>
     <div class="actions">
+      <select id="viewSelect" aria-label="View mode">
+        <option value="infinite">Infinite scroll</option>
+        <option value="week5">5 days</option>
+        <option value="week7">7 days</option>
+      </select>
       <button id="btnToday">Jump to Today</button>
       <button id="btnSettings">Settings</button>
     </div>
@@ -625,6 +670,7 @@
             </div>
           </div>
         </div>
+        <div class="days-grid" id="daysGrid"></div>
       </div>
     </div>
   </div>
@@ -698,7 +744,7 @@
   const STORAGE_KEY = "twoColBoard_v4";
 
   const state = {
-    settings: { daysVisible: 5 },
+    settings: { daysVisible: 5, viewMode: "infinite" },
     tasksByDate: {},
     render: { startDate: null, endDate: null, days: [] },
     modal: { open:false, dateKey:null, taskId:null }
@@ -706,10 +752,12 @@
 
   const boardScroll = document.getElementById('boardScroll');
   const leftCol = document.getElementById('leftCol');
+  const daysGrid = document.getElementById('daysGrid');
   const hours = document.getElementById('timelineHours');
 
   const btnToday = document.getElementById('btnToday');
   const btnSettings = document.getElementById('btnSettings');
+  const viewSelect = document.getElementById('viewSelect');
 
   const settingsPanel = document.getElementById('settingsPanel');
   const daysVisibleInput = document.getElementById('daysVisibleInput');
@@ -743,6 +791,14 @@
   function addDays(date,n){
     const d=new Date(date);
     d.setDate(d.getDate()+n);
+    return d;
+  }
+  function startOfWeek(date){
+    const d = new Date(date);
+    const day = d.getDay();
+    const diff = (day + 6) % 7; // Monday start
+    d.setDate(d.getDate() - diff);
+    d.setHours(0,0,0,0);
     return d;
   }
   function formatDayHeader(dateKey){
@@ -779,7 +835,7 @@
   }
   function updateTimelineScale(){
     const totalSlots = (END_MIN - START_MIN) / SLOT;
-    const taskWidth = leftCol.querySelector('.task')?.getBoundingClientRect().width
+    const taskWidth = daysGrid.querySelector('.task')?.getBoundingClientRect().width
       || Math.max(0, leftCol.getBoundingClientRect().width - 20);
     const slotWidth = Math.max(12, taskWidth / totalSlots);
     document.documentElement.style.setProperty('--slotW', `${slotWidth}px`);
@@ -793,6 +849,7 @@
       const parsed=JSON.parse(raw);
       if(parsed?.settings){
         if(parsed.settings.daysVisible) state.settings.daysVisible=parsed.settings.daysVisible;
+        if(parsed.settings.viewMode) state.settings.viewMode=parsed.settings.viewMode;
       }
       if(parsed?.tasksByDate && typeof parsed.tasksByDate==='object'){
         state.tasksByDate=parsed.tasksByDate;
@@ -810,7 +867,7 @@
     const vis = clamp(parseInt(state.settings.daysVisible,10)||5, 3, 14);
     state.settings.daysVisible=vis;
     daysVisibleInput.value=vis;
-
+    viewSelect.value = state.settings.viewMode || "infinite";
   }
 
   function renderTimelineHeader(){
@@ -830,8 +887,9 @@
 
   function initRange(){
     const today=new Date();
-    state.render.startDate = addDays(today, -20);
-    state.render.endDate = addDays(today, 20);
+    const base = startOfWeek(today);
+    state.render.startDate = addDays(base, -28);
+    state.render.endDate = addDays(base, 28);
     rebuildDaysArray();
   }
   function rebuildDaysArray(){
@@ -846,6 +904,7 @@
   }
 
   function extendBottom(n=20){
+    if(state.settings.viewMode !== "infinite") return;
     const oldEnd = new Date(state.render.endDate);
     state.render.endDate = addDays(oldEnd, n);
     const startCount = state.render.days.length;
@@ -855,11 +914,12 @@
       d = addDays(d,1);
     }
     for(let i=startCount;i<state.render.days.length;i++){
-      leftCol.appendChild(renderLeftDay(state.render.days[i]));
+      daysGrid.appendChild(renderLeftDay(state.render.days[i]));
     }
   }
 
   function extendTop(n=20){
+    if(state.settings.viewMode !== "infinite") return;
     const oldStart = new Date(state.render.startDate);
     const newStart = addDays(oldStart, -n);
     state.render.startDate = newStart;
@@ -878,7 +938,7 @@
     state.render.days = [...newDays, ...state.render.days];
 
     for(let i=newDays.length-1;i>=0;i--){
-      leftCol.insertBefore(renderLeftDay(newDays[i]), leftCol.children[1] || null);
+      daysGrid.insertBefore(renderLeftDay(newDays[i]), daysGrid.firstChild);
     }
 
     if(firstEl && beforeTop !== null){
@@ -1041,22 +1101,38 @@
   });
 
   function clearAll(){
-    const spacer = leftCol.querySelector('.left-header-spacer');
-    leftCol.innerHTML="";
-    leftCol.appendChild(spacer);
+    daysGrid.innerHTML="";
   }
 
   function renderAll(){
     updateTimelineScale();
     clearAll();
-    for(const dayKey of state.render.days){
-      leftCol.appendChild(renderLeftDay(dayKey));
+    const mode = state.settings.viewMode || "infinite";
+    daysGrid.classList.toggle('view-5', mode === 'week5');
+    daysGrid.classList.toggle('view-7', mode === 'week7');
+    for(const dayKey of getRenderedDays()){
+      daysGrid.appendChild(renderLeftDay(dayKey));
     }
   }
 
   function rerenderDay(dayKey){
     const left = document.querySelector(`.day[data-day="${dayKey}"]`);
     if(left) left.replaceWith(renderLeftDay(dayKey));
+  }
+
+  function getRenderedDays(){
+    const mode = state.settings.viewMode || "infinite";
+    if(mode === "infinite") return state.render.days;
+    const days = [];
+    let d = new Date(state.render.startDate);
+    const end = new Date(state.render.endDate);
+    while(d <= end){
+      if(mode === "week7" || (mode === "week5" && d.getDay() !== 0 && d.getDay() !== 6)){
+        days.push(toDateKey(d));
+      }
+      d = addDays(d, 1);
+    }
+    return days;
   }
 
   function renderLeftDay(dayKey){
@@ -1110,7 +1186,7 @@
     meta.innerHTML=`
       <div class="colorbar"></div>
       <div class="body">
-        <div class="desc" title="${escapeHtml(task.desc)}">${escapeHtml(task.desc)}</div>
+        <input class="task-desc-input" value="${escapeHtml(task.desc)}" aria-label="Task description" />
       </div>
     `;
 
@@ -1195,6 +1271,18 @@
     actions.querySelector('.iconbtn').addEventListener('click', (e)=>{ e.stopPropagation(); openModal(dayKey, task.id); });
     actions.querySelector('.iconbtn.danger').addEventListener('click', (e)=>{ e.stopPropagation(); deleteTask(dayKey, task.id); });
     actions.querySelector('.completebtn').addEventListener('click', (e)=>{ e.stopPropagation(); toggleComplete(dayKey, task.id); });
+
+    const descInput = meta.querySelector('.task-desc-input');
+    descInput.addEventListener('click', (e)=> e.stopPropagation());
+    descInput.addEventListener('change', () => {
+      updateTask(dayKey, task.id, { desc: descInput.value.trim() || "Task" });
+    });
+    descInput.addEventListener('keydown', (e) => {
+      if(e.key === 'Enter'){
+        e.preventDefault();
+        descInput.blur();
+      }
+    });
 
     enableBarDrag(bar, dayKey, task.id);
     enableBarResizeRight(hR, bar, dayKey, task.id);
@@ -1356,15 +1444,36 @@
   function initSortable(tasksContainer, dayKey){
     if(!window.Sortable) return;
     new Sortable(tasksContainer, {
+      group: {
+        name: 'days',
+        pull: true,
+        put: true
+      },
       animation: 150,
       delay: 300,
       delayOnTouchOnly: true,
       touchStartThreshold: 4,
       handle: '.task-main, .task-typebar',
-      filter: '.iconbtn, .completebtn, .bar, .handle',
+      filter: '.iconbtn, .completebtn, .bar, .handle, .task-desc-input',
       onMove: (evt) => {
         if(evt.originalEvent?.target?.closest('.bar, .handle')) return false;
         return true;
+      },
+      onAdd: (evt) => {
+        const fromDay = evt.from?.dataset?.tasksFor;
+        const toDay = evt.to?.dataset?.tasksFor;
+        const taskId = evt.item?.dataset?.taskId;
+        if(!fromDay || !toDay || !taskId) return;
+
+        const fromTasks = state.tasksByDate[fromDay] || [];
+        const toTasks = state.tasksByDate[toDay] || [];
+        const taskIndex = fromTasks.findIndex(t => t.id === taskId);
+        if(taskIndex < 0) return;
+        const [task] = fromTasks.splice(taskIndex, 1);
+        toTasks.splice(evt.newIndex, 0, task);
+        state.tasksByDate[fromDay] = fromTasks;
+        state.tasksByDate[toDay] = toTasks;
+        save();
       },
       onEnd: () => {
         const ids=[...tasksContainer.querySelectorAll('.task')].map(el=>el.dataset.taskId);
@@ -1399,6 +1508,14 @@
     state.settings.daysVisible = clamp(parseInt(daysVisibleInput.value,10)||5,3,14);
     save();
     applySettings();
+  });
+  viewSelect.addEventListener('change', ()=>{
+    state.settings.viewMode = viewSelect.value;
+    save();
+    applySettings();
+    updateTimelineScale();
+    renderTimelineHeader();
+    renderAll();
   });
   btnToday.addEventListener('click', jumpToToday);
 
