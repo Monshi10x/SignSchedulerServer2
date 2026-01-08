@@ -239,30 +239,6 @@
       min-height:0;
       padding:8px 12px 4px;
     }
-    .task .colorbar{
-      width: var(--barW);
-      height:100%;
-      background: var(--c, #4aa3ff);
-      position:relative;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-    }
-    .task .type-rot{
-      position:absolute;
-      left:50%;
-      top:50%;
-      transform: translate(-50%,-50%) rotate(-90deg);
-      transform-origin:center;
-      font-size:11px;
-      font-weight:1000;
-      letter-spacing:.3px;
-      color: rgba(255,255,255,.95);
-      text-shadow: 0 2px 10px rgba(0,0,0,.55);
-      white-space:nowrap;
-      pointer-events:none;
-    }
-
     .task .body{
       flex:1;
       display:flex;
@@ -275,6 +251,7 @@
     .task-desc-input{
       width:auto;
       min-width:20px;
+      max-width:100%;
       background: transparent;
       border:1px solid rgba(255,255,255,.18);
       color: var(--text);
@@ -284,11 +261,24 @@
       font-size:14px;
       padding:4px 10px;
       border-radius:999px;
+      text-overflow: ellipsis;
     }
     .task-desc-input:focus{
       outline:none;
       border-color: rgba(255,255,255,.25);
       background: rgba(0,0,0,.15);
+    }
+    .days-grid.view-5 .task-desc-input{
+      min-width:120px;
+      max-width:220px;
+    }
+    .days-grid.view-7 .task-desc-input{
+      min-width:90px;
+      max-width:180px;
+    }
+    .days-grid:not(.view-5):not(.view-7) .task-desc-input{
+      min-width:160px;
+      max-width:280px;
     }
 
     /* task name centered and can be 2 lines with ellipsis on last line */
@@ -308,6 +298,12 @@
 
     .task .right{
       width: var(--actionsW);
+      display:flex;
+      align-items:center;
+      gap:6px;
+      justify-content:flex-end;
+    }
+    .assignees-card{
       display:flex;
       align-items:center;
       gap:6px;
@@ -1228,7 +1224,6 @@
     const meta=document.createElement('div');
     meta.className='meta';
     meta.innerHTML=`
-      <div class="colorbar"></div>
       <div class="body">
         <input class="task-desc-input" value="${escapeHtml(task.desc)}" aria-label="Task description" />
       </div>
@@ -1322,6 +1317,7 @@
       descInput.style.width = `${Math.max(20, length * 8)}px`;
     };
     updateDescWidth();
+    descInput.addEventListener('pointerdown', (e)=> e.stopPropagation());
     descInput.addEventListener('click', (e)=> e.stopPropagation());
     descInput.addEventListener('input', updateDescWidth);
     descInput.addEventListener('change', () => {
