@@ -196,12 +196,32 @@
       background: var(--c, #4aa3ff);
       display:flex;
       align-items:center;
-      justify-content:center;
+      justify-content:flex-start;
       font-size:8px;
       font-weight:900;
       letter-spacing:.4px;
       text-transform:uppercase;
       color: rgba(255,255,255,.95);
+      padding-left:5px;
+    }
+    .task-type-input{
+      min-width:20px;
+      height:100%;
+      border:1px solid rgba(255,255,255,.25);
+      border-radius:999px;
+      background: rgba(0,0,0,.18);
+      color: rgba(255,255,255,.95);
+      font-weight:900;
+      font-size:8px;
+      letter-spacing:.4px;
+      text-transform:uppercase;
+      padding:0 6px;
+      line-height:1;
+    }
+    .task-type-input:focus{
+      outline:none;
+      border-color: rgba(255,255,255,.45);
+      background: rgba(0,0,0,.3);
     }
 
     .task .meta{
@@ -212,7 +232,7 @@
 
     .task-main{
       display:grid;
-      grid-template-columns: var(--metaW) 1fr var(--actionsW);
+      grid-template-columns: minmax(160px, 2fr) minmax(0, 1fr) minmax(120px, auto);
       align-items:center;
       gap:12px;
       flex:1;
@@ -270,23 +290,6 @@
       border-color: rgba(255,255,255,.25);
       background: rgba(0,0,0,.15);
     }
-    .task-desc-input{
-      width:100%;
-      background: transparent;
-      border:1px solid transparent;
-      color: var(--text);
-      font-weight:800;
-      text-align:center;
-      font-family: inherit;
-      font-size:14px;
-      padding:4px 6px;
-      border-radius:8px;
-    }
-    .task-desc-input:focus{
-      outline:none;
-      border-color: rgba(255,255,255,.25);
-      background: rgba(0,0,0,.15);
-    }
 
     /* task name centered and can be 2 lines with ellipsis on last line */
     .desc{
@@ -305,6 +308,12 @@
 
     .task .right{
       width: var(--actionsW);
+      display:flex;
+      align-items:center;
+      gap:6px;
+      justify-content:flex-end;
+    }
+    .assignees-card{
       display:flex;
       align-items:center;
       gap:6px;
@@ -646,6 +655,16 @@
       body{ overflow:auto; }
       .board-scroll{ height:auto; overflow:visible; }
       .left-header-spacer{ top:56px; }
+    }
+    @media (max-width: 520px){
+      .task-main{
+        grid-template-columns: 1fr;
+        gap:6px;
+      }
+      .task .right{
+        justify-content:flex-start;
+        flex-wrap:wrap;
+      }
     }
   </style>
 </head>
@@ -1204,7 +1223,7 @@
 
     const typeBar=document.createElement('div');
     typeBar.className='task-typebar';
-    typeBar.textContent = task.type;
+    typeBar.innerHTML = `<input class="task-type-input" value="${escapeHtml(task.type)}" aria-label="Task type" />`;
 
     const meta=document.createElement('div');
     meta.className='meta';
@@ -1312,6 +1331,24 @@
       if(e.key === 'Enter'){
         e.preventDefault();
         descInput.blur();
+      }
+    });
+
+    const typeInput = typeBar.querySelector('.task-type-input');
+    const updateTypeWidth = () => {
+      const length = Math.max(2, typeInput.value.length + 1);
+      typeInput.style.width = `${Math.max(20, length * 7)}px`;
+    };
+    updateTypeWidth();
+    typeInput.addEventListener('click', (e)=> e.stopPropagation());
+    typeInput.addEventListener('input', updateTypeWidth);
+    typeInput.addEventListener('change', () => {
+      updateTask(dayKey, task.id, { type: typeInput.value.trim() || task.type });
+    });
+    typeInput.addEventListener('keydown', (e)=>{
+      if(e.key === 'Enter'){
+        e.preventDefault();
+        typeInput.blur();
       }
     });
 
@@ -1485,7 +1522,7 @@
       delayOnTouchOnly: true,
       touchStartThreshold: 4,
       handle: '.task-main, .task-typebar',
-      filter: '.iconbtn, .completebtn, .bar, .handle, .task-desc-input',
+      filter: '.iconbtn, .completebtn, .bar, .handle, .task-desc-input, .task-type-input',
       onMove: (evt) => {
         if(evt.originalEvent?.target?.closest('.bar, .handle')) return false;
         return true;
