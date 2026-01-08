@@ -270,6 +270,23 @@
       border-color: rgba(255,255,255,.25);
       background: rgba(0,0,0,.15);
     }
+    .task-desc-input{
+      width:100%;
+      background: transparent;
+      border:1px solid transparent;
+      color: var(--text);
+      font-weight:800;
+      text-align:center;
+      font-family: inherit;
+      font-size:14px;
+      padding:4px 6px;
+      border-radius:8px;
+    }
+    .task-desc-input:focus{
+      outline:none;
+      border-color: rgba(255,255,255,.25);
+      background: rgba(0,0,0,.15);
+    }
 
     /* task name centered and can be 2 lines with ellipsis on last line */
     .desc{
@@ -287,6 +304,19 @@
     }
 
     .task .right{
+      width: var(--actionsW);
+      display:flex;
+      align-items:center;
+      gap:6px;
+      justify-content:flex-end;
+    }
+    .assignees-card{
+      display:flex;
+      align-items:center;
+      gap:6px;
+      justify-content:flex-end;
+    }
+    .assignees-card{
       display:flex;
       align-items:center;
       gap:6px;
