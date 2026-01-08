@@ -12,8 +12,8 @@
       --line:rgba(255,255,255,.10);
       --line2:rgba(255,255,255,.06);
 
-      --leftW: 360px;
-      --splitW: 10px;
+      --metaW: 320px;
+      --actionsW: 140px;
 
       --taskH: 70px;            /* was 50px */
       --dayHeaderH: 34px;
@@ -77,13 +77,12 @@
 
     .board-grid{
       display:grid;
-      grid-template-columns: var(--leftW) var(--splitW) 1fr;
+      grid-template-columns: 1fr;
       min-height:100%;
     }
 
     /* LEFT COLUMN */
     .left-col{
-      border-right:1px solid var(--line);
       background: linear-gradient(180deg, rgba(16,24,38,.65), rgba(16,24,38,.35));
       padding:10px 10px 40px;
     }
@@ -98,13 +97,28 @@
       top: 0;
       z-index: 20;
       backdrop-filter: blur(10px);
-      display:flex;
+      display:grid;
+      grid-template-columns: var(--metaW) var(--timelineW) var(--actionsW);
       align-items:center;
-      justify-content:space-between;
+      gap:12px;
       padding:0 12px;
+      min-width: calc(var(--metaW) + var(--timelineW) + var(--actionsW) + 24px);
     }
     .left-header-spacer .hint{
       font-size:12px; color: rgba(159,176,208,.9); font-weight:800;
+    }
+    .left-header-actions{
+      text-align:right;
+    }
+    .timeline-header-inline{
+      height:100%;
+      position:relative;
+    }
+    .timeline-header-inner{
+      width: var(--timelineW);
+      min-width: var(--timelineW);
+      height: 100%;
+      position:relative;
     }
 
     .day{
@@ -114,6 +128,7 @@
       margin-bottom:10px;
       overflow:hidden;
       min-height: 120px;
+      min-width: calc(var(--metaW) + var(--timelineW) + var(--actionsW) + 24px);
     }
     .day-header{
       height: var(--dayHeaderH);
@@ -142,13 +157,21 @@
       border:1px solid var(--line);
       border-radius:12px;
       background: rgba(255,255,255,.035);
-      display:flex;
+      display:grid;
+      grid-template-columns: var(--metaW) var(--timelineW) var(--actionsW);
       align-items:stretch;
+      gap:12px;
       overflow:hidden;
       position:relative;
       user-select:none;
     }
     .task.completed{ opacity:.45; filter:saturate(.6); }
+
+    .task .meta{
+      display:flex;
+      align-items:stretch;
+      min-width:0;
+    }
 
     .task .colorbar{
       width: var(--barW);
@@ -198,22 +221,13 @@
       max-height: calc(1.15em * 2);
     }
 
-    .chip{
-      font-size:12px;
-      font-weight:900;
-      padding:6px 8px;
-      border-radius:10px;
-      border:1px solid var(--line);
-      background: rgba(0,0,0,.18);
-      white-space:nowrap;
-      cursor:pointer;
-      flex:0 0 auto;
-    }
     .task .right{
+      width: var(--actionsW);
       display:flex;
       align-items:center;
       gap:6px;
       padding-right:8px;
+      justify-content:flex-end;
     }
     .iconbtn{
       width:32px; height:32px;
@@ -271,59 +285,6 @@
     }
     .add-area:hover{ background: rgba(255,255,255,.05); }
 
-    /* SPLITTER */
-    .splitter{
-      width: var(--splitW);
-      cursor: col-resize;
-      position: sticky;
-      top: 0;
-      z-index: 60;
-      background: rgba(255,255,255,.02);
-      border-left:1px solid var(--line2);
-      border-right:1px solid var(--line2);
-    }
-    .splitter::after{
-      content:"";
-      display:block;
-      width:4px;
-      height:140px;
-      border-radius:999px;
-      margin: 16px auto 0;
-      background: rgba(255,255,255,.10);
-      box-shadow: 0 0 0 1px rgba(255,255,255,.06);
-    }
-
-    /* RIGHT COLUMN */
-    .right-col{
-      padding:10px 10px 40px;
-      position:relative;
-    }
-
-    .timeline-sticky-header{
-      position: sticky;
-      top: 0;
-      z-index: 50;
-      height: var(--timelineHeaderH);
-      border:1px solid var(--line);
-      border-radius:14px;
-      background: linear-gradient(180deg, rgba(16,24,38,.95), rgba(16,24,38,.78));
-      backdrop-filter: blur(10px);
-      overflow: hidden;
-      margin-bottom:10px;
-    }
-
-    .timeline-header-scroll{
-      height: 100%;
-      overflow-x:auto;
-      overflow-y:hidden;
-    }
-    .timeline-header-inner{
-      width: var(--timelineW);
-      min-width: var(--timelineW);
-      height: 100%;
-      position:relative;
-    }
-
     .hours{
       position:absolute;
       inset:0;
@@ -351,72 +312,22 @@
       opacity:1;
     }
 
-    .timeline-body-scroll{
-      overflow-x:auto;
-      overflow-y:visible;
-      border-radius:14px;
-      border:1px solid var(--line);
-      background: rgba(255,255,255,.02);
+    .task-timeline{
+      display:flex;
+      align-items:stretch;
+      padding:8px 0;
     }
-
-    .timeline-body-inner{
+    .task-timeline-inner{
       width: var(--timelineW);
       min-width: var(--timelineW);
-      padding: 0;
+      height: 100%;
       position:relative;
-    }
-
-    #timelineDays{
-      padding: 0;
-      margin: 0;
-    }
-
-    .timeline-day{
-      border:1px solid var(--line);
-      border-radius:14px;
-      background: rgba(0,0,0,.12);
-      margin: 0 10px 10px;
-      overflow:hidden;
-      min-height: 120px;
-      position:relative;
-    }
-
-    /* Invisible spacer to align with left day header */
-    .timeline-day-topspacer{
-      height: var(--dayHeaderH);
-      background: transparent;
-    }
-
-    .timeline-day-body{
-      padding:8px 8px 0;
-      display:flex;
-      flex-direction:column;
-      gap:8px;
-      position:relative;
-    }
-
-    .timeline-row{
-      height: var(--taskH);
       border-radius:12px;
-      position:relative;
-      overflow:visible; /* labels can hang out */
       border:1px solid rgba(255,255,255,.06);
       background: rgba(255,255,255,.015);
+      overflow: visible;
     }
-    .timeline-row.completed{ opacity:.45; filter:saturate(.6); }
-
-    /* Put grid lines also behind each row (visible while scrolling) */
-    .timeline-row::before{
-      content:"";
-      position:absolute;
-      inset:0;
-      background:
-        linear-gradient(to right, rgba(255,255,255,.22) 1px, transparent 1px) 0 0 / calc(var(--slotW) * 4) 100%,
-        linear-gradient(to right, rgba(255,255,255,.10) 1px, transparent 1px) 0 0 / var(--slotW) 100%;
-      pointer-events:none;
-      opacity:1;
-      border-radius:12px;
-    }
+    .task.completed .task-timeline-inner{ opacity:.75; }
 
     /* TIME BAR (right column) — square edges (no rounded) */
     .bar{
@@ -502,14 +413,6 @@
     }
     .time-label.start{ left: -18px; }
     .time-label.end{ right: -18px; }
-
-    .timeline-add-spacer{
-      height: var(--dayFooterH);
-      margin:8px;
-      border-radius:12px;
-      border:1px dashed rgba(255,255,255,.12);
-      background: rgba(255,255,255,.01);
-    }
 
     /* MODAL */
     .modal-backdrop{
@@ -640,12 +543,7 @@
     @media (max-width: 900px){
       body{ overflow:auto; }
       .board-scroll{ height:auto; overflow:visible; }
-      .board-grid{ grid-template-columns: 1fr; }
-      .splitter{ display:none; }
-      .right-col{ border-top:1px solid var(--line); }
-      .timeline-sticky-header{ top:56px; }
       .left-header-spacer{ top:56px; }
-      .timeline-day{ margin: 0 0 10px; }
     }
   </style>
 </head>
@@ -671,12 +569,6 @@
       Controls the <b>minimum</b> height of each day (days can grow taller with tasks).
     </div>
     <div style="height:10px"></div>
-    <div class="srow">
-      <span>Left column width (px)</span>
-      <input id="leftWidthInput" type="number" min="240" max="700" step="10" />
-    </div>
-    <div class="tiny">You can also drag the divider.</div>
-    <div style="height:10px"></div>
     <button id="btnCloseSettings" style="width:100%;">Close</button>
   </div>
 
@@ -685,26 +577,13 @@
       <div class="left-col" id="leftCol">
         <div class="left-header-spacer">
           <div class="hint">Days</div>
-          <div class="hint">↕ Scroll</div>
-        </div>
-      </div>
-
-      <div class="splitter" id="splitter" title="Drag to resize columns"></div>
-
-      <div class="right-col">
-        <div class="timeline-sticky-header">
-          <div class="timeline-header-scroll" id="timelineHeaderScroll">
-            <div class="timeline-header-inner" id="timelineHeaderInner">
+          <div class="timeline-header-inline">
+            <div class="timeline-header-inner">
               <div class="grid-bg"></div>
-              <div class="hours" id="hours"></div>
+              <div class="hours" id="timelineHours"></div>
             </div>
           </div>
-        </div>
-
-        <div class="timeline-body-scroll" id="timelineBodyScroll">
-          <div class="timeline-body-inner" id="timelineBodyInner">
-            <div id="timelineDays"></div>
-          </div>
+          <div class="hint left-header-actions">Actions</div>
         </div>
       </div>
     </div>
@@ -779,7 +658,7 @@
   const STORAGE_KEY = "twoColBoard_v4";
 
   const state = {
-    settings: { daysVisible: 5, leftW: 360 },
+    settings: { daysVisible: 5 },
     tasksByDate: {},
     render: { startDate: null, endDate: null, days: [] },
     modal: { open:false, dateKey:null, taskId:null }
@@ -787,21 +666,14 @@
 
   const boardScroll = document.getElementById('boardScroll');
   const leftCol = document.getElementById('leftCol');
-  const timelineDays = document.getElementById('timelineDays');
-
-  const timelineHeaderScroll = document.getElementById('timelineHeaderScroll');
-  const timelineBodyScroll = document.getElementById('timelineBodyScroll');
-  const hours = document.getElementById('hours');
+  const hours = document.getElementById('timelineHours');
 
   const btnToday = document.getElementById('btnToday');
   const btnSettings = document.getElementById('btnSettings');
 
   const settingsPanel = document.getElementById('settingsPanel');
   const daysVisibleInput = document.getElementById('daysVisibleInput');
-  const leftWidthInput = document.getElementById('leftWidthInput');
   const btnCloseSettings = document.getElementById('btnCloseSettings');
-
-  const splitter = document.getElementById('splitter');
 
   const modalBackdrop = document.getElementById('modalBackdrop');
   const modalClose = document.getElementById('modalClose');
@@ -854,8 +726,6 @@
     const h12=((h24+11)%12)+1;
     return `${h12}:${pad2(m)}${ampm}`;
   }
-  function timeChipText(task){ return minsToLabel(task.startMin); }
-
   function ensureTasks(dateKey){
     if(!state.tasksByDate[dateKey]) state.tasksByDate[dateKey]=[];
   }
@@ -875,7 +745,6 @@
       const parsed=JSON.parse(raw);
       if(parsed?.settings){
         if(parsed.settings.daysVisible) state.settings.daysVisible=parsed.settings.daysVisible;
-        if(parsed.settings.leftW) state.settings.leftW=parsed.settings.leftW;
       }
       if(parsed?.tasksByDate && typeof parsed.tasksByDate==='object'){
         state.tasksByDate=parsed.tasksByDate;
@@ -894,10 +763,6 @@
     state.settings.daysVisible=vis;
     daysVisibleInput.value=vis;
 
-    const lw = clamp(parseInt(state.settings.leftW,10)||360, 240, 700);
-    state.settings.leftW = lw;
-    leftWidthInput.value = lw;
-    document.documentElement.style.setProperty('--leftW', `${lw}px`);
   }
 
   function renderTimelineHeader(){
@@ -914,21 +779,6 @@
     }
   }
 
-  function syncHorizontalScroll(){
-    let lock=false;
-    timelineBodyScroll.addEventListener('scroll', () => {
-      if(lock) return;
-      lock=true;
-      timelineHeaderScroll.scrollLeft = timelineBodyScroll.scrollLeft;
-      lock=false;
-    }, {passive:true});
-    timelineHeaderScroll.addEventListener('scroll', () => {
-      if(lock) return;
-      lock=true;
-      timelineBodyScroll.scrollLeft = timelineHeaderScroll.scrollLeft;
-      lock=false;
-    }, {passive:true});
-  }
 
   function initRange(){
     const today=new Date();
@@ -957,7 +807,7 @@
       d = addDays(d,1);
     }
     for(let i=startCount;i<state.render.days.length;i++){
-      renderDayPair(state.render.days[i], false);
+      leftCol.appendChild(renderLeftDay(state.render.days[i]));
     }
   }
 
@@ -980,7 +830,7 @@
     state.render.days = [...newDays, ...state.render.days];
 
     for(let i=newDays.length-1;i>=0;i--){
-      renderDayPair(newDays[i], true);
+      leftCol.insertBefore(renderLeftDay(newDays[i]), leftCol.children[1] || null);
     }
 
     if(firstEl && beforeTop !== null){
@@ -1146,34 +996,18 @@
     const spacer = leftCol.querySelector('.left-header-spacer');
     leftCol.innerHTML="";
     leftCol.appendChild(spacer);
-    timelineDays.innerHTML="";
   }
 
   function renderAll(){
     clearAll();
     for(const dayKey of state.render.days){
-      renderDayPair(dayKey, false);
-    }
-  }
-
-  function renderDayPair(dayKey, prepend){
-    const left = renderLeftDay(dayKey);
-    const right = renderRightDay(dayKey);
-
-    if(prepend){
-      leftCol.insertBefore(left, leftCol.children[1] || null);
-      timelineDays.insertBefore(right, timelineDays.firstChild);
-    }else{
-      leftCol.appendChild(left);
-      timelineDays.appendChild(right);
+      leftCol.appendChild(renderLeftDay(dayKey));
     }
   }
 
   function rerenderDay(dayKey){
     const left = document.querySelector(`.day[data-day="${dayKey}"]`);
-    const right = document.querySelector(`.timeline-day[data-day="${dayKey}"]`);
     if(left) left.replaceWith(renderLeftDay(dayKey));
-    if(right) right.replaceWith(renderRightDay(dayKey));
   }
 
   function renderLeftDay(dayKey){
@@ -1218,59 +1052,23 @@
     el.dataset.day=dayKey;
     el.style.setProperty('--c', task.color);
 
-    el.innerHTML=`
+    const meta=document.createElement('div');
+    meta.className='meta';
+    meta.innerHTML=`
       <div class="colorbar">
         <div class="type-rot">${escapeHtml(task.type)}</div>
       </div>
       <div class="body">
         <div class="desc" title="${escapeHtml(task.desc)}">${escapeHtml(task.desc)}</div>
-        <div class="chip" title="Click to edit time">${escapeHtml(timeChipText(task))}</div>
-      </div>
-      <div class="right">
-        <div class="iconbtn" title="Edit">${iconPencil()}</div>
-        <div class="iconbtn danger" title="Delete">${iconTrash()}</div>
-        <div class="completebtn" title="Complete">${iconCheck()}</div>
       </div>
     `;
 
-    el.querySelector('.chip').addEventListener('click', (e)=>{ e.stopPropagation(); openModal(dayKey, task.id); });
-    el.querySelector('.iconbtn').addEventListener('click', (e)=>{ e.stopPropagation(); openModal(dayKey, task.id); });
-    el.querySelector('.iconbtn.danger').addEventListener('click', (e)=>{ e.stopPropagation(); deleteTask(dayKey, task.id); });
-    el.querySelector('.completebtn').addEventListener('click', (e)=>{ e.stopPropagation(); toggleComplete(dayKey, task.id); });
+    const timeline=document.createElement('div');
+    timeline.className='task-timeline';
 
-    return el;
-  }
-
-  function renderRightDay(dayKey){
-    ensureTasks(dayKey);
-    const day=document.createElement('div');
-    day.className='timeline-day';
-    day.dataset.day=dayKey;
-
-    const topSpacer=document.createElement('div');
-    topSpacer.className='timeline-day-topspacer';
-    day.appendChild(topSpacer);
-
-    const body=document.createElement('div');
-    body.className='timeline-day-body';
-
-    for(const t of (state.tasksByDate[dayKey]||[])){
-      body.appendChild(renderTimelineRow(dayKey, t));
-    }
-    day.appendChild(body);
-
-    const spacer=document.createElement('div');
-    spacer.className='timeline-add-spacer';
-    day.appendChild(spacer);
-
-    return day;
-  }
-
-  function renderTimelineRow(dayKey, task){
-    const row=document.createElement('div');
-    row.className='timeline-row'+(task.completed?' completed':'');
-    row.dataset.taskId=task.id;
-    row.dataset.day=dayKey;
+    const track=document.createElement('div');
+    track.className='task-timeline-inner';
+    track.innerHTML = `<div class="grid-bg"></div>`;
 
     const left=minsToLeftPx(task.startMin);
     const w=minsToLeftPx(task.startMin + task.durMin) - left;
@@ -1281,7 +1079,6 @@
     bar.style.setProperty('--left', `${left}px`);
     bar.style.setProperty('--w', `${Math.max(0,w)}px`);
 
-    // time labels outside
     const tStart=document.createElement('div');
     tStart.className='time-label start';
     tStart.textContent = minsToLabel(task.startMin);
@@ -1293,7 +1090,6 @@
     bar.appendChild(tStart);
     bar.appendChild(tEnd);
 
-    // people chips inside bar
     const assigneesWrap=document.createElement('div');
     assigneesWrap.className='assignees';
     const assignees = (task.assignees || []);
@@ -1307,7 +1103,6 @@
     }
     bar.appendChild(assigneesWrap);
 
-    // handles
     const hL=document.createElement('div');
     hL.className='handle left';
     hL.title="Resize start";
@@ -1317,20 +1112,36 @@
     bar.appendChild(hL);
     bar.appendChild(hR);
 
-    // click bar => modal focused on assignees
     bar.addEventListener('click', (e)=>{
       if(e.target.classList.contains('handle')) return;
       e.stopPropagation();
       openModal(dayKey, task.id, true);
     });
 
-    row.appendChild(bar);
+    track.appendChild(bar);
+    timeline.appendChild(track);
+
+    const actions=document.createElement('div');
+    actions.className='right';
+    actions.innerHTML=`
+      <div class="iconbtn" title="Edit">${iconPencil()}</div>
+      <div class="iconbtn danger" title="Delete">${iconTrash()}</div>
+      <div class="completebtn" title="Complete">${iconCheck()}</div>
+    `;
+
+    el.appendChild(meta);
+    el.appendChild(timeline);
+    el.appendChild(actions);
+
+    actions.querySelector('.iconbtn').addEventListener('click', (e)=>{ e.stopPropagation(); openModal(dayKey, task.id); });
+    actions.querySelector('.iconbtn.danger').addEventListener('click', (e)=>{ e.stopPropagation(); deleteTask(dayKey, task.id); });
+    actions.querySelector('.completebtn').addEventListener('click', (e)=>{ e.stopPropagation(); toggleComplete(dayKey, task.id); });
 
     enableBarDrag(bar, dayKey, task.id);
     enableBarResizeRight(hR, bar, dayKey, task.id);
     enableBarResizeLeft(hL, bar, dayKey, task.id);
 
-    return row;
+    return el;
   }
 
   function setBarTimes(barEl, startMin, durMin){
@@ -1371,8 +1182,6 @@
       barEl.style.setProperty('--left', `${minsToLeftPx(newStart)}px`);
       setBarTimes(barEl, newStart, t.durMin);
 
-      const chip=document.querySelector(`.task[data-day="${dayKey}"][data-task-id="${taskId}"] .chip`);
-      if(chip) chip.textContent = minsToLabel(newStart);
     });
 
     barEl.addEventListener('pointerup', ()=>{
@@ -1468,8 +1277,6 @@
       barEl.style.setProperty('--w', `${minsToLeftPx(newStart + newDur) - minsToLeftPx(newStart)}px`);
       setBarTimes(barEl, newStart, newDur);
 
-      const chip=document.querySelector(`.task[data-day="${dayKey}"][data-task-id="${taskId}"] .chip`);
-      if(chip) chip.textContent = minsToLabel(newStart);
     });
 
     handleEl.addEventListener('pointerup', ()=>{
@@ -1493,7 +1300,7 @@
     tasksContainer.addEventListener('pointerdown', (e)=>{
       const taskEl = e.target.closest('.task');
       if(!taskEl) return;
-      if(e.target.closest('.iconbtn') || e.target.closest('.completebtn') || e.target.closest('.chip')) return;
+      if(e.target.closest('.iconbtn') || e.target.closest('.completebtn')) return;
 
       e.preventDefault();
       draggingEl = taskEl;
@@ -1591,48 +1398,7 @@
     save();
     applySettings();
   });
-  leftWidthInput.addEventListener('change', ()=>{
-    state.settings.leftW = clamp(parseInt(leftWidthInput.value,10)||360, 240, 700);
-    save();
-    applySettings();
-  });
   btnToday.addEventListener('click', jumpToToday);
-
-  function enableSplitter(){
-    let dragging=false;
-    let startX=0;
-    let startW=0;
-
-    splitter.addEventListener('pointerdown', (e)=>{
-      e.preventDefault();
-      dragging=true;
-      splitter.setPointerCapture(e.pointerId);
-      startX=e.clientX;
-      startW=state.settings.leftW;
-      document.body.style.cursor='col-resize';
-    });
-
-    splitter.addEventListener('pointermove', (e)=>{
-      if(!dragging) return;
-      const dx=e.clientX - startX;
-      const newW = clamp(startW + dx, 240, 700);
-      state.settings.leftW = newW;
-      document.documentElement.style.setProperty('--leftW', `${newW}px`);
-      leftWidthInput.value = Math.round(newW);
-    });
-
-    splitter.addEventListener('pointerup', ()=>{
-      if(!dragging) return;
-      dragging=false;
-      document.body.style.cursor='';
-      save();
-    });
-
-    splitter.addEventListener('pointercancel', ()=>{
-      dragging=false;
-      document.body.style.cursor='';
-    });
-  }
 
   function iconCheck(){
     return `<svg viewBox="0 0 24 24" fill="none">
@@ -1653,506 +1419,16 @@
       <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4 11.5-11.5Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
     </svg>`;
   }
-
-  function clearAll(){
-    const spacer = leftCol.querySelector('.left-header-spacer');
-    leftCol.innerHTML="";
-    leftCol.appendChild(spacer);
-    timelineDays.innerHTML="";
-  }
-
-  function renderAll(){
-    clearAll();
-    for(const dayKey of state.render.days){
-      renderDayPair(dayKey, false);
-    }
-  }
-
-  function renderDayPair(dayKey, prepend){
-    const left = renderLeftDay(dayKey);
-    const right = renderRightDay(dayKey);
-
-    if(prepend){
-      leftCol.insertBefore(left, leftCol.children[1] || null);
-      timelineDays.insertBefore(right, timelineDays.firstChild);
-    }else{
-      leftCol.appendChild(left);
-      timelineDays.appendChild(right);
-    }
-  }
-
-  function rerenderDay(dayKey){
-    const left = document.querySelector(`.day[data-day="${dayKey}"]`);
-    const right = document.querySelector(`.timeline-day[data-day="${dayKey}"]`);
-    if(left) left.replaceWith(renderLeftDay(dayKey));
-    if(right) right.replaceWith(renderRightDay(dayKey));
-  }
-
-  function renderLeftDay(dayKey){
-    ensureTasks(dayKey);
-    const day=document.createElement('div');
-    day.className='day';
-    day.dataset.day=dayKey;
-    day.id=`day-${dayKey}`;
-
-    const head=document.createElement('div');
-    head.className='day-header';
-    head.innerHTML=`
-      <div>${formatDayHeader(dayKey)}</div>
-      <div class="sub">${(state.tasksByDate[dayKey]||[]).length} tasks</div>
-    `;
-    day.appendChild(head);
-
-    const tasks=document.createElement('div');
-    tasks.className='tasks';
-    tasks.dataset.tasksFor=dayKey;
-
-    for(const t of (state.tasksByDate[dayKey]||[])){
-      tasks.appendChild(renderTaskCard(dayKey, t));
-    }
-    day.appendChild(tasks);
-
-    const addArea=document.createElement('div');
-    addArea.className='add-area';
-    addArea.textContent='+ Add task';
-    addArea.addEventListener('click', ()=>addTask(dayKey));
-    day.appendChild(addArea);
-
-    enableTaskReorder(tasks, dayKey);
-
-    return day;
-  }
-
-  function renderTaskCard(dayKey, task){
-    const el=document.createElement('div');
-    el.className='task'+(task.completed?' completed':'');
-    el.dataset.taskId=task.id;
-    el.dataset.day=dayKey;
-    el.style.setProperty('--c', task.color);
-
-    el.innerHTML=`
-      <div class="colorbar">
-        <div class="type-rot">${escapeHtml(task.type)}</div>
-      </div>
-      <div class="body">
-        <div class="desc" title="${escapeHtml(task.desc)}">${escapeHtml(task.desc)}</div>
-        <div class="chip" title="Click to edit time">${escapeHtml(timeChipText(task))}</div>
-      </div>
-      <div class="right">
-        <div class="iconbtn" title="Edit">${iconPencil()}</div>
-        <div class="iconbtn danger" title="Delete">${iconTrash()}</div>
-        <div class="completebtn" title="Complete">${iconCheck()}</div>
-      </div>
-    `;
-
-    el.querySelector('.chip').addEventListener('click', (e)=>{ e.stopPropagation(); openModal(dayKey, task.id); });
-    el.querySelector('.iconbtn').addEventListener('click', (e)=>{ e.stopPropagation(); openModal(dayKey, task.id); });
-    el.querySelector('.iconbtn.danger').addEventListener('click', (e)=>{ e.stopPropagation(); deleteTask(dayKey, task.id); });
-    el.querySelector('.completebtn').addEventListener('click', (e)=>{ e.stopPropagation(); toggleComplete(dayKey, task.id); });
-
-    return el;
-  }
-
-  function renderRightDay(dayKey){
-    ensureTasks(dayKey);
-    const day=document.createElement('div');
-    day.className='timeline-day';
-    day.dataset.day=dayKey;
-
-    const topSpacer=document.createElement('div');
-    topSpacer.className='timeline-day-topspacer';
-    day.appendChild(topSpacer);
-
-    const body=document.createElement('div');
-    body.className='timeline-day-body';
-
-    for(const t of (state.tasksByDate[dayKey]||[])){
-      body.appendChild(renderTimelineRow(dayKey, t));
-    }
-    day.appendChild(body);
-
-    const spacer=document.createElement('div');
-    spacer.className='timeline-add-spacer';
-    day.appendChild(spacer);
-
-    return day;
-  }
-
-  function renderTimelineRow(dayKey, task){
-    const row=document.createElement('div');
-    row.className='timeline-row'+(task.completed?' completed':'');
-    row.dataset.taskId=task.id;
-    row.dataset.day=dayKey;
-
-    const left=minsToLeftPx(task.startMin);
-    const w=minsToLeftPx(task.startMin + task.durMin) - left;
-
-    const bar=document.createElement('div');
-    bar.className='bar';
-    bar.style.setProperty('--c', task.color);
-    bar.style.setProperty('--left', `${left}px`);
-    bar.style.setProperty('--w', `${Math.max(0,w)}px`);
-
-    const tStart=document.createElement('div');
-    tStart.className='time-label start';
-    tStart.textContent = minsToLabel(task.startMin);
-
-    const tEnd=document.createElement('div');
-    tEnd.className='time-label end';
-    tEnd.textContent = minsToLabel(task.startMin + task.durMin);
-
-    bar.appendChild(tStart);
-    bar.appendChild(tEnd);
-
-    const assigneesWrap=document.createElement('div');
-    assigneesWrap.className='assignees';
-    const assignees = (task.assignees || []);
-    for(const name of assignees){
-      const person = PEOPLE.find(p => p.name === name);
-      const chip=document.createElement('div');
-      chip.className='person-chip';
-      chip.style.setProperty('--p', person?.color || 'rgba(255,255,255,.15)');
-      chip.textContent = name;
-      assigneesWrap.appendChild(chip);
-    }
-    bar.appendChild(assigneesWrap);
-
-    const hL=document.createElement('div');
-    hL.className='handle left';
-    hL.title="Resize start";
-    const hR=document.createElement('div');
-    hR.className='handle right';
-    hR.title="Resize end";
-    bar.appendChild(hL);
-    bar.appendChild(hR);
-
-    bar.addEventListener('click', (e)=>{
-      if(e.target.classList.contains('handle')) return;
-      e.stopPropagation();
-      openModal(dayKey, task.id, true);
-    });
-
-    row.appendChild(bar);
-
-    enableBarDrag(bar, dayKey, task.id);
-    enableBarResizeRight(hR, bar, dayKey, task.id);
-    enableBarResizeLeft(hL, bar, dayKey, task.id);
-
-    return row;
-  }
-
-  function setBarTimes(barEl, startMin, durMin){
-    const start = barEl.querySelector('.time-label.start');
-    const end = barEl.querySelector('.time-label.end');
-    if(start) start.textContent = minsToLabel(startMin);
-    if(end) end.textContent = minsToLabel(startMin + durMin);
-  }
-
-  function enableBarDrag(barEl, dayKey, taskId){
-    let dragging=false, startX=0, startLeftPx=0;
-
-    barEl.addEventListener('pointerdown', (e)=>{
-      if(e.target.classList.contains('handle')) return;
-      e.preventDefault();
-      dragging=true;
-      barEl.setPointerCapture(e.pointerId);
-      startX=e.clientX;
-
-      const t=getTask(dayKey, taskId);
-      if(!t) return;
-      startLeftPx = minsToLeftPx(t.startMin);
-    });
-
-    barEl.addEventListener('pointermove', (e)=>{
-      if(!dragging) return;
-      const t=getTask(dayKey, taskId);
-      if(!t) return;
-
-      const dx=e.clientX - startX;
-      const rawLeft = startLeftPx + dx;
-      const rawMins = pxToMins(rawLeft);
-      const snapped = snapToSlot(rawMins);
-
-      const maxStart = END_MIN - t.durMin;
-      const newStart = clamp(snapped, START_MIN, maxStart);
-
-      barEl.style.setProperty('--left', `${minsToLeftPx(newStart)}px`);
-      setBarTimes(barEl, newStart, t.durMin);
-
-      const chip=document.querySelector(`.task[data-day="${dayKey}"][data-task-id="${taskId}"] .chip`);
-      if(chip) chip.textContent = minsToLabel(newStart);
-    });
-
-    barEl.addEventListener('pointerup', ()=>{
-      if(!dragging) return;
-      dragging=false;
-
-      const t=getTask(dayKey, taskId);
-      if(!t) return;
-
-      const cssLeft = parseFloat(getComputedStyle(barEl).getPropertyValue('--left')) || 0;
-      const newStart = snapToSlot(pxToMins(cssLeft));
-      const maxStart = END_MIN - t.durMin;
-      updateTask(dayKey, taskId, { startMin: clamp(newStart, START_MIN, maxStart) });
-    });
-
-    barEl.addEventListener('pointercancel', ()=> dragging=false);
-  }
-
-  function enableBarResizeRight(handleEl, barEl, dayKey, taskId){
-    let resizing=false, startX=0, startW=0;
-
-    handleEl.addEventListener('pointerdown', (e)=>{
-      e.preventDefault(); e.stopPropagation();
-      resizing=true;
-      handleEl.setPointerCapture(e.pointerId);
-      startX=e.clientX;
-      startW = parseFloat(getComputedStyle(barEl).getPropertyValue('--w')) || 0;
-    });
-
-    handleEl.addEventListener('pointermove', (e)=>{
-      if(!resizing) return;
-      const t=getTask(dayKey, taskId);
-      if(!t) return;
-
-      const dx=e.clientX - startX;
-      const rawW = startW + dx;
-      const slots = Math.max(1, Math.round(rawW / slotW()));
-      let dur = slots * SLOT;
-      dur = snapToSlot(clamp(dur, SLOT, END_MIN - t.startMin));
-
-      const left = minsToLeftPx(t.startMin);
-      const w = minsToLeftPx(t.startMin + dur) - left;
-      barEl.style.setProperty('--w', `${Math.max(0,w)}px`);
-      setBarTimes(barEl, t.startMin, dur);
-    });
-
-    handleEl.addEventListener('pointerup', ()=>{
-      if(!resizing) return;
-      resizing=false;
-
-      const t=getTask(dayKey, taskId);
-      if(!t) return;
-
-      const wPx = parseFloat(getComputedStyle(barEl).getPropertyValue('--w')) || 0;
-      const slots = Math.max(1, Math.round(wPx / slotW()));
-      let dur = slots * SLOT;
-      dur = snapToSlot(clamp(dur, SLOT, END_MIN - t.startMin));
-      updateTask(dayKey, taskId, { durMin: dur });
-    });
-
-    handleEl.addEventListener('pointercancel', ()=> resizing=false);
-  }
-
-  function enableBarResizeLeft(handleEl, barEl, dayKey, taskId){
-    let resizing=false, startX=0, startLeft=0, startEndMin=0;
-
-    handleEl.addEventListener('pointerdown', (e)=>{
-      e.preventDefault(); e.stopPropagation();
-      resizing=true;
-      handleEl.setPointerCapture(e.pointerId);
-      startX=e.clientX;
-
-      const t=getTask(dayKey, taskId);
-      if(!t) return;
-
-      startLeft = minsToLeftPx(t.startMin);
-      startEndMin = t.startMin + t.durMin;
-    });
-
-    handleEl.addEventListener('pointermove', (e)=>{
-      if(!resizing) return;
-      const t=getTask(dayKey, taskId);
-      if(!t) return;
-
-      const dx = e.clientX - startX;
-      const rawLeft = startLeft + dx;
-      let newStart = snapToSlot(pxToMins(rawLeft));
-
-      newStart = clamp(newStart, START_MIN, startEndMin - SLOT);
-      const newDur = snapToSlot(clamp(startEndMin - newStart, SLOT, END_MIN - newStart));
-
-      barEl.style.setProperty('--left', `${minsToLeftPx(newStart)}px`);
-      barEl.style.setProperty('--w', `${minsToLeftPx(newStart + newDur) - minsToLeftPx(newStart)}px`);
-      setBarTimes(barEl, newStart, newDur);
-
-      const chip=document.querySelector(`.task[data-day="${dayKey}"][data-task-id="${taskId}"] .chip`);
-      if(chip) chip.textContent = minsToLabel(newStart);
-    });
-
-    handleEl.addEventListener('pointerup', ()=>{
-      if(!resizing) return;
-      resizing=false;
-
-      const cssLeft = parseFloat(getComputedStyle(barEl).getPropertyValue('--left')) || 0;
-      let newStart = snapToSlot(pxToMins(cssLeft));
-      newStart = clamp(newStart, START_MIN, startEndMin - SLOT);
-
-      const newDur = snapToSlot(clamp(startEndMin - newStart, SLOT, END_MIN - newStart));
-      updateTask(dayKey, taskId, { startMin: newStart, durMin: newDur });
-    });
-
-    handleEl.addEventListener('pointercancel', ()=> resizing=false);
-  }
-
-  function enableTaskReorder(tasksContainer, dayKey){
-    let draggingEl=null, placeholder=null, pointerId=null, offsetY=0;
-
-    tasksContainer.addEventListener('pointerdown', (e)=>{
-      const taskEl = e.target.closest('.task');
-      if(!taskEl) return;
-      if(e.target.closest('.iconbtn') || e.target.closest('.completebtn') || e.target.closest('.chip')) return;
-
-      e.preventDefault();
-      draggingEl = taskEl;
-      pointerId = e.pointerId;
-      draggingEl.setPointerCapture(pointerId);
-
-      const rect = draggingEl.getBoundingClientRect();
-      offsetY = e.clientY - rect.top;
-
-      placeholder = document.createElement('div');
-      placeholder.className='task placeholder';
-      placeholder.style.height = rect.height + "px";
-
-      draggingEl.classList.add('dragging');
-      draggingEl.style.width = rect.width + "px";
-
-      tasksContainer.insertBefore(placeholder, draggingEl.nextSibling);
-      moveDragging(e.clientY);
-    });
-
-    tasksContainer.addEventListener('pointermove', (e)=>{
-      if(!draggingEl || e.pointerId !== pointerId) return;
-      moveDragging(e.clientY);
-
-      const items=[...tasksContainer.querySelectorAll('.task:not(.dragging):not(.placeholder)')];
-      const y=e.clientY;
-
-      let insertBefore=null;
-      for(const it of items){
-        const r=it.getBoundingClientRect();
-        const mid=r.top + r.height/2;
-        if(y < mid){ insertBefore=it; break; }
-      }
-      if(insertBefore) tasksContainer.insertBefore(placeholder, insertBefore);
-      else tasksContainer.appendChild(placeholder);
-    });
-
-    tasksContainer.addEventListener('pointerup', (e)=>{
-      if(!draggingEl || e.pointerId !== pointerId) return;
-      finish(false);
-    });
-    tasksContainer.addEventListener('pointercancel', (e)=>{
-      if(!draggingEl || e.pointerId !== pointerId) return;
-      finish(true);
-    });
-
-    function moveDragging(clientY){
-      const containerRect = tasksContainer.getBoundingClientRect();
-      const localY = (clientY - offsetY) - containerRect.top;
-      draggingEl.style.transform = `translateY(${localY}px)`;
-    }
-
-    function finish(cancel){
-      draggingEl.classList.remove('dragging');
-      draggingEl.style.transform='';
-      draggingEl.style.width='';
-
-      tasksContainer.insertBefore(draggingEl, placeholder);
-      placeholder.remove();
-
-      if(!cancel){
-        const ids=[...tasksContainer.querySelectorAll('.task')].map(el=>el.dataset.taskId);
-        const current=state.tasksByDate[dayKey]||[];
-        const byId=new Map(current.map(t=>[t.id,t]));
-        state.tasksByDate[dayKey]=ids.map(id=>byId.get(id)).filter(Boolean);
-        save();
-      }
-      rerenderDay(dayKey);
-
-      draggingEl=null; placeholder=null; pointerId=null;
-    }
-  }
-
-  btnToday.addEventListener('click', jumpToToday);
-
-  function enableSplitter(){
-    let dragging=false;
-    let startX=0;
-    let startW=0;
-
-    splitter.addEventListener('pointerdown', (e)=>{
-      e.preventDefault();
-      dragging=true;
-      splitter.setPointerCapture(e.pointerId);
-      startX=e.clientX;
-      startW=state.settings.leftW;
-      document.body.style.cursor='col-resize';
-    });
-
-    splitter.addEventListener('pointermove', (e)=>{
-      if(!dragging) return;
-      const dx=e.clientX - startX;
-      const newW = clamp(startW + dx, 240, 700);
-      state.settings.leftW = newW;
-      document.documentElement.style.setProperty('--leftW', `${newW}px`);
-      leftWidthInput.value = Math.round(newW);
-    });
-
-    splitter.addEventListener('pointerup', ()=>{
-      if(!dragging) return;
-      dragging=false;
-      document.body.style.cursor='';
-      save();
-    });
-
-    splitter.addEventListener('pointercancel', ()=>{
-      dragging=false;
-      document.body.style.cursor='';
-    });
-  }
-
-  function clearAll(){
-    const spacer = leftCol.querySelector('.left-header-spacer');
-    leftCol.innerHTML="";
-    leftCol.appendChild(spacer);
-    timelineDays.innerHTML="";
-  }
-
-  function renderAll(){
-    clearAll();
-    for(const dayKey of state.render.days){
-      renderDayPair(dayKey, false);
-    }
-  }
-
-  function renderDayPair(dayKey, prepend){
-    const left = renderLeftDay(dayKey);
-    const right = renderRightDay(dayKey);
-
-    if(prepend){
-      leftCol.insertBefore(left, leftCol.children[1] || null);
-      timelineDays.insertBefore(right, timelineDays.firstChild);
-    }else{
-      leftCol.appendChild(left);
-      timelineDays.appendChild(right);
-    }
-  }
-
   function init(){
     load();
     applySettings();
     renderTimelineHeader();
-    syncHorizontalScroll();
-    enableSplitter();
 
     initRange();
     renderAll();
 
     boardScroll.addEventListener('scroll', handleInfiniteScroll, {passive:true});
     window.addEventListener('resize', ()=>{
-      applySettings();
       renderTimelineHeader();
       renderAll();
     });
