@@ -331,12 +331,6 @@
       display:flex;
       align-items:center;
       gap:6px;
-      justify-content:flex-end;
-    }
-    .assignees-card{
-      display:flex;
-      align-items:center;
-      gap:6px;
       margin-right:6px;
       flex-wrap:nowrap;
     }
@@ -895,7 +889,8 @@
   }
   function updateTimelineScale(){
     const totalSlots = (END_MIN - START_MIN) / SLOT;
-    const taskWidth = daysGrid.querySelector('.task')?.getBoundingClientRect().width
+    const firstTask = daysGrid.querySelector('.task');
+    const taskWidth = (firstTask ? firstTask.getBoundingClientRect().width : 0)
       || Math.max(0, leftCol.getBoundingClientRect().width - 20);
     const slotWidth = Math.max(12, taskWidth / totalSlots);
     document.documentElement.style.setProperty('--slotW', `${slotWidth}px`);
@@ -1368,6 +1363,84 @@
       }
     });
 
+    enableBarDrag(bar, dayKey, task.id);
+    enableBarResizeRight(hR, bar, dayKey, task.id);
+    enableBarResizeLeft(hL, bar, dayKey, task.id);
+
+    return el;
+  }
+
+    const assigneesWrap=document.createElement('div');
+    assigneesWrap.className='assignees-card';
+    const assignees = (task.assignees || []);
+    for(const name of assignees){
+      const person = PEOPLE.find(p => p.name === name);
+      const chip=document.createElement('div');
+      chip.className='person-chip';
+      chip.style.setProperty('--p', person?.color || 'rgba(255,255,255,.15)');
+      chip.textContent = name;
+      assigneesWrap.appendChild(chip);
+    }
+
+    actions.innerHTML=`
+      <div class="iconbtn" title="Edit">${iconPencil()}</div>
+      <div class="iconbtn danger" title="Delete">${iconTrash()}</div>
+      <div class="completebtn" title="Complete">${iconCheck()}</div>
+    `;
+
+    const main=document.createElement('div');
+    main.className='task-main';
+    main.appendChild(meta);
+    main.appendChild(document.createElement('div'));
+    main.appendChild(actions);
+
+    actions.prepend(assigneesWrap);
+
+    el.appendChild(typeBar);
+    el.appendChild(main);
+    el.appendChild(timeline);
+
+    actions.querySelector('.iconbtn').addEventListener('click', (e)=>{ e.stopPropagation(); openModal(dayKey, task.id); });
+    actions.querySelector('.iconbtn.danger').addEventListener('click', (e)=>{ e.stopPropagation(); deleteTask(dayKey, task.id); });
+    actions.querySelector('.completebtn').addEventListener('click', (e)=>{ e.stopPropagation(); toggleComplete(dayKey, task.id); });
+
+    const descInput = meta.querySelector('.task-desc-input');
+    const updateDescWidth = () => {
+      const length = Math.max(2, descInput.value.length + 1);
+      descInput.style.width = `${Math.max(20, length * 8)}px`;
+    };
+    updateDescWidth();
+    descInput.addEventListener('pointerdown', (e)=> e.stopPropagation());
+    descInput.addEventListener('click', (e)=> e.stopPropagation());
+    descInput.addEventListener('input', updateDescWidth);
+    descInput.addEventListener('change', () => {
+      updateTask(dayKey, task.id, { desc: descInput.value.trim() || "Task" });
+    });
+    descInput.addEventListener('keydown', (e) => {
+      if(e.key === 'Enter'){
+        e.preventDefault();
+        descInput.blur();
+      }
+    });
+
+    const typeInput = typeBar.querySelector('.task-type-input');
+    const updateTypeWidth = () => {
+      const length = Math.max(2, typeInput.value.length + 1);
+      typeInput.style.width = `${Math.max(20, length * 7)}px`;
+    };
+    updateTypeWidth();
+    typeInput.addEventListener('click', (e)=> e.stopPropagation());
+    typeInput.addEventListener('input', updateTypeWidth);
+    typeInput.addEventListener('change', () => {
+      updateTask(dayKey, task.id, { type: typeInput.value.trim() || task.type });
+    });
+    typeInput.addEventListener('keydown', (e)=>{
+      if(e.key === 'Enter'){
+        e.preventDefault();
+        typeInput.blur();
+      }
+    });
+
     const actions=document.createElement('div');
     actions.className='right';
 
@@ -1605,13 +1678,14 @@
       handle: '.task-main, .task-typebar',
       filter: '.iconbtn, .completebtn, .bar, .handle, .task-desc-input, .task-type-input',
       onMove: (evt) => {
-        if(evt.originalEvent?.target?.closest('.bar, .handle')) return false;
+        const target = evt.originalEvent ? evt.originalEvent.target : null;
+        if(target && target.closest && target.closest('.bar, .handle')) return false;
         return true;
       },
       onAdd: (evt) => {
-        const fromDay = evt.from?.dataset?.tasksFor;
-        const toDay = evt.to?.dataset?.tasksFor;
-        const taskId = evt.item?.dataset?.taskId;
+        const fromDay = evt.from && evt.from.dataset ? evt.from.dataset.tasksFor : null;
+        const toDay = evt.to && evt.to.dataset ? evt.to.dataset.tasksFor : null;
+        const taskId = evt.item && evt.item.dataset ? evt.item.dataset.taskId : null;
         if(!fromDay || !toDay || !taskId) return;
 
         const fromTasks = state.tasksByDate[fromDay] || [];
