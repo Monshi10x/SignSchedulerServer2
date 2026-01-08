@@ -1363,84 +1363,6 @@
       }
     });
 
-    enableBarDrag(bar, dayKey, task.id);
-    enableBarResizeRight(hR, bar, dayKey, task.id);
-    enableBarResizeLeft(hL, bar, dayKey, task.id);
-
-    return el;
-  }
-
-    const assigneesWrap=document.createElement('div');
-    assigneesWrap.className='assignees-card';
-    const assignees = (task.assignees || []);
-    for(const name of assignees){
-      const person = PEOPLE.find(p => p.name === name);
-      const chip=document.createElement('div');
-      chip.className='person-chip';
-      chip.style.setProperty('--p', person?.color || 'rgba(255,255,255,.15)');
-      chip.textContent = name;
-      assigneesWrap.appendChild(chip);
-    }
-
-    actions.innerHTML=`
-      <div class="iconbtn" title="Edit">${iconPencil()}</div>
-      <div class="iconbtn danger" title="Delete">${iconTrash()}</div>
-      <div class="completebtn" title="Complete">${iconCheck()}</div>
-    `;
-
-    const main=document.createElement('div');
-    main.className='task-main';
-    main.appendChild(meta);
-    main.appendChild(document.createElement('div'));
-    main.appendChild(actions);
-
-    actions.prepend(assigneesWrap);
-
-    el.appendChild(typeBar);
-    el.appendChild(main);
-    el.appendChild(timeline);
-
-    actions.querySelector('.iconbtn').addEventListener('click', (e)=>{ e.stopPropagation(); openModal(dayKey, task.id); });
-    actions.querySelector('.iconbtn.danger').addEventListener('click', (e)=>{ e.stopPropagation(); deleteTask(dayKey, task.id); });
-    actions.querySelector('.completebtn').addEventListener('click', (e)=>{ e.stopPropagation(); toggleComplete(dayKey, task.id); });
-
-    const descInput = meta.querySelector('.task-desc-input');
-    const updateDescWidth = () => {
-      const length = Math.max(2, descInput.value.length + 1);
-      descInput.style.width = `${Math.max(20, length * 8)}px`;
-    };
-    updateDescWidth();
-    descInput.addEventListener('pointerdown', (e)=> e.stopPropagation());
-    descInput.addEventListener('click', (e)=> e.stopPropagation());
-    descInput.addEventListener('input', updateDescWidth);
-    descInput.addEventListener('change', () => {
-      updateTask(dayKey, task.id, { desc: descInput.value.trim() || "Task" });
-    });
-    descInput.addEventListener('keydown', (e) => {
-      if(e.key === 'Enter'){
-        e.preventDefault();
-        descInput.blur();
-      }
-    });
-
-    const typeInput = typeBar.querySelector('.task-type-input');
-    const updateTypeWidth = () => {
-      const length = Math.max(2, typeInput.value.length + 1);
-      typeInput.style.width = `${Math.max(20, length * 7)}px`;
-    };
-    updateTypeWidth();
-    typeInput.addEventListener('click', (e)=> e.stopPropagation());
-    typeInput.addEventListener('input', updateTypeWidth);
-    typeInput.addEventListener('change', () => {
-      updateTask(dayKey, task.id, { type: typeInput.value.trim() || task.type });
-    });
-    typeInput.addEventListener('keydown', (e)=>{
-      if(e.key === 'Enter'){
-        e.preventDefault();
-        typeInput.blur();
-      }
-    });
-
     const actions=document.createElement('div');
     actions.className='right';
 
@@ -1461,9 +1383,7 @@
 
     actions.prepend(assigneesWrap);
 
-    el.appendChild(typeBar);
-    el.appendChild(main);
-    el.appendChild(timeline);
+    });
 
     actions.querySelector('.iconbtn').addEventListener('click', (e)=>{ e.stopPropagation(); openModal(dayKey, task.id); });
     actions.querySelector('.iconbtn.danger').addEventListener('click', (e)=>{ e.stopPropagation(); deleteTask(dayKey, task.id); });
@@ -1488,132 +1408,10 @@
       }
     });
 
-    const typeInput = typeBar.querySelector('.task-type-input');
-    const updateTypeWidth = () => {
-      const length = Math.max(2, typeInput.value.length + 1);
-      typeInput.style.width = `${Math.max(20, length * 7)}px`;
-    };
-    updateTypeWidth();
-    typeInput.addEventListener('click', (e)=> e.stopPropagation());
-    typeInput.addEventListener('input', updateTypeWidth);
-    typeInput.addEventListener('change', () => {
-      updateTask(dayKey, task.id, { type: typeInput.value.trim() || task.type });
-    });
-    typeInput.addEventListener('keydown', (e)=>{
-      if(e.key === 'Enter'){
-        e.preventDefault();
-        typeInput.blur();
-      }
-    });
-
-    enableBarDrag(bar, dayKey, task.id);
-    enableBarResizeRight(hR, bar, dayKey, task.id);
-    enableBarResizeLeft(hL, bar, dayKey, task.id);
-
-    return el;
-  }
-
-  function setBarTimes(barEl, startMin, durMin){
-    const start = barEl.querySelector('.time-label.start');
-    const end = barEl.querySelector('.time-label.end');
-    if(start) start.textContent = minsToLabel(startMin);
-    if(end) end.textContent = minsToLabel(startMin + durMin);
-  }
-
-  function enableBarDrag(barEl, dayKey, taskId){
-    let dragging=false, startX=0, startLeftPx=0;
-
-    barEl.addEventListener('pointerdown', (e)=>{
-      if(e.target.classList.contains('handle')) return;
-      e.preventDefault();
-      dragging=true;
-      barEl.setPointerCapture(e.pointerId);
-      startX=e.clientX;
-
-      const t=getTask(dayKey, taskId);
-      if(!t) return;
-      startLeftPx = minsToLeftPx(t.startMin);
-    });
-
-    barEl.addEventListener('pointermove', (e)=>{
-      if(!dragging) return;
-      const t=getTask(dayKey, taskId);
-      if(!t) return;
-
-      const dx=e.clientX - startX;
-      const rawLeft = startLeftPx + dx;
-      const rawMins = pxToMins(rawLeft);
-      const snapped = snapToSlot(rawMins);
-
-      const maxStart = END_MIN - t.durMin;
-      const newStart = clamp(snapped, START_MIN, maxStart);
-
-      barEl.style.setProperty('--left', `${minsToLeftPx(newStart)}px`);
-      setBarTimes(barEl, newStart, t.durMin);
-
-    });
-
-    barEl.addEventListener('pointerup', ()=>{
-      if(!dragging) return;
-      dragging=false;
-
-      const t=getTask(dayKey, taskId);
-      if(!t) return;
-
-      const cssLeft = parseFloat(getComputedStyle(barEl).getPropertyValue('--left')) || 0;
-      const newStart = snapToSlot(pxToMins(cssLeft));
-      const maxStart = END_MIN - t.durMin;
-      updateTask(dayKey, taskId, { startMin: clamp(newStart, START_MIN, maxStart) });
-    });
-
-    barEl.addEventListener('pointercancel', ()=> dragging=false);
-  }
-
-  function enableBarResizeRight(handleEl, barEl, dayKey, taskId){
-    let resizing=false, startX=0, startW=0;
-
-    handleEl.addEventListener('pointerdown', (e)=>{
-      e.preventDefault(); e.stopPropagation();
-      resizing=true;
-      handleEl.setPointerCapture(e.pointerId);
-      startX=e.clientX;
-      startW = parseFloat(getComputedStyle(barEl).getPropertyValue('--w')) || 0;
-    });
-
-    handleEl.addEventListener('pointermove', (e)=>{
-      if(!resizing) return;
-      const t=getTask(dayKey, taskId);
-      if(!t) return;
-
-      const dx=e.clientX - startX;
-      const rawW = startW + dx;
-      const slots = Math.max(1, Math.round(rawW / slotW()));
-      let dur = slots * SLOT;
-      dur = snapToSlot(clamp(dur, SLOT, END_MIN - t.startMin));
-
-      const left = minsToLeftPx(t.startMin);
-      const w = minsToLeftPx(t.startMin + dur) - left;
-      barEl.style.setProperty('--w', `${Math.max(0,w)}px`);
-      setBarTimes(barEl, t.startMin, dur);
-    });
-
-    handleEl.addEventListener('pointerup', ()=>{
-      if(!resizing) return;
-      resizing=false;
-
-      const t=getTask(dayKey, taskId);
-      if(!t) return;
-
-      const wPx = parseFloat(getComputedStyle(barEl).getPropertyValue('--w')) || 0;
-      const slots = Math.max(1, Math.round(wPx / slotW()));
-      let dur = slots * SLOT;
-      dur = snapToSlot(clamp(dur, SLOT, END_MIN - t.startMin));
-      updateTask(dayKey, taskId, { durMin: dur });
-    });
-
     handleEl.addEventListener('pointercancel', ()=> resizing=false);
   }
 
+  // Resize from the left edge of the timeline bar.
   function enableBarResizeLeft(handleEl, barEl, dayKey, taskId){
     let resizing=false, startX=0, startLeft=0, startEndMin=0;
 
@@ -1648,19 +1446,11 @@
 
     });
 
-    handleEl.addEventListener('pointerup', ()=>{
-      if(!resizing) return;
-      resizing=false;
+    enableBarDrag(bar, dayKey, task.id);
+    enableBarResizeRight(hR, bar, dayKey, task.id);
+    enableBarResizeLeft(hL, bar, dayKey, task.id);
 
-      const cssLeft = parseFloat(getComputedStyle(barEl).getPropertyValue('--left')) || 0;
-      let newStart = snapToSlot(pxToMins(cssLeft));
-      newStart = clamp(newStart, START_MIN, startEndMin - SLOT);
-
-      const newDur = snapToSlot(clamp(startEndMin - newStart, SLOT, END_MIN - newStart));
-      updateTask(dayKey, taskId, { startMin: newStart, durMin: newDur });
-    });
-
-    handleEl.addEventListener('pointercancel', ()=> resizing=false);
+    return el;
   }
 
   function initSortable(tasksContainer, dayKey){
@@ -1708,19 +1498,17 @@
     });
   }
 
-  function handleInfiniteScroll(){
-    const top=boardScroll.scrollTop;
-    const height=boardScroll.scrollHeight;
-    const view=boardScroll.clientHeight;
-    if(top + view > height - 800) extendBottom(20);
-    if(top < 300) extendTop(20);
-  }
+    actions.innerHTML=`
+      <div class="iconbtn" title="Edit">${iconPencil()}</div>
+      <div class="iconbtn danger" title="Delete">${iconTrash()}</div>
+      <div class="completebtn" title="Complete">${iconCheck()}</div>
+    `;
 
-  function jumpToToday(){
-    const key=toDateKey(new Date());
-    const el=document.getElementById(`day-${key}`);
-    if(el) el.scrollIntoView({block:'start', behavior:'smooth'});
-  }
+    const main=document.createElement('div');
+    main.className='task-main';
+    main.appendChild(meta);
+    main.appendChild(document.createElement('div'));
+    main.appendChild(actions);
 
   btnSettings.addEventListener('click', ()=>{
     settingsPanel.classList.toggle('show');
