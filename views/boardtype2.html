@@ -263,6 +263,17 @@
       border-radius:999px;
       text-overflow: ellipsis;
     }
+    .task-customer{
+      font-size:8px;
+      color: rgba(232,238,252,.55);
+      font-weight:700;
+      margin-top:2px;
+      text-align:left;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      max-width:100%;
+    }
     .task-desc-input:focus{
       outline:none;
       border-color: rgba(255,255,255,.25);
@@ -498,6 +509,17 @@
       border:1px solid rgba(255,255,255,.25);
       white-space:nowrap;
       flex:0 0 auto;
+    }
+    @media (max-width: 550px){
+      .person-chip{
+        padding:4px 6px;
+        min-width:20px;
+        justify-content:center;
+      }
+      .person-chip span{ display:none; }
+      .person-chip::before{
+        content: attr(data-initial);
+      }
     }
 
     /* Rotated time labels outside bar, not clipped */
@@ -745,6 +767,10 @@
           <input id="mDesc" type="text" placeholder="Short description"/>
         </div>
         <div class="row">
+          <label>Customer</label>
+          <input id="mCustomer" type="text" placeholder="Customer name"/>
+        </div>
+        <div class="row">
           <label>Colour</label>
           <input id="mColor" type="color" />
         </div>
@@ -823,6 +849,7 @@
 
   const mType = document.getElementById('mType');
   const mDesc = document.getElementById('mDesc');
+  const mCustomer = document.getElementById('mCustomer');
   const mColor = document.getElementById('mColor');
   const mStart = document.getElementById('mStart');
   const mEnd = document.getElementById('mEnd');
@@ -1008,6 +1035,7 @@
       type: base.key,
       color: base.color,
       desc: "New task",
+      customer: "Customer",
       startMin: DEFAULT_START,
       durMin: DEFAULT_DUR,
       completed: false,
@@ -1092,6 +1120,7 @@
 
     mType.value=t.type;
     mDesc.value=t.desc;
+    mCustomer.value=t.customer || "";
     mColor.value=t.color;
 
     mStart.value=t.startMin;
@@ -1121,6 +1150,7 @@
 
     const type=mType.value;
     const desc=(mDesc.value||"").trim() || "Task";
+    const customer=(mCustomer.value||"").trim() || "Customer";
     const color=mColor.value || t.color;
 
     const start=parseInt(mStart.value,10);
@@ -1132,7 +1162,7 @@
       .map(x => x.getAttribute('data-person'))
       .filter(Boolean);
 
-    updateTask(dateKey, taskId, { type, desc, color, startMin:start, durMin:dur, assignees: assignees.length ? assignees : [] });
+    updateTask(dateKey, taskId, { type, desc, customer, color, startMin:start, durMin:dur, assignees: assignees.length ? assignees : [] });
     closeModal();
   }
 
@@ -1239,6 +1269,7 @@
     meta.innerHTML=`
       <div class="body">
         <input class="task-desc-input" value="${escapeHtml(task.desc)}" aria-label="Task description" />
+        <div class="task-customer">${escapeHtml(task.customer || "Customer")}</div>
       </div>
     `;
 
@@ -1298,7 +1329,8 @@
       const chip=document.createElement('div');
       chip.className='person-chip';
       chip.style.setProperty('--p', person?.color || 'rgba(255,255,255,.15)');
-      chip.textContent = name;
+      chip.dataset.initial = name ? name[0].toUpperCase() : '';
+      chip.innerHTML = `<span>${escapeHtml(name)}</span>`;
       assigneesWrap.appendChild(chip);
     }
 
