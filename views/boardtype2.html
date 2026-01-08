@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Two-Column Day Task Board</title>
+  <script type="text/javascript" src="../javascript/Sortable/Sortable.js"></script>
   <style>
     :root{
       --bg:#0b0f17;
@@ -1066,7 +1067,7 @@
     addArea.addEventListener('click', ()=>addTask(dayKey));
     day.appendChild(addArea);
 
-    enableTaskReorder(tasks, dayKey);
+    initSortable(tasks, dayKey);
 
     return day;
   }
@@ -1325,84 +1326,27 @@
     handleEl.addEventListener('pointercancel', ()=> resizing=false);
   }
 
-  function enableTaskReorder(tasksContainer, dayKey){
-    let draggingEl=null, placeholder=null, pointerId=null, offsetY=0;
-
-    tasksContainer.addEventListener('pointerdown', (e)=>{
-      const taskEl = e.target.closest('.task');
-      if(!taskEl) return;
-      if(e.target.closest('.iconbtn') || e.target.closest('.completebtn')) return;
-
-      e.preventDefault();
-      draggingEl = taskEl;
-      pointerId = e.pointerId;
-      draggingEl.setPointerCapture(pointerId);
-
-      const rect = draggingEl.getBoundingClientRect();
-      offsetY = e.clientY - rect.top;
-
-      placeholder = document.createElement('div');
-      placeholder.className='task placeholder';
-      placeholder.style.height = rect.height + "px";
-
-      draggingEl.classList.add('dragging');
-      draggingEl.style.width = rect.width + "px";
-
-      tasksContainer.insertBefore(placeholder, draggingEl.nextSibling);
-      moveDragging(e.clientY);
-    });
-
-    tasksContainer.addEventListener('pointermove', (e)=>{
-      if(!draggingEl || e.pointerId !== pointerId) return;
-      moveDragging(e.clientY);
-
-      const items=[...tasksContainer.querySelectorAll('.task:not(.dragging):not(.placeholder)')];
-      const y=e.clientY;
-
-      let insertBefore=null;
-      for(const it of items){
-        const r=it.getBoundingClientRect();
-        const mid=r.top + r.height/2;
-        if(y < mid){ insertBefore=it; break; }
-      }
-      if(insertBefore) tasksContainer.insertBefore(placeholder, insertBefore);
-      else tasksContainer.appendChild(placeholder);
-    });
-
-    tasksContainer.addEventListener('pointerup', (e)=>{
-      if(!draggingEl || e.pointerId !== pointerId) return;
-      finish(false);
-    });
-    tasksContainer.addEventListener('pointercancel', (e)=>{
-      if(!draggingEl || e.pointerId !== pointerId) return;
-      finish(true);
-    });
-
-    function moveDragging(clientY){
-      const containerRect = tasksContainer.getBoundingClientRect();
-      const localY = (clientY - offsetY) - containerRect.top;
-      draggingEl.style.transform = `translateY(${localY}px)`;
-    }
-
-    function finish(cancel){
-      draggingEl.classList.remove('dragging');
-      draggingEl.style.transform='';
-      draggingEl.style.width='';
-
-      tasksContainer.insertBefore(draggingEl, placeholder);
-      placeholder.remove();
-
-      if(!cancel){
+  function initSortable(tasksContainer, dayKey){
+    if(!window.Sortable) return;
+    new Sortable(tasksContainer, {
+      animation: 150,
+      delay: 300,
+      delayOnTouchOnly: false,
+      touchStartThreshold: 4,
+      handle: '.task-main',
+      filter: '.iconbtn, .completebtn, .bar, .handle',
+      onMove: (evt) => {
+        if(evt.originalEvent?.target?.closest('.bar, .handle')) return false;
+        return true;
+      },
+      onEnd: () => {
         const ids=[...tasksContainer.querySelectorAll('.task')].map(el=>el.dataset.taskId);
         const current=state.tasksByDate[dayKey]||[];
         const byId=new Map(current.map(t=>[t.id,t]));
         state.tasksByDate[dayKey]=ids.map(id=>byId.get(id)).filter(Boolean);
         save();
       }
-      rerenderDay(dayKey);
-
-      draggingEl=null; placeholder=null; pointerId=null;
-    }
+    });
   }
 
   function handleInfiniteScroll(){
