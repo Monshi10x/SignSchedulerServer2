@@ -1292,11 +1292,11 @@
 
     const tStart=document.createElement('div');
     tStart.className='time-label start';
-    tStart.textContent = minsToLabel(task.startMin);
+    tStart.innerHTML = `<span class="time-label-text">${minsToLabel(task.startMin)}</span>`;
 
     const tEnd=document.createElement('div');
     tEnd.className='time-label end';
-    tEnd.textContent = minsToLabel(task.startMin + task.durMin);
+    tEnd.innerHTML = `<span class="time-label-text">${minsToLabel(task.startMin + task.durMin)}</span>`;
 
     bar.appendChild(tStart);
     bar.appendChild(tEnd);
