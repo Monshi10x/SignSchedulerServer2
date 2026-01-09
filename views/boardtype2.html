@@ -237,13 +237,14 @@
       gap:12px;
       flex:1;
       min-height:0;
-      padding:5px 2px;
+      padding:3px 2px;
     }
     .task .body{
       flex:1;
       display:flex;
-      align-items:center;
-      gap:10px;
+      flex-direction:column;
+      align-items:flex-start;
+      gap:2px;
       padding:0;
       min-width:0;
       justify-content:flex-start;
@@ -251,7 +252,6 @@
     .task-desc-input{
       width:auto;
       min-width:20px;
-      max-width:100%;
       background: transparent;
       border:1px solid rgba(255,255,255,.18);
       color: var(--text);
@@ -281,15 +281,12 @@
     }
     .days-grid.view-5 .task-desc-input{
       min-width:120px;
-      max-width:220px;
     }
     .days-grid.view-7 .task-desc-input{
       min-width:90px;
-      max-width:180px;
     }
     .days-grid:not(.view-5):not(.view-7) .task-desc-input{
       min-width:160px;
-      max-width:280px;
     }
 
     /* task name centered and can be 2 lines with ellipsis on last line */
@@ -376,14 +373,15 @@
 
     .task.dragging{
       opacity:.9;
-      box-shadow: 0 12px 30px rgba(0,0,0,.35);
+      box-shadow: 0 6px 14px rgba(0,0,0,.3);
       transform: scale(1.01);
       z-index:5;
       position:relative;
     }
     .task.placeholder{
-      border:1px dashed rgba(255,255,255,.25);
-      background: rgba(255,255,255,.02);
+      border:none;
+      background: transparent;
+      opacity:0;
     }
 
     .add-area{
@@ -1035,7 +1033,7 @@
       type: base.key,
       color: base.color,
       desc: "New task",
-      customer: "Customer",
+      customer: "",
       startMin: DEFAULT_START,
       durMin: DEFAULT_DUR,
       completed: false,
@@ -1150,7 +1148,7 @@
 
     const type=mType.value;
     const desc=(mDesc.value||"").trim() || "Task";
-    const customer=(mCustomer.value||"").trim() || "Customer";
+    const customer=(mCustomer.value||"").trim();
     const color=mColor.value || t.color;
 
     const start=parseInt(mStart.value,10);
@@ -1266,10 +1264,11 @@
 
     const meta=document.createElement('div');
     meta.className='meta';
+    const customerName = (task.customer || "").trim();
     meta.innerHTML=`
       <div class="body">
         <input class="task-desc-input" value="${escapeHtml(task.desc)}" aria-label="Task description" />
-        <div class="task-customer">${escapeHtml(task.customer || "Customer")}</div>
+        ${customerName ? `<div class="task-customer">${escapeHtml(customerName)}</div>` : ""}
       </div>
     `;
 
