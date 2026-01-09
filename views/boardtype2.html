@@ -115,7 +115,8 @@
       top: 0;
       z-index: 20;
       backdrop-filter: blur(10px);
-      display:grid;
+      /*display:grid;*/
+      display:none;
       grid-template-rows: 1fr 15px;
       align-items:center;
       gap:6px;
@@ -174,6 +175,8 @@
     }
 
     .task{
+      container-type: inline-size;   /* watches width */
+      container-name: taskContainer;
       height: var(--taskH);
       border:1px solid var(--line);
       border-radius:12px;
@@ -249,7 +252,7 @@
       justify-content:flex-start;
     }
     .task-desc-input{
-      width:auto;
+      width:100%;
       max-width:100%;
       min-width:0;
       background: transparent;
@@ -264,7 +267,8 @@
       text-overflow: ellipsis;
     }
     .task-customer{
-      font-size:8px;
+      font-size:10px;
+      padding-left:5px;
       color: rgba(232,238,252,.55);
       font-weight:700;
       margin-top:2px;
@@ -502,7 +506,7 @@
       white-space:nowrap;
       flex:0 0 auto;
     }
-    @media (max-width: 550px){
+    @container taskContainer (max-width: 550px){
       .person-chip{
         padding:4px 6px;
         min-width:20px;
@@ -701,7 +705,7 @@
       .board-scroll{ height:auto; overflow:visible; }
       .left-header-spacer{ top:56px; }
     }
-    @media (max-width: 720px){
+    @container taskContainer  (max-width: 720px){
       .task-main{
         grid-template-columns: 1fr;
         gap:6px;
@@ -711,11 +715,13 @@
         /* justify-content:flex-start;
         flex-wrap:wrap; */
       }
+    }
+    @media (max-width: 720px){
       .left-header-spacer{
         display:none;
       }
     }
-    @media (max-width: 400px){
+    @container taskContainer (max-width: 400px){
       .task .right .iconbtn,
       .task .right .completebtn{
         display:none;
@@ -724,7 +730,7 @@
         display:grid;
       }
     }
-    @media (max-width: 720px){
+    @container taskContainer (max-width: 720px){
       .task .right{
         order:-1;
       }
@@ -732,7 +738,7 @@
         order:1;
       }
     }
-    @media (max-width: 400px){
+    @container taskContainer (max-width: 400px){
       .task .right .iconbtn,
       .task .right .completebtn{
         display:none;
@@ -1456,14 +1462,14 @@
     actions.querySelector('.menu-btn').addEventListener('click', (e)=>{ e.stopPropagation(); openQuickActions(dayKey, task.id); });
 
     const descInput = meta.querySelector('.task-desc-input');
-    const updateDescWidth = () => {
+    /*const updateDescWidth = () => {
       const length = Math.max(2, descInput.value.length + 1);
       descInput.style.width = `${Math.max(0, length * 8)}px`;
     };
-    updateDescWidth();
+    updateDescWidth();*/
     descInput.addEventListener('pointerdown', (e)=> e.stopPropagation());
     descInput.addEventListener('click', (e)=> e.stopPropagation());
-    descInput.addEventListener('input', updateDescWidth);
+    //descInput.addEventListener('input', updateDescWidth);
     descInput.addEventListener('change', () => {
       updateTask(dayKey, task.id, { desc: descInput.value.trim() || "Task" });
     });
