@@ -1595,6 +1595,10 @@
     }
     merged.textContent = `${shortTimeLabel(startMin)} - ${shortTimeLabel(startMin + durMin)}`;
 
+    start.style.display = 'flex';
+    end.style.display = 'flex';
+    merged.style.display = 'none';
+
     const startRect = start.getBoundingClientRect();
     const endRect = end.getBoundingClientRect();
     const overlap = startRect.right >= (endRect.left - 2);
