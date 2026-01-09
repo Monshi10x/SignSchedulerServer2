@@ -724,6 +724,23 @@
         display:grid;
       }
     }
+    @media (max-width: 720px){
+      .task .right{
+        order:-1;
+      }
+      .task .meta{
+        order:1;
+      }
+    }
+    @media (max-width: 400px){
+      .task .right .iconbtn,
+      .task .right .completebtn{
+        display:none;
+      }
+      .task .right .menu-btn{
+        display:grid;
+      }
+    }
   </style>
 </head>
 <body>
