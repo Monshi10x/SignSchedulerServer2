@@ -151,7 +151,6 @@
       background: rgba(255,255,255,.03);
       margin-bottom:10px;
       overflow:hidden;
-      min-height: 120px;
       min-width: 100%;
     }
     .day-header{
@@ -237,21 +236,21 @@
       gap:12px;
       flex:1;
       min-height:0;
-      padding:8px 12px 4px;
+      padding:3px 2px;
     }
     .task .body{
       flex:1;
       display:flex;
-      align-items:center;
-      gap:10px;
-      padding:0 10px;
+      flex-direction:column;
+      align-items:flex-start;
+      gap:2px;
+      padding:0;
       min-width:0;
       justify-content:flex-start;
     }
     .task-desc-input{
       width:auto;
       min-width:20px;
-      max-width:100%;
       background: transparent;
       border:1px solid rgba(255,255,255,.18);
       color: var(--text);
@@ -263,6 +262,17 @@
       border-radius:999px;
       text-overflow: ellipsis;
     }
+    .task-customer{
+      font-size:8px;
+      color: rgba(232,238,252,.55);
+      font-weight:700;
+      margin-top:2px;
+      text-align:left;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      max-width:100%;
+    }
     .task-desc-input:focus{
       outline:none;
       border-color: rgba(255,255,255,.25);
@@ -270,15 +280,12 @@
     }
     .days-grid.view-5 .task-desc-input{
       min-width:120px;
-      max-width:220px;
     }
     .days-grid.view-7 .task-desc-input{
       min-width:90px;
-      max-width:180px;
     }
     .days-grid:not(.view-5):not(.view-7) .task-desc-input{
       min-width:160px;
-      max-width:280px;
     }
 
     /* task name centered and can be 2 lines with ellipsis on last line */
@@ -364,15 +371,18 @@
     .completebtn svg{ width:18px; height:18px; }
 
     .task.dragging{
-      opacity:.9;
-      box-shadow: 0 12px 30px rgba(0,0,0,.35);
-      transform: scale(1.01);
+      opacity:.95;
+      box-shadow: 0 14px 28px rgba(0,0,0,.35);
+      transform: translateY(-2px) scale(1.02);
       z-index:5;
       position:relative;
     }
     .task.placeholder{
-      border:1px dashed rgba(255,255,255,.25);
-      background: rgba(255,255,255,.02);
+      border:0;
+      background: transparent;
+      opacity:0;
+      visibility:hidden;
+      box-shadow:none;
     }
 
     .add-area{
@@ -444,7 +454,7 @@
       left: var(--left, 0px);
       width: var(--w, 0px);
       border-radius: 0;          /* removed rounded */
-      background: var(--c, #4aa3ff);
+      background: #ffffff;
       box-shadow: 0 10px 24px rgba(0,0,0,.25);
       cursor:pointer;
       display:flex;
@@ -499,13 +509,30 @@
       white-space:nowrap;
       flex:0 0 auto;
     }
+    @media (max-width: 550px){
+      .person-chip{
+        padding:4px 6px;
+        min-width:20px;
+        justify-content:center;
+      }
+      .person-chip span{ display:none; }
+      .person-chip::before{
+        content: attr(data-initial);
+      }
+    }
 
     /* Rotated time labels outside bar, not clipped */
     .time-label{
       position:absolute;
-      top:50%;
-      transform: translateY(-50%) rotate(-90deg);
-      transform-origin: center;
+      top:-19px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:2px 6px;
+      min-width:20px;
+      background: #101010;
+      border:1px solid #0a0a0a;
+      border-radius:5px;
       color: rgba(255,255,255,.95);
       font-weight:1000;
       font-size:11px;
@@ -513,13 +540,20 @@
       text-shadow: 0 2px 10px rgba(0,0,0,.55);
       pointer-events:none;
       z-index:6;
-      background: transparent;
-      border: none;
-      padding: 0;
       white-space:nowrap;
     }
-    .time-label.start{ left: -18px; }
-    .time-label.end{ right: -18px; }
+    .time-label::after{
+      content:"";
+      position:absolute;
+      left:50%;
+      bottom:-6px;
+      transform: translateX(-50%);
+      border-width:6px 5px 0;
+      border-style:solid;
+      border-color:#101010 transparent transparent;
+    }
+    .time-label.start{ left: -12px; }
+    .time-label.end{ right: -12px; }
 
     /* MODAL */
     .modal-backdrop{
@@ -732,6 +766,10 @@
           <input id="mDesc" type="text" placeholder="Short description"/>
         </div>
         <div class="row">
+          <label>Customer</label>
+          <input id="mCustomer" type="text" placeholder="Customer name"/>
+        </div>
+        <div class="row">
           <label>Colour</label>
           <input id="mColor" type="color" />
         </div>
@@ -810,6 +848,7 @@
 
   const mType = document.getElementById('mType');
   const mDesc = document.getElementById('mDesc');
+  const mCustomer = document.getElementById('mCustomer');
   const mColor = document.getElementById('mColor');
   const mStart = document.getElementById('mStart');
   const mEnd = document.getElementById('mEnd');
@@ -995,6 +1034,7 @@
       type: base.key,
       color: base.color,
       desc: "New task",
+      customer: "",
       startMin: DEFAULT_START,
       durMin: DEFAULT_DUR,
       completed: false,
@@ -1079,6 +1119,7 @@
 
     mType.value=t.type;
     mDesc.value=t.desc;
+    mCustomer.value=t.customer || "";
     mColor.value=t.color;
 
     mStart.value=t.startMin;
@@ -1108,6 +1149,7 @@
 
     const type=mType.value;
     const desc=(mDesc.value||"").trim() || "Task";
+    const customer=(mCustomer.value||"").trim();
     const color=mColor.value || t.color;
 
     const start=parseInt(mStart.value,10);
@@ -1119,7 +1161,7 @@
       .map(x => x.getAttribute('data-person'))
       .filter(Boolean);
 
-    updateTask(dateKey, taskId, { type, desc, color, startMin:start, durMin:dur, assignees: assignees.length ? assignees : [] });
+    updateTask(dateKey, taskId, { type, desc, customer, color, startMin:start, durMin:dur, assignees: assignees.length ? assignees : [] });
     closeModal();
   }
 
@@ -1223,9 +1265,11 @@
 
     const meta=document.createElement('div');
     meta.className='meta';
+    const customerName = (task.customer || "").trim();
     meta.innerHTML=`
       <div class="body">
         <input class="task-desc-input" value="${escapeHtml(task.desc)}" aria-label="Task description" />
+        ${customerName ? `<div class="task-customer">${escapeHtml(customerName)}</div>` : ""}
       </div>
     `;
 
@@ -1285,7 +1329,8 @@
       const chip=document.createElement('div');
       chip.className='person-chip';
       chip.style.setProperty('--p', person?.color || 'rgba(255,255,255,.15)');
-      chip.textContent = name;
+      chip.dataset.initial = name ? name[0].toUpperCase() : '';
+      chip.innerHTML = `<span>${escapeHtml(name)}</span>`;
       assigneesWrap.appendChild(chip);
     }
 
@@ -1298,7 +1343,6 @@
     const main=document.createElement('div');
     main.className='task-main';
     main.appendChild(meta);
-    main.appendChild(document.createElement('div'));
     main.appendChild(actions);
 
     actions.prepend(assigneesWrap);
