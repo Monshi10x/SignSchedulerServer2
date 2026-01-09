@@ -16,7 +16,7 @@
       --metaW: 320px;
       --actionsW: 140px;
 
-      --taskH: 90px;            /* was 50px */
+      --taskH: 140px;            /* was 50px */
       --dayHeaderH: 34px;
       --dayFooterH: 28px;
 
@@ -250,6 +250,7 @@
     }
     .task-desc-input{
       width:auto;
+      max-width:100%;
       min-width:0;
       background: transparent;
       border:1px solid rgba(255,255,255,.18);
@@ -294,7 +295,8 @@
     }
 
     .task .right{
-      width: var(--actionsW);
+     /* width: var(--actionsW);*/
+     width:100%;
       display:flex;
       align-items:center;
       gap:6px;
@@ -424,7 +426,7 @@
       align-items:flex-end;
       height:15px;
       width:100%;
-      margin-top:auto;
+          margin-top: 20px;
     }
     .task-timeline-inner{
       width: 100%;
@@ -699,14 +701,18 @@
       .board-scroll{ height:auto; overflow:visible; }
       .left-header-spacer{ top:56px; }
     }
-    @media (max-width: 520px){
+    @media (max-width: 720px){
       .task-main{
         grid-template-columns: 1fr;
         gap:6px;
       }
       .task .right{
-        justify-content:flex-start;
-        flex-wrap:wrap;
+        width:100%;
+        /* justify-content:flex-start;
+        flex-wrap:wrap; */
+      }
+      .left-header-spacer{
+        display:none;
       }
     }
     @media (max-width: 400px){
