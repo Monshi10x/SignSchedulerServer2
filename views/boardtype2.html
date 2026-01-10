@@ -16,7 +16,7 @@
       --metaW: 320px;
       --actionsW: 140px;
 
-      --taskH: 140px;            /* was 50px */
+      --taskH: 100px;            /* was 50px */
       --dayHeaderH: 34px;
       --dayFooterH: 28px;
 
@@ -186,6 +186,8 @@
     }
 
     .tasks{
+      container-type: inline-size;
+      container-name: taskContainer;
       padding:8px 8px 0;
       display:flex;
       flex-direction:column;
@@ -194,7 +196,7 @@
 
     .task{
       container-type: inline-size;   /* watches width */
-      container-name: taskContainer;
+      container-name: task;
       height: var(--taskH);
       border:1px solid var(--line);
       border-radius:12px;
@@ -207,6 +209,7 @@
       user-select:none;
       padding:0;
     }
+
     .task.completed{ opacity:.45; filter:saturate(.6); }
 
     .task-typebar{
@@ -524,7 +527,7 @@
       white-space:nowrap;
       flex:0 0 auto;
     }
-    @container taskContainer (max-width: 550px){
+    @container task (max-width: 550px){
       .person-chip{
         padding:4px 6px;
         min-width:20px;
@@ -735,8 +738,8 @@
         border-bottom:0;
       }
       .board-scroll{
-        height:auto;
-        overflow:visible;
+        /*height:auto;*/
+       /*overflow:visible;*/
         margin-top:0;
         margin-bottom:56px;
       }
@@ -761,13 +764,21 @@
         bottom:70px;
       }
     }
-    @container taskContainer  (max-width: 720px){
+
+    @container taskContainer (max-width: 725px) {
+      .task {
+        --taskH: 140px;
+      }
+    }
+
+    @container task (max-width: 720px){
       .task-main{
         grid-template-columns: 1fr;
         gap:6px;
       }
       .task .right{
         width:100%;
+        --taskH: 140px;
         /* justify-content:flex-start;
         flex-wrap:wrap; */
       }
@@ -777,16 +788,17 @@
         display:none;
       }
     }
-    @container taskContainer (max-width: 400px){
+    @container task (max-width: 400px){
       .task .right .iconbtn,
       .task .right .completebtn{
+        --taskH: 140px;
         display:none;
       }
       .task .right .menu-btn{
         display:grid;
       }
     }
-    @container taskContainer (max-width: 720px){
+    @container task (max-width: 720px){
       .task .right{
         order:-1;
       }
@@ -794,7 +806,7 @@
         order:1;
       }
     }
-    @container taskContainer (max-width: 400px){
+    @container task (max-width: 400px){
       .task .right .iconbtn,
       .task .right .completebtn{
         display:none;
