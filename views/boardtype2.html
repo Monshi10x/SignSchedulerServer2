@@ -1403,11 +1403,12 @@
   }
 
   function renderAll(){
-    updateTimelineScale();
     clearAll();
     const mode = state.settings.viewMode || "infinite";
     daysGrid.classList.toggle('view-5', mode === 'week5');
     daysGrid.classList.toggle('view-7', mode === 'week7');
+    updateTimelineScale();
+    renderTimelineHeader();
     for(const dayKey of getRenderedDays()){
       daysGrid.appendChild(renderLeftDay(dayKey));
     }
