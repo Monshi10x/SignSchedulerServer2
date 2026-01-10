@@ -1099,8 +1099,12 @@
   }
   function updateTimelineScale(){
     const totalSlots = (END_MIN - START_MIN) / SLOT;
-    const taskWidth = daysGrid.querySelector('.task')?.getBoundingClientRect().width
-      || Math.max(0, leftCol.getBoundingClientRect().width - 20);
+    const mode = state.settings.viewMode || "infinite";
+    const columns = mode === "week5" ? 5 : (mode === "week7" ? 7 : 1);
+    const gridWidth = daysGrid.getBoundingClientRect().width || Math.max(0, leftCol.getBoundingClientRect().width - 20);
+    const gapValue = parseFloat(getComputedStyle(daysGrid).columnGap || getComputedStyle(daysGrid).gap || "0") || 0;
+    const totalGap = gapValue * Math.max(0, columns - 1);
+    const taskWidth = Math.max(0, (gridWidth - totalGap) / columns);
     const slotWidth = Math.max(0, taskWidth / totalSlots);
     document.documentElement.style.setProperty('--slotW', `${slotWidth}px`);
     document.documentElement.style.setProperty('--timelineW', `${slotWidth * totalSlots}px`);
