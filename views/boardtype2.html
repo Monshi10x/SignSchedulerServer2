@@ -1104,7 +1104,9 @@
     const gridWidth = daysGrid.getBoundingClientRect().width || Math.max(0, leftCol.getBoundingClientRect().width - 20);
     const gapValue = parseFloat(getComputedStyle(daysGrid).columnGap || getComputedStyle(daysGrid).gap || "0") || 0;
     const totalGap = gapValue * Math.max(0, columns - 1);
-    const taskWidth = Math.max(0, (gridWidth - totalGap) / columns);
+    const sampleTrack = daysGrid.querySelector('.task-timeline-inner');
+    const fallbackTaskWidth = Math.max(0, (gridWidth - totalGap) / columns - 16);
+    const taskWidth = Math.max(0, sampleTrack?.getBoundingClientRect().width || fallbackTaskWidth);
     const slotWidth = Math.max(0, taskWidth / totalSlots);
     document.documentElement.style.setProperty('--slotW', `${slotWidth}px`);
     document.documentElement.style.setProperty('--timelineW', `${slotWidth * totalSlots}px`);
