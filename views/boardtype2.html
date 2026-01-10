@@ -1421,6 +1421,12 @@
     }
   }
 
+  function renderAllPreserveScroll(){
+    const prevScroll = boardScroll.scrollTop;
+    renderAll();
+    boardScroll.scrollTop = prevScroll;
+  }
+
   function rerenderDay(dayKey){
     const left = document.querySelector(`.day[data-day="${dayKey}"]`);
     if(left) left.replaceWith(renderLeftDay(dayKey));
@@ -1953,7 +1959,7 @@
         suppressInfiniteScroll = true;
         updateTimelineScale();
         renderTimelineHeader();
-        renderAll();
+        renderAllPreserveScroll();
         requestAnimationFrame(() => {
           suppressInfiniteScroll = false;
         });
@@ -1964,7 +1970,7 @@
       suppressInfiniteScroll = true;
       updateTimelineScale();
       renderTimelineHeader();
-      renderAll();
+      renderAllPreserveScroll();
       requestAnimationFrame(() => {
         suppressInfiniteScroll = false;
       });
