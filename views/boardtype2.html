@@ -43,25 +43,42 @@
 
     .topbar{
       height:56px;
-      display:flex;
+      display:grid;
+      grid-template-columns: 1fr auto 1fr;
       align-items:center;
-      justify-content:space-between;
       padding:0 14px;
       border-bottom:1px solid var(--line);
       background: linear-gradient(180deg, rgba(16,24,38,.95), rgba(16,24,38,.75));
       backdrop-filter: blur(10px);
-      position:sticky;
+      position:fixed;
       top:0;
+      left:0;
+      right:0;
       z-index:100;
     }
     .brand{ display:flex; gap:10px; align-items:center; font-weight:800; }
+    .brand svg{ width:22px; height:22px; }
     .pill{
       font-size:12px; color:var(--muted);
       padding:4px 8px; border:1px solid var(--line);
       border-radius:999px; background:rgba(255,255,255,.04);
       font-weight:700;
     }
-    .actions{ display:flex; gap:8px; align-items:center; }
+    .actions{ display:flex; gap:8px; align-items:center; justify-self:end; }
+    .filter-btn.active{
+      border-color: rgba(125,211,252,.5);
+      box-shadow: 0 0 12px rgba(125,211,252,.35);
+    }
+    .jump-today{
+      justify-self:center;
+      display:flex;
+      align-items:center;
+      gap:8px;
+      padding:9px 14px;
+    }
+    .jump-today svg{ width:18px; height:18px; }
+    .jump-today .icon{ display:none; }
+    .menu-toggle{ display:none; }
     button{
       appearance:none; border:1px solid var(--line);
       background: rgba(255,255,255,.05);
@@ -74,6 +91,7 @@
     .board-scroll{
       height: calc(100vh - 56px);
       overflow:auto;
+      margin-top:56px;
     }
 
     .board-grid{
@@ -551,6 +569,10 @@
     }
     .time-label.start{ left: -12px; }
     .time-label.end{ right: -12px; }
+    .time-label.merge{
+      left:50%;
+      transform: translateX(-50%);
+    }
 
     /* MODAL */
     .modal-backdrop{
@@ -674,7 +696,7 @@
       position:fixed;
       top:64px;
       right:14px;
-      width:320px;
+      width:min(320px, calc(100% - 28px));
       border-radius:16px;
       border:1px solid var(--line);
       background: linear-gradient(180deg, rgba(16,24,38,.98), rgba(16,24,38,.92));
@@ -687,10 +709,14 @@
     .settings-panel h4{ margin:0 0 10px; font-size:13px; }
     .settings-panel .srow{
       display:grid;
-      grid-template-columns: 1fr 90px;
+      grid-template-columns: minmax(0, 1fr) 90px;
       gap:8px;
       align-items:center;
       margin-bottom:8px;
+    }
+    .settings-panel .srow select,
+    .settings-panel .srow input{
+      min-width:0;
     }
     .settings-panel .srow span{
       font-size:12px;
@@ -702,8 +728,38 @@
 
     @media (max-width: 900px){
       body{ overflow:auto; }
-      .board-scroll{ height:auto; overflow:visible; }
+      .topbar{
+        top:auto;
+        bottom:0;
+        border-top:1px solid var(--line);
+        border-bottom:0;
+      }
+      .board-scroll{
+        height:auto;
+        overflow:visible;
+        margin-top:0;
+        margin-bottom:56px;
+      }
+      .actions select,
+      #btnSettings{
+        display:none;
+      }
+      .menu-toggle{
+        display:flex;
+      }
+      .jump-today{
+        padding:0;
+        width:44px;
+        height:44px;
+        justify-content:center;
+      }
+      .jump-today .label{ display:none; }
+      .jump-today .icon{ display:block; }
       .left-header-spacer{ top:56px; }
+      .settings-panel{
+        top:auto;
+        bottom:70px;
+      }
     }
     @container taskContainer  (max-width: 720px){
       .task-main{
@@ -752,22 +808,72 @@
 <body>
   <div class="topbar">
     <div class="brand">
-      <span>Task Board</span>
-      <span class="pill">2-column day + timeline</span>
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <defs>
+          <linearGradient id="neonCalendarGradient" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#7dd3fc"/>
+            <stop offset="50%" stop-color="#a78bfa"/>
+            <stop offset="100%" stop-color="#f472b6"/>
+          </linearGradient>
+          <filter id="neonGlow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="1.5" result="blur"/>
+            <feMerge>
+              <feMergeNode in="blur"/>
+              <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+          </filter>
+        </defs>
+        <rect x="3" y="4" width="18" height="17" rx="4" stroke="url(#neonCalendarGradient)" stroke-width="2" filter="url(#neonGlow)"/>
+        <path d="M7 3v4M17 3v4" stroke="url(#neonCalendarGradient)" stroke-width="2" stroke-linecap="round" filter="url(#neonGlow)"/>
+        <path d="M3 9h18" stroke="url(#neonCalendarGradient)" stroke-width="2" stroke-linecap="round" filter="url(#neonGlow)"/>
+        <rect x="7.5" y="12" width="3" height="3" rx="0.7" fill="url(#neonCalendarGradient)" filter="url(#neonGlow)"/>
+        <rect x="13.5" y="12" width="3" height="3" rx="0.7" fill="url(#neonCalendarGradient)" filter="url(#neonGlow)"/>
+      </svg>
     </div>
+    <button id="btnToday" class="jump-today" aria-label="Jump to today">
+      <span class="label">Jump to Today</span>
+      <span class="icon">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="M4 7h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          <path d="M7 4v6M17 4v6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          <rect x="5" y="9" width="14" height="11" rx="2" stroke="currentColor" stroke-width="2"/>
+          <path d="M9 13h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </span>
+    </button>
     <div class="actions">
+      <button id="btnFilterMine" class="iconbtn filter-btn" aria-label="Filter to my tasks">
+        <svg viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="2"/>
+          <path d="M4 20c1.8-4 5.2-6 8-6s6.2 2 8 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </button>
       <select id="viewSelect" aria-label="View mode">
         <option value="infinite">Infinite scroll</option>
         <option value="week5">5 days</option>
         <option value="week7">7 days</option>
       </select>
-      <button id="btnToday">Jump to Today</button>
       <button id="btnSettings">Settings</button>
+      <button id="btnMenuToggle" class="menu-toggle iconbtn" aria-label="Open settings">
+        <svg viewBox="0 0 24 24" fill="none">
+          <circle cx="6" cy="12" r="1.8" fill="currentColor"/>
+          <circle cx="12" cy="12" r="1.8" fill="currentColor"/>
+          <circle cx="18" cy="12" r="1.8" fill="currentColor"/>
+        </svg>
+      </button>
     </div>
   </div>
 
   <div id="settingsPanel" class="settings-panel">
     <h4>Settings</h4>
+    <div class="srow">
+      <span>View mode</span>
+      <select id="viewSelectMobile" aria-label="View mode (mobile)">
+        <option value="infinite">Infinite scroll</option>
+        <option value="week5">5 days</option>
+        <option value="week7">7 days</option>
+      </select>
+    </div>
     <div class="srow">
       <span>Days visible (min height)</span>
       <input id="daysVisibleInput" type="number" min="3" max="14" step="1" />
@@ -893,7 +999,8 @@
     tasksByDate: {},
     render: { startDate: null, endDate: null, days: [] },
     modal: { open:false, dateKey:null, taskId:null },
-    quickActions: { open:false, dateKey:null, taskId:null }
+    quickActions: { open:false, dateKey:null, taskId:null },
+    filterMine: false
   };
 
   const boardScroll = document.getElementById('boardScroll');
@@ -903,7 +1010,10 @@
 
   const btnToday = document.getElementById('btnToday');
   const btnSettings = document.getElementById('btnSettings');
+  const btnMenuToggle = document.getElementById('btnMenuToggle');
+  const btnFilterMine = document.getElementById('btnFilterMine');
   const viewSelect = document.getElementById('viewSelect');
+  const viewSelectMobile = document.getElementById('viewSelectMobile');
 
   const settingsPanel = document.getElementById('settingsPanel');
   const daysVisibleInput = document.getElementById('daysVisibleInput');
@@ -927,6 +1037,7 @@
   const mStart = document.getElementById('mStart');
   const mEnd = document.getElementById('mEnd');
   const mAssignees = document.getElementById('mAssignees');
+  const CURRENT_USER = PEOPLE[0]?.name || "";
 
   const pad2 = (n) => String(n).padStart(2,'0');
   const slotW = () => parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--slotW'));
@@ -988,8 +1099,14 @@
   }
   function updateTimelineScale(){
     const totalSlots = (END_MIN - START_MIN) / SLOT;
-    const taskWidth = daysGrid.querySelector('.task')?.getBoundingClientRect().width
-      || Math.max(0, leftCol.getBoundingClientRect().width - 20);
+    const mode = state.settings.viewMode || "infinite";
+    const columns = mode === "week5" ? 5 : (mode === "week7" ? 7 : 1);
+    const gridWidth = daysGrid.getBoundingClientRect().width || Math.max(0, leftCol.getBoundingClientRect().width - 20);
+    const gapValue = parseFloat(getComputedStyle(daysGrid).columnGap || getComputedStyle(daysGrid).gap || "0") || 0;
+    const totalGap = gapValue * Math.max(0, columns - 1);
+    const sampleTrack = daysGrid.querySelector('.task-timeline-inner');
+    const fallbackTaskWidth = Math.max(0, (gridWidth - totalGap) / columns - 16);
+    const taskWidth = Math.max(0, sampleTrack?.getBoundingClientRect().width || fallbackTaskWidth);
     const slotWidth = Math.max(0, taskWidth / totalSlots);
     document.documentElement.style.setProperty('--slotW', `${slotWidth}px`);
     document.documentElement.style.setProperty('--timelineW', `${slotWidth * totalSlots}px`);
@@ -1021,6 +1138,7 @@
     state.settings.daysVisible=vis;
     daysVisibleInput.value=vis;
     viewSelect.value = state.settings.viewMode || "infinite";
+    viewSelectMobile.value = state.settings.viewMode || "infinite";
   }
 
   function renderTimelineHeader(){
@@ -1291,11 +1409,12 @@
   }
 
   function renderAll(){
-    updateTimelineScale();
     clearAll();
     const mode = state.settings.viewMode || "infinite";
     daysGrid.classList.toggle('view-5', mode === 'week5');
     daysGrid.classList.toggle('view-7', mode === 'week7');
+    updateTimelineScale();
+    renderTimelineHeader();
     for(const dayKey of getRenderedDays()){
       daysGrid.appendChild(renderLeftDay(dayKey));
     }
@@ -1340,7 +1459,11 @@
     tasks.className='tasks';
     tasks.dataset.tasksFor=dayKey;
 
-    for(const t of (state.tasksByDate[dayKey]||[])){
+    const tasksForDay = (state.tasksByDate[dayKey]||[]).filter((task) => {
+      if(!state.filterMine || !CURRENT_USER) return true;
+      return (task.assignees || []).includes(CURRENT_USER);
+    });
+    for(const t of tasksForDay){
       tasks.appendChild(renderTaskCard(dayKey, t));
     }
     day.appendChild(tasks);
@@ -1498,6 +1621,8 @@
       }
     });
 
+    requestAnimationFrame(() => updateTimeLabelLayout(bar, task.startMin, task.durMin));
+
     enableBarDrag(bar, dayKey, task.id);
     enableBarResizeRight(hR, bar, dayKey, task.id);
     enableBarResizeLeft(hL, bar, dayKey, task.id);
@@ -1505,11 +1630,42 @@
     return el;
   }
 
+  function shortTimeLabel(mins){
+    return minsToLabel(mins).replace(":00", "");
+  }
+
+  function updateTimeLabelLayout(barEl, startMin, durMin){
+    const start = barEl.querySelector('.time-label.start');
+    const end = barEl.querySelector('.time-label.end');
+    if(!start || !end) return;
+
+    let merged = barEl.querySelector('.time-label.merge');
+    if(!merged){
+      merged = document.createElement('div');
+      merged.className = 'time-label merge';
+      barEl.appendChild(merged);
+    }
+    merged.textContent = `${shortTimeLabel(startMin)} - ${shortTimeLabel(startMin + durMin)}`;
+
+    start.style.display = 'flex';
+    end.style.display = 'flex';
+    merged.style.display = 'none';
+
+    const startRect = start.getBoundingClientRect();
+    const endRect = end.getBoundingClientRect();
+    const overlap = startRect.right >= (endRect.left - 2);
+
+    merged.style.display = overlap ? 'flex' : 'none';
+    start.style.display = overlap ? 'none' : 'flex';
+    end.style.display = overlap ? 'none' : 'flex';
+  }
+
   function setBarTimes(barEl, startMin, durMin){
     const start = barEl.querySelector('.time-label.start');
     const end = barEl.querySelector('.time-label.end');
     if(start) start.textContent = minsToLabel(startMin);
     if(end) end.textContent = minsToLabel(startMin + durMin);
+    requestAnimationFrame(() => updateTimeLabelLayout(barEl, startMin, durMin));
   }
 
   function enableBarDrag(barEl, dayKey, taskId){
@@ -1717,6 +1873,15 @@
     settingsPanel.classList.toggle('show');
     daysVisibleInput.focus();
   });
+  btnMenuToggle.addEventListener('click', ()=>{
+    settingsPanel.classList.toggle('show');
+    daysVisibleInput.focus();
+  });
+  btnFilterMine.addEventListener('click', ()=>{
+    state.filterMine = !state.filterMine;
+    btnFilterMine.classList.toggle('active', state.filterMine);
+    renderAll();
+  });
   btnCloseSettings.addEventListener('click', ()=> settingsPanel.classList.remove('show'));
   daysVisibleInput.addEventListener('change', ()=>{
     state.settings.daysVisible = clamp(parseInt(daysVisibleInput.value,10)||5,3,14);
@@ -1725,6 +1890,16 @@
   });
   viewSelect.addEventListener('change', ()=>{
     state.settings.viewMode = viewSelect.value;
+    viewSelectMobile.value = viewSelect.value;
+    save();
+    applySettings();
+    updateTimelineScale();
+    renderTimelineHeader();
+    renderAll();
+  });
+  viewSelectMobile.addEventListener('change', ()=>{
+    state.settings.viewMode = viewSelectMobile.value;
+    viewSelect.value = viewSelectMobile.value;
     save();
     applySettings();
     updateTimelineScale();
@@ -1769,6 +1944,16 @@
     renderAll();
 
     boardScroll.addEventListener('scroll', handleInfiniteScroll, {passive:true});
+    let resizeRaf = null;
+    const layoutObserver = new ResizeObserver(() => {
+      if(resizeRaf) cancelAnimationFrame(resizeRaf);
+      resizeRaf = requestAnimationFrame(() => {
+        updateTimelineScale();
+        renderTimelineHeader();
+        renderAll();
+      });
+    });
+    layoutObserver.observe(leftCol);
     window.addEventListener('resize', ()=>{
       updateTimelineScale();
       renderTimelineHeader();
