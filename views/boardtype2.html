@@ -1002,6 +1002,7 @@
     quickActions: { open:false, dateKey:null, taskId:null },
     filterMine: false
   };
+  let suppressInfiniteScroll = false;
 
   const boardScroll = document.getElementById('boardScroll');
   const leftCol = document.getElementById('leftCol');
@@ -1856,6 +1857,7 @@
   }
 
   function handleInfiniteScroll(){
+    if(suppressInfiniteScroll) return;
     const top=boardScroll.scrollTop;
     const height=boardScroll.scrollHeight;
     const view=boardScroll.clientHeight;
@@ -1948,16 +1950,24 @@
     const layoutObserver = new ResizeObserver(() => {
       if(resizeRaf) cancelAnimationFrame(resizeRaf);
       resizeRaf = requestAnimationFrame(() => {
+        suppressInfiniteScroll = true;
         updateTimelineScale();
         renderTimelineHeader();
         renderAll();
+        requestAnimationFrame(() => {
+          suppressInfiniteScroll = false;
+        });
       });
     });
     layoutObserver.observe(leftCol);
     window.addEventListener('resize', ()=>{
+      suppressInfiniteScroll = true;
       updateTimelineScale();
       renderTimelineHeader();
       renderAll();
+      requestAnimationFrame(() => {
+        suppressInfiniteScroll = false;
+      });
     });
 
     requestAnimationFrame(() => jumpToToday());
