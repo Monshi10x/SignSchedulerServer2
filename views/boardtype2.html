@@ -65,6 +65,10 @@
       font-weight:700;
     }
     .actions{ display:flex; gap:8px; align-items:center; justify-self:end; }
+    .filter-btn.active{
+      border-color: rgba(125,211,252,.5);
+      box-shadow: 0 0 12px rgba(125,211,252,.35);
+    }
     .jump-today{
       justify-self:center;
       display:flex;
@@ -825,7 +829,6 @@
         <rect x="7.5" y="12" width="3" height="3" rx="0.7" fill="url(#neonCalendarGradient)" filter="url(#neonGlow)"/>
         <rect x="13.5" y="12" width="3" height="3" rx="0.7" fill="url(#neonCalendarGradient)" filter="url(#neonGlow)"/>
       </svg>
-      <span class="pill">2-column day + timeline</span>
     </div>
     <button id="btnToday" class="jump-today" aria-label="Jump to today">
       <span class="label">Jump to Today</span>
@@ -839,6 +842,12 @@
       </span>
     </button>
     <div class="actions">
+      <button id="btnFilterMine" class="iconbtn filter-btn" aria-label="Filter to my tasks">
+        <svg viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="2"/>
+          <path d="M4 20c1.8-4 5.2-6 8-6s6.2 2 8 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </button>
       <select id="viewSelect" aria-label="View mode">
         <option value="infinite">Infinite scroll</option>
         <option value="week5">5 days</option>
@@ -990,7 +999,8 @@
     tasksByDate: {},
     render: { startDate: null, endDate: null, days: [] },
     modal: { open:false, dateKey:null, taskId:null },
-    quickActions: { open:false, dateKey:null, taskId:null }
+    quickActions: { open:false, dateKey:null, taskId:null },
+    filterMine: false
   };
 
   const boardScroll = document.getElementById('boardScroll');
@@ -1001,6 +1011,7 @@
   const btnToday = document.getElementById('btnToday');
   const btnSettings = document.getElementById('btnSettings');
   const btnMenuToggle = document.getElementById('btnMenuToggle');
+  const btnFilterMine = document.getElementById('btnFilterMine');
   const viewSelect = document.getElementById('viewSelect');
   const viewSelectMobile = document.getElementById('viewSelectMobile');
 
@@ -1026,6 +1037,7 @@
   const mStart = document.getElementById('mStart');
   const mEnd = document.getElementById('mEnd');
   const mAssignees = document.getElementById('mAssignees');
+  const CURRENT_USER = PEOPLE[0]?.name || "";
 
   const pad2 = (n) => String(n).padStart(2,'0');
   const slotW = () => parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--slotW'));
@@ -1440,7 +1452,11 @@
     tasks.className='tasks';
     tasks.dataset.tasksFor=dayKey;
 
-    for(const t of (state.tasksByDate[dayKey]||[])){
+    const tasksForDay = (state.tasksByDate[dayKey]||[]).filter((task) => {
+      if(!state.filterMine || !CURRENT_USER) return true;
+      return (task.assignees || []).includes(CURRENT_USER);
+    });
+    for(const t of tasksForDay){
       tasks.appendChild(renderTaskCard(dayKey, t));
     }
     day.appendChild(tasks);
@@ -1853,6 +1869,11 @@
   btnMenuToggle.addEventListener('click', ()=>{
     settingsPanel.classList.toggle('show');
     daysVisibleInput.focus();
+  });
+  btnFilterMine.addEventListener('click', ()=>{
+    state.filterMine = !state.filterMine;
+    btnFilterMine.classList.toggle('active', state.filterMine);
+    renderAll();
   });
   btnCloseSettings.addEventListener('click', ()=> settingsPanel.classList.remove('show'));
   daysVisibleInput.addEventListener('change', ()=>{
