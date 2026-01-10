@@ -209,6 +209,9 @@
       user-select:none;
       padding:0;
     }
+    .task.no-time{
+      --taskH: 72px;
+    }
 
     .task.completed{ opacity:.45; filter:saturate(.6); }
 
@@ -452,6 +455,9 @@
       height:15px;
       width:100%;
           margin-top: 20px;
+    }
+    .task.no-time .task-timeline{
+      display:none;
     }
     .task-timeline-inner{
       width: 100%;
@@ -769,6 +775,9 @@
       .task {
         --taskH: 140px;
       }
+      .task.no-time{
+        --taskH: 110px;
+      }
     }
 
     @container task (max-width: 720px){
@@ -782,6 +791,9 @@
         /* justify-content:flex-start;
         flex-wrap:wrap; */
       }
+      .task.no-time .right{
+        --taskH: 110px;
+      }
     }
     @media (max-width: 720px){
       .left-header-spacer{
@@ -793,6 +805,10 @@
       .task .right .completebtn{
         --taskH: 140px;
         display:none;
+      }
+      .task.no-time .right .iconbtn,
+      .task.no-time .right .completebtn{
+        --taskH: 110px;
       }
       .task .right .menu-btn{
         display:grid;
@@ -951,6 +967,10 @@
           <select id="mEnd"></select>
         </div>
         <div class="row">
+          <label>No time</label>
+          <input id="mNoTime" type="checkbox" />
+        </div>
+        <div class="row">
           <label>Assignees</label>
           <div class="assignee-grid" id="mAssignees"></div>
         </div>
@@ -1003,6 +1023,8 @@
   const SLOT = 15;
   const DEFAULT_START = 540;
   const DEFAULT_DUR = 60;
+  const NO_TIME_DEFAULT_START = 510;
+  const NO_TIME_DEFAULT_END = 720;
 
   const STORAGE_KEY = "twoColBoard_v4";
 
@@ -1049,6 +1071,7 @@
   const mColor = document.getElementById('mColor');
   const mStart = document.getElementById('mStart');
   const mEnd = document.getElementById('mEnd');
+  const mNoTime = document.getElementById('mNoTime');
   const mAssignees = document.getElementById('mAssignees');
   const CURRENT_USER = PEOPLE[0]?.name || "";
 
@@ -1242,6 +1265,7 @@
       customer: "",
       startMin: DEFAULT_START,
       durMin: DEFAULT_DUR,
+      noTime: false,
       completed: false,
       assignees: ["Tristan"]
     };
@@ -1270,8 +1294,17 @@
     if(!t) return;
 
     Object.assign(t, patch);
-    t.startMin = snapToSlot(clamp(t.startMin, START_MIN, END_MIN - SLOT));
-    t.durMin = snapToSlot(clamp(t.durMin, SLOT, END_MIN - t.startMin));
+    if(t.noTime){
+      t.startMin = null;
+      t.durMin = null;
+    }else{
+      if(typeof t.startMin !== 'number' || typeof t.durMin !== 'number'){
+        t.startMin = DEFAULT_START;
+        t.durMin = DEFAULT_DUR;
+      }
+      t.startMin = snapToSlot(clamp(t.startMin, START_MIN, END_MIN - SLOT));
+      t.durMin = snapToSlot(clamp(t.durMin, SLOT, END_MIN - t.startMin));
+    }
 
     save();
     rerenderDay(dateKey);
@@ -1311,6 +1344,15 @@
     }
   }
 
+  function syncNoTimeControls(noTime, resetDefaults=false){
+    mStart.disabled = noTime;
+    mEnd.disabled = noTime;
+    if(!noTime && resetDefaults){
+      mStart.value = NO_TIME_DEFAULT_START;
+      mEnd.value = NO_TIME_DEFAULT_END;
+    }
+  }
+
   function openModal(dateKey, taskId, focusAssignees=false){
     const t=getTask(dateKey, taskId);
     if(!t) return;
@@ -1327,9 +1369,13 @@
     mCustomer.value=t.customer || "";
     mColor.value=t.color;
 
-    mStart.value=t.startMin;
-    const endMin = clamp(t.startMin + t.durMin, START_MIN + SLOT, END_MIN);
-    mEnd.value=endMin;
+    const hasTime = !t.noTime && typeof t.startMin === 'number' && typeof t.durMin === 'number';
+    const fallbackStart = hasTime ? t.startMin : NO_TIME_DEFAULT_START;
+    const fallbackEnd = hasTime ? clamp(t.startMin + t.durMin, START_MIN + SLOT, END_MIN) : NO_TIME_DEFAULT_END;
+    mStart.value=fallbackStart;
+    mEnd.value=fallbackEnd;
+    mNoTime.checked = !!t.noTime;
+    syncNoTimeControls(mNoTime.checked);
 
     buildAssignees(t);
 
@@ -1369,22 +1415,39 @@
     const customer=(mCustomer.value||"").trim();
     const color=mColor.value || t.color;
 
-    const start=parseInt(mStart.value,10);
-    const end=parseInt(mEnd.value,10);
-    let dur=end-start;
-    if(dur < SLOT) dur=SLOT;
+    const noTime = mNoTime.checked;
+    let start = null;
+    let dur = null;
+    if(!noTime){
+      start=parseInt(mStart.value,10);
+      const end=parseInt(mEnd.value,10);
+      dur=end-start;
+      if(dur < SLOT) dur=SLOT;
+    }
 
     const assignees=[...mAssignees.querySelectorAll('input[type="checkbox"]:checked')]
       .map(x => x.getAttribute('data-person'))
       .filter(Boolean);
 
-    updateTask(dateKey, taskId, { type, desc, customer, color, startMin:start, durMin:dur, assignees: assignees.length ? assignees : [] });
+    updateTask(dateKey, taskId, {
+      type,
+      desc,
+      customer,
+      color,
+      noTime,
+      startMin:start,
+      durMin:dur,
+      assignees: assignees.length ? assignees : []
+    });
     closeModal();
   }
 
   modalClose.addEventListener('click', closeModal);
   modalBackdrop.addEventListener('click', (e)=>{ if(e.target===modalBackdrop) closeModal(); });
   modalSave.addEventListener('click', saveModal);
+  mNoTime.addEventListener('change', () => {
+    syncNoTimeControls(mNoTime.checked, !mNoTime.checked);
+  });
 
   quickActionsClose.addEventListener('click', closeQuickActions);
   quickActionsBackdrop.addEventListener('click', (e)=>{ if(e.target===quickActionsBackdrop) closeQuickActions(); });
@@ -1506,6 +1569,9 @@
     el.dataset.taskId=task.id;
     el.dataset.day=dayKey;
     el.style.setProperty('--c', task.color);
+    if(task.noTime){
+      el.classList.add('no-time');
+    }
 
     const typeBar=document.createElement('div');
     typeBar.className='task-typebar';
@@ -1521,50 +1587,56 @@
       </div>
     `;
 
-    const timeline=document.createElement('div');
-    timeline.className='task-timeline';
+    let timeline = null;
+    let bar = null;
+    let hR = null;
+    let hL = null;
+    if(!task.noTime){
+      timeline=document.createElement('div');
+      timeline.className='task-timeline';
 
-    const track=document.createElement('div');
-    track.className='task-timeline-inner';
-    track.innerHTML = `<div class="grid-bg"></div>`;
+      const track=document.createElement('div');
+      track.className='task-timeline-inner';
+      track.innerHTML = `<div class="grid-bg"></div>`;
 
-    const left=minsToLeftPx(task.startMin);
-    const w=minsToLeftPx(task.startMin + task.durMin) - left;
+      const left=minsToLeftPx(task.startMin);
+      const w=minsToLeftPx(task.startMin + task.durMin) - left;
 
-    const bar=document.createElement('div');
-    bar.className='bar';
-    bar.style.setProperty('--c', task.color);
-    bar.style.setProperty('--left', `${left}px`);
-    bar.style.setProperty('--w', `${Math.max(0,w)}px`);
+      bar=document.createElement('div');
+      bar.className='bar';
+      bar.style.setProperty('--c', task.color);
+      bar.style.setProperty('--left', `${left}px`);
+      bar.style.setProperty('--w', `${Math.max(0,w)}px`);
 
-    const tStart=document.createElement('div');
-    tStart.className='time-label start';
-    tStart.innerHTML = `<span class="time-label-text">${minsToLabel(task.startMin)}</span>`;
+      const tStart=document.createElement('div');
+      tStart.className='time-label start';
+      tStart.innerHTML = `<span class="time-label-text">${minsToLabel(task.startMin)}</span>`;
 
-    const tEnd=document.createElement('div');
-    tEnd.className='time-label end';
-    tEnd.innerHTML = `<span class="time-label-text">${minsToLabel(task.startMin + task.durMin)}</span>`;
+      const tEnd=document.createElement('div');
+      tEnd.className='time-label end';
+      tEnd.innerHTML = `<span class="time-label-text">${minsToLabel(task.startMin + task.durMin)}</span>`;
 
-    bar.appendChild(tStart);
-    bar.appendChild(tEnd);
+      bar.appendChild(tStart);
+      bar.appendChild(tEnd);
 
-    const hL=document.createElement('div');
-    hL.className='handle left';
-    hL.title="Resize start";
-    const hR=document.createElement('div');
-    hR.className='handle right';
-    hR.title="Resize end";
-    bar.appendChild(hL);
-    bar.appendChild(hR);
+      hL=document.createElement('div');
+      hL.className='handle left';
+      hL.title="Resize start";
+      hR=document.createElement('div');
+      hR.className='handle right';
+      hR.title="Resize end";
+      bar.appendChild(hL);
+      bar.appendChild(hR);
 
-    bar.addEventListener('click', (e)=>{
-      if(e.target.classList.contains('handle')) return;
-      e.stopPropagation();
-      openModal(dayKey, task.id, true);
-    });
+      bar.addEventListener('click', (e)=>{
+        if(e.target.classList.contains('handle')) return;
+        e.stopPropagation();
+        openModal(dayKey, task.id, true);
+      });
 
-    track.appendChild(bar);
-    timeline.appendChild(track);
+      track.appendChild(bar);
+      timeline.appendChild(track);
+    }
 
     const actions=document.createElement('div');
     actions.className='right';
@@ -1598,7 +1670,9 @@
 
     el.appendChild(typeBar);
     el.appendChild(main);
-    el.appendChild(timeline);
+    if(timeline){
+      el.appendChild(timeline);
+    }
 
     actions.querySelector('.iconbtn').addEventListener('click', (e)=>{ e.stopPropagation(); openModal(dayKey, task.id); });
     actions.querySelector('.iconbtn.danger').addEventListener('click', (e)=>{ e.stopPropagation(); deleteTask(dayKey, task.id); });
@@ -1642,11 +1716,12 @@
       }
     });
 
-    requestAnimationFrame(() => updateTimeLabelLayout(bar, task.startMin, task.durMin));
-
-    enableBarDrag(bar, dayKey, task.id);
-    enableBarResizeRight(hR, bar, dayKey, task.id);
-    enableBarResizeLeft(hL, bar, dayKey, task.id);
+    if(bar){
+      requestAnimationFrame(() => updateTimeLabelLayout(bar, task.startMin, task.durMin));
+      enableBarDrag(bar, dayKey, task.id);
+      enableBarResizeRight(hR, bar, dayKey, task.id);
+      enableBarResizeLeft(hL, bar, dayKey, task.id);
+    }
 
     return el;
   }
