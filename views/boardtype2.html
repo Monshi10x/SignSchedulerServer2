@@ -1421,26 +1421,12 @@
     }
   }
 
-  function getScrollState(){
-    const mobileView = window.matchMedia('(max-width: 900px)').matches;
-    if(mobileView){
-      return { type: 'window', value: window.scrollY || document.documentElement.scrollTop || 0 };
-    }
-    return { type: 'board', value: boardScroll.scrollTop };
-  }
-
-  function restoreScrollState(state){
-    if(state.type === 'window'){
-      window.scrollTo(0, state.value);
-      return;
-    }
-    boardScroll.scrollTop = state.value;
-  }
-
   function renderAllPreserveScroll(){
-    const prevScroll = getScrollState();
+    const prevBoardScroll = boardScroll.scrollTop;
+    const prevWindowScroll = window.scrollY || document.documentElement.scrollTop || 0;
     renderAll();
-    restoreScrollState(prevScroll);
+    boardScroll.scrollTop = prevBoardScroll;
+    window.scrollTo(0, prevWindowScroll);
   }
 
   function rerenderDay(dayKey){
