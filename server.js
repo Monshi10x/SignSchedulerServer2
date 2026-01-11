@@ -132,6 +132,7 @@ app.get('/SpandexBearerToken', async (req, res) => {
             res.set('Vary', 'Origin');
       }
       let spandexPage = null;
+      let tokenPromise = null;
       try {
             if(!browser) {
                   console.log("puppeteer browser starting for Spandex...");
@@ -143,7 +144,7 @@ app.get('/SpandexBearerToken', async (req, res) => {
             console.log("Spandex: new page opened");
             let bearerToken = null;
 
-            let tokenPromise = null;
+
 
             console.log("Spandex: navigating to login page");
             await spandexPage.goto('https://shop.spandex.com/en_AU/login', {
@@ -166,12 +167,15 @@ app.get('/SpandexBearerToken', async (req, res) => {
             });
 
             if(storedAuthToken) {
-                  console.log("Spandex: existing bearer token found");
-                  res.status(200).json({ bearerToken: storedAuthToken });
+                  console.log("Spandex: existing bearer token found: " + storedAuthToken);
+                  res.status(200).json({bearerToken: storedAuthToken});
                   return;
             }
 
-            console.log("Spandex: handling cookie consent");
+            console.log("Spandex: waiting for login fields");
+            await spandexPage.waitForSelector('#loginEmail', {timeout: 60000});
+
+            console.log("Spandex: Closing cookie consent");
             await spandexPage.evaluate(() => {
                   const cookieDialog = document.querySelector('#CybotCookiebotDialog');
                   if(cookieDialog) {
@@ -179,12 +183,14 @@ app.get('/SpandexBearerToken', async (req, res) => {
                   }
             });
 
-            console.log("Spandex: waiting for login fields");
-            await spandexPage.waitForSelector('#loginEmail', { timeout: 60000 });
             console.log("Spandex: entering credentials");
             await spandexPage.type('#loginEmail', 'admin.springwood@signarama.com.au');
             await spandexPage.type('#loginPassword', 'ChewyYoda93');
             console.log("Spandex: submitting login form");
+            await delay(10);
+            await spandexPage.click('button[type="submit"]');
+            await spandexPage.click('button[type="submit"]');
+
             console.log("Spandex: waiting for bearer token response");
             tokenPromise = spandexPage.waitForResponse(async response => {
                   try {
@@ -206,9 +212,7 @@ app.get('/SpandexBearerToken', async (req, res) => {
                         return false;
                   }
                   return false;
-            }, { timeout: 60000 }).catch(() => null);
-            await delay(500);
-            await spandexPage.click('button[type="submit"]');
+            }, {timeout: 60000}).catch(() => null);
 
             console.log("Spandex: waiting for token response to resolve");
             await tokenPromise;
@@ -224,15 +228,15 @@ app.get('/SpandexBearerToken', async (req, res) => {
 
             if(!bearerToken) {
                   console.log("Spandex: bearer token not found");
-                  res.status(500).json({ error: 'Bearer token not found.' });
+                  res.status(500).json({error: 'Bearer token not found.'});
                   return;
             }
 
             console.log("Spandex: bearer token retrieved");
-            res.status(200).json({ bearerToken });
+            res.status(200).json({bearerToken});
       } catch(err) {
             console.error('Failed to fetch Spandex bearer token', err);
-            res.status(500).json({ error: 'Failed to fetch bearer token.' });
+            res.status(500).json({error: 'Failed to fetch bearer token.'});
       } finally {
             if(spandexPage) {
                   console.log("Spandex: closing page");
