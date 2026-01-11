@@ -232,7 +232,7 @@ app.get('/SpandexBearerToken', async (req, res) => {
                   return;
             }
 
-            console.log("Spandex: bearer token retrieved");
+            console.log("Spandex: bearer token retrieved: " + bearerToken);
             res.status(200).json({bearerToken});
       } catch(err) {
             console.error('Failed to fetch Spandex bearer token', err);
