@@ -178,6 +178,7 @@ app.get('/SpandexBearerToken', async (req, res) => {
             await spandexPage.type('#loginEmail', 'admin.springwood@signarama.com.au');
             await spandexPage.type('#loginPassword', 'ChewyYoda93');
             console.log("Spandex: submitting login form");
+            await delay(500);
             await spandexPage.click('button[type="submit"]');
 
             console.log("Spandex: waiting for token response to resolve");
@@ -199,6 +200,15 @@ app.get('/SpandexBearerToken', async (req, res) => {
             }
 
             console.log("Spandex: bearer token retrieved");
+            console.log("Spandex: logging out");
+            await spandexPage.evaluate(() => {
+                  const logoutLink = document.querySelector(
+                        "body > app-root > spdx-storefront > header > cx-page-layout > cx-page-slot.SiteLogin.has-components > spdx-login > cx-page-slot > spdx-navigation > spdx-navigation-ui > nav > div > div.childs > nav:nth-child(9) > spdx-generic-link > a"
+                  );
+                  if(logoutLink) {
+                        logoutLink.click();
+                  }
+            });
             res.status(200).json({ bearerToken });
       } catch(err) {
             console.error('Failed to fetch Spandex bearer token', err);
