@@ -16,6 +16,22 @@ function delay(time) {
       return new Promise(resolve => setTimeout(resolve, time));
 }
 
+const TEST_MODE = process.env.PUPPETEER_TEST_MODE === 'true';
+const PUPPETEER_LAUNCH_OPTIONS = {
+      args: [
+            '--disable-gpu',
+            '--disable-dev-shm-usage',
+            '--disable-setuid-sandbox',
+            '--no-first-run',
+            '--no-sandbox',
+            '--no-zygote',
+            '--deterministic-fetch',
+            '--disable-features=IsolateOrigins',
+            '--disable-site-isolation-trials',
+      ],
+      headless: TEST_MODE,
+};
+
 let CB_DesignBoard_Data;
 var dataFetchedTimes = [];
 var browser = null;
@@ -23,20 +39,7 @@ var page = null;
 (async () => {
       try {
             console.log("puppeteer browser starting...");
-            browser = await puppeteer.launch({
-                  args: [
-                        '--disable-gpu',
-                        '--disable-dev-shm-usage',
-                        '--disable-setuid-sandbox',
-                        '--no-first-run',
-                        '--no-sandbox',
-                        '--no-zygote',
-                        '--deterministic-fetch',
-                        '--disable-features=IsolateOrigins',
-                        '--disable-site-isolation-trials',
-                  ],
-                  headless: true,
-            });
+            browser = await puppeteer.launch(PUPPETEER_LAUNCH_OPTIONS);
             console.log("puppeteer browser started");
             await delay(1000);
             page = await browser.newPage();
@@ -115,6 +118,125 @@ app.get('/CB_DesignBoard_Data', (req, resp) => {
                   });
                   resp.status(200).json(CB_DesignBoard_Data);
             })();
+      }
+});
+
+app.get('/SpandexBearerToken', async (req, res) => {
+      const allowedOrigins = [
+            'https://sar10686.corebridge.net',
+            'https://shop.spandex.com',
+      ];
+      const requestOrigin = req.get('origin');
+      if(requestOrigin && allowedOrigins.includes(requestOrigin)) {
+            res.set('Access-Control-Allow-Origin', requestOrigin);
+            res.set('Vary', 'Origin');
+      }
+      let spandexPage = null;
+      try {
+            if(!browser) {
+                  console.log("puppeteer browser starting for Spandex...");
+                  browser = await puppeteer.launch(PUPPETEER_LAUNCH_OPTIONS);
+                  console.log("puppeteer browser started for Spandex");
+            }
+
+            spandexPage = await browser.newPage();
+            console.log("Spandex: new page opened");
+            let bearerToken = null;
+
+            console.log("Spandex: waiting for bearer token response");
+            const tokenPromise = spandexPage.waitForResponse(async response => {
+                  try {
+                        const contentType = response.headers()['content-type'] || '';
+                        if(!contentType.includes('application/json')) {
+                              return false;
+                        }
+                        const data = await response.json();
+                        const token = data?.access_token
+                              || data?.token
+                              || data?.bearer_token
+                              || data?.data?.access_token
+                              || data?.data?.token;
+                        if(token) {
+                              bearerToken = token;
+                              return true;
+                        }
+                  } catch(err) {
+                        return false;
+                  }
+                  return false;
+            }, { timeout: 60000 });
+
+            console.log("Spandex: navigating to login page");
+            await spandexPage.goto('https://shop.spandex.com/en_AU/login', {
+                  waitUntil: 'domcontentloaded',
+                  timeout: 60000
+            });
+
+            console.log("Spandex: checking localStorage for existing token");
+            let storedAuthToken = await spandexPage.evaluate(() => {
+                  const authValue = localStorage.getItem('spartacus⚿AU_Site⚿auth');
+                  if(!authValue) {
+                        return null;
+                  }
+                  try {
+                        const parsed = JSON.parse(authValue);
+                        return parsed?.token?.access_token || null;
+                  } catch(err) {
+                        return null;
+                  }
+            });
+
+            if(storedAuthToken) {
+                  console.log("Spandex: existing bearer token found");
+                  res.status(200).json({ bearerToken: storedAuthToken });
+                  return;
+            }
+
+            console.log("Spandex: handling cookie consent");
+            await spandexPage.evaluate(() => {
+                  const cookieDialog = document.querySelector('#CybotCookiebotDialog');
+                  if(cookieDialog) {
+                        cookieDialog.remove();
+                  }
+            });
+
+            console.log("Spandex: waiting for login fields");
+            await spandexPage.waitForSelector('#loginEmail', { timeout: 60000 });
+            console.log("Spandex: entering credentials");
+            await spandexPage.type('#loginEmail', 'admin.springwood@signarama.com.au');
+            await spandexPage.type('#loginPassword', 'ChewyYoda93');
+            console.log("Spandex: submitting login form");
+            await delay(500);
+            await spandexPage.click('button[type="submit"]');
+
+            console.log("Spandex: waiting for token response to resolve");
+            await tokenPromise.catch(() => null);
+
+            if(!bearerToken) {
+                  console.log("Spandex: checking localStorage for token");
+                  bearerToken = await spandexPage.evaluate(() => {
+                        return localStorage.getItem('access_token')
+                              || localStorage.getItem('token')
+                              || localStorage.getItem('bearer_token');
+                  });
+            }
+
+            if(!bearerToken) {
+                  console.log("Spandex: bearer token not found");
+                  res.status(500).json({ error: 'Bearer token not found.' });
+                  return;
+            }
+
+            console.log("Spandex: bearer token retrieved");
+            res.status(200).json({ bearerToken });
+      } catch(err) {
+            console.error('Failed to fetch Spandex bearer token', err);
+            res.status(500).json({ error: 'Failed to fetch bearer token.' });
+      } finally {
+            if(spandexPage) {
+                  console.log("Spandex: closing page");
+                  await spandexPage.close();
+            }
       }
 });
 
