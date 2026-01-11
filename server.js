@@ -16,6 +16,21 @@ function delay(time) {
       return new Promise(resolve => setTimeout(resolve, time));
 }
 
+const PUPPETEER_LAUNCH_OPTIONS = {
+      args: [
+            '--disable-gpu',
+            '--disable-dev-shm-usage',
+            '--disable-setuid-sandbox',
+            '--no-first-run',
+            '--no-sandbox',
+            '--no-zygote',
+            '--deterministic-fetch',
+            '--disable-features=IsolateOrigins',
+            '--disable-site-isolation-trials',
+      ],
+      headless: true,
+};
+
 let CB_DesignBoard_Data;
 var dataFetchedTimes = [];
 var browser = null;
@@ -23,20 +38,7 @@ var page = null;
 (async () => {
       try {
             console.log("puppeteer browser starting...");
-            browser = await puppeteer.launch({
-                  args: [
-                        '--disable-gpu',
-                        '--disable-dev-shm-usage',
-                        '--disable-setuid-sandbox',
-                        '--no-first-run',
-                        '--no-sandbox',
-                        '--no-zygote',
-                        '--deterministic-fetch',
-                        '--disable-features=IsolateOrigins',
-                        '--disable-site-isolation-trials',
-                  ],
-                  headless: true,
-            });
+            browser = await puppeteer.launch(PUPPETEER_LAUNCH_OPTIONS);
             console.log("puppeteer browser started");
             await delay(1000);
             page = await browser.newPage();
@@ -115,6 +117,78 @@ app.get('/CB_DesignBoard_Data', (req, resp) => {
                   });
                   resp.status(200).json(CB_DesignBoard_Data);
             })();
+      }
+});
+
+app.get('/SpandexBearerToken', async (req, res) => {
+      res.set('Access-Control-Allow-Origin', 'https://sar10686.corebridge.net');
+      res.set('Vary', 'Origin');
+      let spandexPage = null;
+      try {
+            if(!browser) {
+                  console.log("puppeteer browser starting for Spandex...");
+                  browser = await puppeteer.launch(PUPPETEER_LAUNCH_OPTIONS);
+                  console.log("puppeteer browser started for Spandex");
+            }
+
+            spandexPage = await browser.newPage();
+            let bearerToken = null;
+
+            const tokenPromise = spandexPage.waitForResponse(async response => {
+                  try {
+                        const contentType = response.headers()['content-type'] || '';
+                        if(!contentType.includes('application/json')) {
+                              return false;
+                        }
+                        const data = await response.json();
+                        const token = data?.access_token
+                              || data?.token
+                              || data?.bearer_token
+                              || data?.data?.access_token
+                              || data?.data?.token;
+                        if(token) {
+                              bearerToken = token;
+                              return true;
+                        }
+                  } catch(err) {
+                        return false;
+                  }
+                  return false;
+            }, { timeout: 60000 });
+
+            await spandexPage.goto('https://shop.spandex.com/en_AU/login', {
+                  waitUntil: 'domcontentloaded',
+                  timeout: 60000
+            });
+
+            await spandexPage.waitForSelector('#loginEmail', { timeout: 60000 });
+            await spandexPage.type('#loginEmail', 'admin.springwood@signarama.com.au');
+            await spandexPage.type('#loginPassword', 'ChewyYoda93');
+            await spandexPage.click('button[type="submit"]');
+
+            await tokenPromise.catch(() => null);
+
+            if(!bearerToken) {
+                  bearerToken = await spandexPage.evaluate(() => {
+                        return localStorage.getItem('access_token')
+                              || localStorage.getItem('token')
+                              || localStorage.getItem('bearer_token');
+                  });
+            }
+
+            if(!bearerToken) {
+                  res.status(500).json({ error: 'Bearer token not found.' });
+                  return;
+            }
+
+            res.status(200).json({ bearerToken });
+      } catch(err) {
+            console.error('Failed to fetch Spandex bearer token', err);
+            res.status(500).json({ error: 'Failed to fetch bearer token.' });
+      } finally {
+            if(spandexPage) {
+                  await spandexPage.close();
+            }
       }
 });
 
