@@ -164,7 +164,7 @@ app.get('/SpandexBearerToken', async (req, res) => {
                         return false;
                   }
                   return false;
-            }, { timeout: 60000 });
+            }, {timeout: 60000});
 
             console.log("Spandex: navigating to login page");
             await spandexPage.goto('https://shop.spandex.com/en_AU/login', {
@@ -188,9 +188,15 @@ app.get('/SpandexBearerToken', async (req, res) => {
 
             if(storedAuthToken) {
                   console.log("Spandex: existing bearer token found");
-                  res.status(200).json({ bearerToken: storedAuthToken });
+                  res.status(200).json({bearerToken: storedAuthToken});
+                  await delay(10000);
                   return;
             }
+
+
+
+            console.log("Spandex: waiting for login fields");
+            await spandexPage.waitForSelector('#loginEmail', {timeout: 60000});
 
             console.log("Spandex: handling cookie consent");
             await spandexPage.evaluate(() => {
@@ -200,13 +206,12 @@ app.get('/SpandexBearerToken', async (req, res) => {
                   }
             });
 
-            console.log("Spandex: waiting for login fields");
-            await spandexPage.waitForSelector('#loginEmail', { timeout: 60000 });
             console.log("Spandex: entering credentials");
             await spandexPage.type('#loginEmail', 'admin.springwood@signarama.com.au');
             await spandexPage.type('#loginPassword', 'ChewyYoda93');
             console.log("Spandex: submitting login form");
             await delay(500);
+            await spandexPage.click('button[type="submit"]');
             await spandexPage.click('button[type="submit"]');
 
             console.log("Spandex: waiting for token response to resolve");
@@ -223,15 +228,15 @@ app.get('/SpandexBearerToken', async (req, res) => {
 
             if(!bearerToken) {
                   console.log("Spandex: bearer token not found");
-                  res.status(500).json({ error: 'Bearer token not found.' });
+                  res.status(500).json({error: 'Bearer token not found.'});
                   return;
             }
 
             console.log("Spandex: bearer token retrieved");
-            res.status(200).json({ bearerToken });
+            res.status(200).json({bearerToken});
       } catch(err) {
             console.error('Failed to fetch Spandex bearer token', err);
-            res.status(500).json({ error: 'Failed to fetch bearer token.' });
+            res.status(500).json({error: 'Failed to fetch bearer token.'});
       } finally {
             if(spandexPage) {
                   console.log("Spandex: closing page");
