@@ -209,9 +209,7 @@ app.get('/SpandexBearerToken', async (req, res) => {
             console.log("Spandex: bearer token retrieved");
             console.log("Spandex: logging out");
             await spandexPage.evaluate(() => {
-                  const logoutLink = document.querySelector(
-                        "body > app-root > spdx-storefront > header > cx-page-layout > cx-page-slot.SiteLogin.has-components > spdx-login > cx-page-slot > spdx-navigation > spdx-navigation-ui > nav > div > div.childs > nav:nth-child(9) > spdx-generic-link > a"
-                  );
+                  const logoutLink = document.querySelector('a[href="/en_AU/logout"]');
                   if(logoutLink) {
                         logoutLink.click();
                   }
