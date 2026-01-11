@@ -16,7 +16,7 @@ function delay(time) {
       return new Promise(resolve => setTimeout(resolve, time));
 }
 
-const TEST_MODE = process.env.PUPPETEER_TEST_MODE === 'true';
+const TEST_MODE = process.env.PUPPETEER_TEST_MODE = false;
 const PUPPETEER_LAUNCH_OPTIONS = {
       args: [
             '--disable-gpu',
@@ -29,7 +29,7 @@ const PUPPETEER_LAUNCH_OPTIONS = {
             '--disable-features=IsolateOrigins',
             '--disable-site-isolation-trials',
       ],
-      headless: TEST_MODE,
+      headless: !TEST_MODE,
 };
 
 let CB_DesignBoard_Data;
