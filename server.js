@@ -173,11 +173,10 @@ app.get('/SpandexBearerToken', async (req, res) => {
             });
 
             console.log("Spandex: handling cookie consent");
-            const cookieButton = await spandexPage.waitForSelector(
-                  '#CybotCookiebotDialogBodyButtonDecline',
-                  { timeout: 60000 }
-            );
-            await cookieButton.click();
+            const cookieButton = await spandexPage.$('#CybotCookiebotDialogBodyButtonDecline');
+            if(cookieButton) {
+                  await cookieButton.click();
+            }
 
             console.log("Spandex: waiting for login fields");
             await spandexPage.waitForSelector('#loginEmail', { timeout: 60000 });
