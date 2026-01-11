@@ -208,12 +208,11 @@ app.get('/SpandexBearerToken', async (req, res) => {
 
             console.log("Spandex: bearer token retrieved");
             console.log("Spandex: logging out");
-            await spandexPage.evaluate(() => {
-                  const logoutLink = document.querySelector('a[href="/en_AU/logout"]');
-                  if(logoutLink) {
-                        logoutLink.click();
-                  }
+            await spandexPage.goto('https://shop.spandex.com/en_AU/logout', {
+                  waitUntil: 'domcontentloaded',
+                  timeout: 60000
             });
+            await delay(10000);
             res.status(200).json({ bearerToken });
       } catch(err) {
             console.error('Failed to fetch Spandex bearer token', err);
