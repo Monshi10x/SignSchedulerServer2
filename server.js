@@ -122,8 +122,15 @@ app.get('/CB_DesignBoard_Data', (req, resp) => {
 });
 
 app.get('/SpandexBearerToken', async (req, res) => {
-      res.set('Access-Control-Allow-Origin', 'https://sar10686.corebridge.net');
-      res.set('Vary', 'Origin');
+      const allowedOrigins = [
+            'https://sar10686.corebridge.net',
+            'https://shop.spandex.com',
+      ];
+      const requestOrigin = req.get('origin');
+      if(requestOrigin && allowedOrigins.includes(requestOrigin)) {
+            res.set('Access-Control-Allow-Origin', requestOrigin);
+            res.set('Vary', 'Origin');
+      }
       let spandexPage = null;
       try {
             if(!browser) {
