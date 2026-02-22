@@ -267,18 +267,27 @@ app.get('/CB_OrderEntryProducts_PartSearchEntries', async (req, res) => {
                               params.delete(key);
                         }
                   });
-                  const queryString = params.toString();
                   const baseUrl = 'https://sar10686.corebridge.net/Api/OrderEntryProducts/GetPartSearchEntries';
-                  const urlWithQuery = baseUrl + (queryString ? '?' + queryString : '');
                   const sanitizedQueryParams = Object.fromEntries(params.entries());
-                  const requestBody = JSON.stringify(sanitizedQueryParams);
+                  const requestPayload = {
+                        partGroupId: Number(sanitizedQueryParams.partGroupId || 0),
+                        partCategoryId: Number(sanitizedQueryParams.partCategoryId || 0),
+                        txSearch: String(sanitizedQueryParams.txSearch || ''),
+                        pageIndex: Number(sanitizedQueryParams.pageIndex || 1),
+                        useGetAllParts: String(sanitizedQueryParams.useGetAllParts || 'false').toLowerCase() === 'true'
+                  };
+                  const requestBody = JSON.stringify(requestPayload);
                   const commonOptions = {
                         headers: {
-                              accept: '*/*',
-                              'content-type': 'application/json; charset=utf-8',
+                              accept: 'application/json, text/javascript, */*; q=0.01',
+                              'accept-language': 'en-US,en;q=0.9',
+                              'content-type': 'application/json; charset=UTF-8',
+                              'sec-fetch-dest': 'empty',
+                              'sec-fetch-mode': 'cors',
+                              'sec-fetch-site': 'same-origin',
                               'x-requested-with': 'XMLHttpRequest'
                         },
-                        referrer: 'https://sar10686.corebridge.net/DesignModule/DesignMainQueue.aspx',
+                        referrer: 'https://sar10686.corebridge.net/SalesModule/Estimates/QuickPrice.aspx',
                         referrerPolicy: 'strict-origin-when-cross-origin',
                         mode: 'cors',
                         credentials: 'include'
@@ -334,21 +343,19 @@ app.get('/CB_OrderEntryProducts_PartSearchEntries', async (req, res) => {
                         };
                   }
 
-                  console.log('CB_OrderEntryProducts_PartSearchEntries(browser): fetching POST', urlWithQuery, sanitizedQueryParams);
-                  const postResponse = await fetch(urlWithQuery, {
+                  console.log('CB_OrderEntryProducts_PartSearchEntries(browser): fetching POST', baseUrl, requestPayload);
+                  const postResponse = await fetch(baseUrl, {
                         ...commonOptions,
                         method: 'POST',
                         body: requestBody
                   });
-                  let parsedResponse = await parseResponse(postResponse, urlWithQuery, 'POST');
+                  let parsedResponse = await parseResponse(postResponse, baseUrl, 'POST');
 
-                  if(parsedResponse.status === 405) {
-                        console.log('CB_OrderEntryProducts_PartSearchEntries(browser): POST returned 405, retrying as GET');
-                        const getResponse = await fetch(urlWithQuery, {
-                              ...commonOptions,
-                              method: 'GET'
-                        });
-                        parsedResponse = await parseResponse(getResponse, urlWithQuery, 'GET');
+                  if(parsedResponse.ok && parsedResponse.data && parsedResponse.data.IsSuccess === false) {
+                        console.log('CB_OrderEntryProducts_PartSearchEntries(browser): upstream returned IsSuccess=false', parsedResponse.data);
+                        parsedResponse.ok = false;
+                        parsedResponse.status = 502;
+                        parsedResponse.statusText = parsedResponse.data.Status || 'Upstream business error';
                   }
 
                   return parsedResponse;
