@@ -248,6 +248,106 @@ app.get('/CB_OrderData_QuoteLevel', async (req, res) => {
       }
 });
 
+app.options('/CB_OrderEntryProducts_PartSearchEntries', (req, res) => {
+      setCorsHeaders(req, res);
+      res.status(204).end();
+});
+app.get('/CB_OrderEntryProducts_PartSearchEntries', async (req, res) => {
+      setCorsHeaders(req, res);
+      console.log('CB_OrderEntryProducts_PartSearchEntries: request received', req.query);
+
+      try {
+            console.log('CB_OrderEntryProducts_PartSearchEntries: preparing Corebridge session request');
+            const result = await runInCorebridgeSession(async ({queryParams}) => {
+                  const params = new URLSearchParams(queryParams || {});
+                  const queryString = params.toString();
+                  const baseUrl = 'https://sar10686.corebridge.net/Api/OrderEntryProducts/GetPartSearchEntries';
+                  const urlWithQuery = baseUrl + (queryString ? '?' + queryString : '');
+                  const requestBody = JSON.stringify(queryParams || {});
+                  const commonOptions = {
+                        headers: {
+                              accept: '*/*',
+                              'content-type': 'application/json; charset=utf-8',
+                              'x-requested-with': 'XMLHttpRequest'
+                        },
+                        referrer: 'https://sar10686.corebridge.net/DesignModule/DesignMainQueue.aspx',
+                        referrerPolicy: 'strict-origin-when-cross-origin',
+                        mode: 'cors',
+                        credentials: 'include'
+                  };
+
+                  async function parseResponse(response, url, methodUsed) {
+                        const text = await response.text();
+                        let data = null;
+                        try {data = JSON.parse(text);} catch(_eParse3) {data = text;}
+                        console.log(
+                              'CB_OrderEntryProducts_PartSearchEntries(browser): fetch complete',
+                              methodUsed,
+                              response.status,
+                              response.statusText
+                        );
+                        return {
+                              ok: response.ok,
+                              status: response.status,
+                              statusText: response.statusText,
+                              url: url,
+                              methodUsed: methodUsed,
+                              data: data
+                        };
+                  }
+
+                  console.log('CB_OrderEntryProducts_PartSearchEntries(browser): fetching POST', urlWithQuery, queryParams);
+                  const postResponse = await fetch(urlWithQuery, {
+                        ...commonOptions,
+                        method: 'POST',
+                        body: requestBody
+                  });
+                  let parsedResponse = await parseResponse(postResponse, urlWithQuery, 'POST');
+
+                  if(parsedResponse.status === 405) {
+                        console.log('CB_OrderEntryProducts_PartSearchEntries(browser): POST returned 405, retrying as GET');
+                        const getResponse = await fetch(urlWithQuery, {
+                              ...commonOptions,
+                              method: 'GET'
+                        });
+                        parsedResponse = await parseResponse(getResponse, urlWithQuery, 'GET');
+                  }
+
+                  return parsedResponse;
+            }, {queryParams: req.query});
+
+            console.log('CB_OrderEntryProducts_PartSearchEntries: Corebridge response received', {
+                  ok: result.ok,
+                  status: result.status,
+                  statusText: result.statusText,
+                  url: result.url,
+                  methodUsed: result.methodUsed
+            });
+
+            if(!result.ok) {
+                  console.log('CB_OrderEntryProducts_PartSearchEntries: returning upstream error payload');
+                  res.status(result.status || 502).json({
+                        error: 'Corebridge part search request failed.',
+                        status: result.status,
+                        statusText: result.statusText,
+                        url: result.url,
+                        methodUsed: result.methodUsed,
+                        data: result.data
+                  });
+                  return;
+            }
+
+            console.log('CB_OrderEntryProducts_PartSearchEntries: success response returned');
+            res.status(200).json(result.data);
+      } catch(err) {
+            console.error('CB_OrderEntryProducts_PartSearchEntries: proxy error', err);
+            res.status(500).json({
+                  error: 'Part search proxy failed.',
+                  detail: String(err && err.message ? err.message : err)
+            });
+      }
+});
+
 app.options('/CB_ProductNotesAll', (req, res) => {
       setCorsHeaders(req, res);
       res.status(204).end();
