@@ -260,10 +260,18 @@ app.get('/CB_OrderEntryProducts_PartSearchEntries', async (req, res) => {
             console.log('CB_OrderEntryProducts_PartSearchEntries: preparing Corebridge session request');
             const result = await runInCorebridgeSession(async ({queryParams}) => {
                   const params = new URLSearchParams(queryParams || {});
+                  const ignoredQueryParamKeys = ['_ts', 'ts', 't', '_t', 'timestamp', '_timestamp'];
+                  ignoredQueryParamKeys.forEach((key) => {
+                        if(params.has(key)) {
+                              console.log('CB_OrderEntryProducts_PartSearchEntries(browser): removing timestamp-like query param', key, params.get(key));
+                              params.delete(key);
+                        }
+                  });
                   const queryString = params.toString();
                   const baseUrl = 'https://sar10686.corebridge.net/Api/OrderEntryProducts/GetPartSearchEntries';
                   const urlWithQuery = baseUrl + (queryString ? '?' + queryString : '');
-                  const requestBody = JSON.stringify(queryParams || {});
+                  const sanitizedQueryParams = Object.fromEntries(params.entries());
+                  const requestBody = JSON.stringify(sanitizedQueryParams);
                   const commonOptions = {
                         headers: {
                               accept: '*/*',
@@ -326,7 +334,7 @@ app.get('/CB_OrderEntryProducts_PartSearchEntries', async (req, res) => {
                         };
                   }
 
-                  console.log('CB_OrderEntryProducts_PartSearchEntries(browser): fetching POST', urlWithQuery, queryParams);
+                  console.log('CB_OrderEntryProducts_PartSearchEntries(browser): fetching POST', urlWithQuery, sanitizedQueryParams);
                   const postResponse = await fetch(urlWithQuery, {
                         ...commonOptions,
                         method: 'POST',
