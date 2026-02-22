@@ -276,22 +276,52 @@ app.get('/CB_OrderEntryProducts_PartSearchEntries', async (req, res) => {
                         credentials: 'include'
                   };
 
+                  function getDataDebugInfo(data) {
+                        if(Array.isArray(data)) {
+                              return {type: 'array', rowCount: data.length};
+                        }
+                        if(data && typeof data === 'object') {
+                              const keys = Object.keys(data);
+                              const listLikeKey = keys.find((key) => Array.isArray(data[key]));
+                              return {
+                                    type: 'object',
+                                    keys: keys,
+                                    rowCount: listLikeKey ? data[listLikeKey].length : undefined,
+                                    rowSource: listLikeKey || undefined
+                              };
+                        }
+                        return {type: typeof data, rowCount: undefined};
+                  }
+
                   async function parseResponse(response, url, methodUsed) {
                         const text = await response.text();
                         let data = null;
-                        try {data = JSON.parse(text);} catch(_eParse3) {data = text;}
+                        let parseMode = 'json';
+                        try {data = JSON.parse(text);} catch(_eParse3) {data = text; parseMode = 'text';}
+                        const debugInfo = getDataDebugInfo(data);
                         console.log(
                               'CB_OrderEntryProducts_PartSearchEntries(browser): fetch complete',
                               methodUsed,
                               response.status,
-                              response.statusText
+                              response.statusText,
+                              'parseMode=',
+                              parseMode,
+                              'debugInfo=',
+                              debugInfo
                         );
+                        if(response.ok) {
+                              console.log('CB_OrderEntryProducts_PartSearchEntries(browser): json fetched result', data);
+                        } else {
+                              console.log('CB_OrderEntryProducts_PartSearchEntries(browser): non-ok response body', data);
+                        }
                         return {
                               ok: response.ok,
                               status: response.status,
                               statusText: response.statusText,
                               url: url,
                               methodUsed: methodUsed,
+                              parseMode: parseMode,
+                              debugInfo: debugInfo,
                               data: data
                         };
                   }
@@ -321,7 +351,9 @@ app.get('/CB_OrderEntryProducts_PartSearchEntries', async (req, res) => {
                   status: result.status,
                   statusText: result.statusText,
                   url: result.url,
-                  methodUsed: result.methodUsed
+                  methodUsed: result.methodUsed,
+                  parseMode: result.parseMode,
+                  debugInfo: result.debugInfo
             });
 
             if(!result.ok) {
@@ -332,11 +364,14 @@ app.get('/CB_OrderEntryProducts_PartSearchEntries', async (req, res) => {
                         statusText: result.statusText,
                         url: result.url,
                         methodUsed: result.methodUsed,
+                        parseMode: result.parseMode,
+                        debugInfo: result.debugInfo,
                         data: result.data
                   });
                   return;
             }
 
+            console.log('CB_OrderEntryProducts_PartSearchEntries: json fetched result', result.data);
             console.log('CB_OrderEntryProducts_PartSearchEntries: success response returned');
             res.status(200).json(result.data);
       } catch(err) {
