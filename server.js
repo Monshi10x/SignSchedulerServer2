@@ -248,6 +248,156 @@ app.get('/CB_OrderData_QuoteLevel', async (req, res) => {
       }
 });
 
+app.options('/CB_OrderEntryProducts_PartSearchEntries', (req, res) => {
+      setCorsHeaders(req, res);
+      res.status(204).end();
+});
+app.get('/CB_OrderEntryProducts_PartSearchEntries', async (req, res) => {
+      setCorsHeaders(req, res);
+      console.log('CB_OrderEntryProducts_PartSearchEntries: request received', req.query);
+
+      try {
+            console.log('CB_OrderEntryProducts_PartSearchEntries: preparing Corebridge session request');
+            const result = await runInCorebridgeSession(async ({queryParams}) => {
+                  const params = new URLSearchParams(queryParams || {});
+                  const ignoredQueryParamKeys = ['_ts', 'ts', 't', '_t', 'timestamp', '_timestamp'];
+                  ignoredQueryParamKeys.forEach((key) => {
+                        if(params.has(key)) {
+                              console.log('CB_OrderEntryProducts_PartSearchEntries(browser): removing timestamp-like query param', key, params.get(key));
+                              params.delete(key);
+                        }
+                  });
+                  const baseUrl = 'https://sar10686.corebridge.net/Api/OrderEntryProducts/GetPartSearchEntries';
+                  const sanitizedQueryParams = Object.fromEntries(params.entries());
+                  const requestPayload = {
+                        partGroupId: Number(sanitizedQueryParams.partGroupId || 0),
+                        partCategoryId: Number(sanitizedQueryParams.partCategoryId || 0),
+                        txSearch: String(sanitizedQueryParams.txSearch || ''),
+                        pageIndex: Number(sanitizedQueryParams.pageIndex || 1),
+                        useGetAllParts: String(sanitizedQueryParams.useGetAllParts || 'false').toLowerCase() === 'true'
+                  };
+                  const requestBody = JSON.stringify(requestPayload);
+                  const commonOptions = {
+                        headers: {
+                              accept: 'application/json, text/javascript, */*; q=0.01',
+                              'accept-language': 'en-US,en;q=0.9',
+                              'content-type': 'application/json; charset=UTF-8',
+                              'sec-fetch-dest': 'empty',
+                              'sec-fetch-mode': 'cors',
+                              'sec-fetch-site': 'same-origin',
+                              'x-requested-with': 'XMLHttpRequest'
+                        },
+                        referrer: 'https://sar10686.corebridge.net/SalesModule/Estimates/QuickPrice.aspx',
+                        referrerPolicy: 'strict-origin-when-cross-origin',
+                        mode: 'cors',
+                        credentials: 'include'
+                  };
+
+                  function getDataDebugInfo(data) {
+                        if(Array.isArray(data)) {
+                              return {type: 'array', rowCount: data.length};
+                        }
+                        if(data && typeof data === 'object') {
+                              const keys = Object.keys(data);
+                              const listLikeKey = keys.find((key) => Array.isArray(data[key]));
+                              return {
+                                    type: 'object',
+                                    keys: keys,
+                                    rowCount: listLikeKey ? data[listLikeKey].length : undefined,
+                                    rowSource: listLikeKey || undefined
+                              };
+                        }
+                        return {type: typeof data, rowCount: undefined};
+                  }
+
+                  async function parseResponse(response, url, methodUsed) {
+                        const text = await response.text();
+                        let data = null;
+                        let parseMode = 'json';
+                        try {data = JSON.parse(text);} catch(_eParse3) {data = text; parseMode = 'text';}
+                        const debugInfo = getDataDebugInfo(data);
+                        console.log(
+                              'CB_OrderEntryProducts_PartSearchEntries(browser): fetch complete',
+                              methodUsed,
+                              response.status,
+                              response.statusText,
+                              'parseMode=',
+                              parseMode,
+                              'debugInfo=',
+                              debugInfo
+                        );
+                        if(response.ok) {
+                              console.log('CB_OrderEntryProducts_PartSearchEntries(browser): json fetched result', data);
+                        } else {
+                              console.log('CB_OrderEntryProducts_PartSearchEntries(browser): non-ok response body', data);
+                        }
+                        return {
+                              ok: response.ok,
+                              status: response.status,
+                              statusText: response.statusText,
+                              url: url,
+                              methodUsed: methodUsed,
+                              parseMode: parseMode,
+                              debugInfo: debugInfo,
+                              data: data
+                        };
+                  }
+
+                  console.log('CB_OrderEntryProducts_PartSearchEntries(browser): fetching POST', baseUrl, requestPayload);
+                  const postResponse = await fetch(baseUrl, {
+                        ...commonOptions,
+                        method: 'POST',
+                        body: requestBody
+                  });
+                  let parsedResponse = await parseResponse(postResponse, baseUrl, 'POST');
+
+                  if(parsedResponse.ok && parsedResponse.data && parsedResponse.data.IsSuccess === false) {
+                        console.log('CB_OrderEntryProducts_PartSearchEntries(browser): upstream returned IsSuccess=false', parsedResponse.data);
+                        parsedResponse.ok = false;
+                        parsedResponse.status = 502;
+                        parsedResponse.statusText = parsedResponse.data.Status || 'Upstream business error';
+                  }
+
+                  return parsedResponse;
+            }, {queryParams: req.query});
+
+            console.log('CB_OrderEntryProducts_PartSearchEntries: Corebridge response received', {
+                  ok: result.ok,
+                  status: result.status,
+                  statusText: result.statusText,
+                  url: result.url,
+                  methodUsed: result.methodUsed,
+                  parseMode: result.parseMode,
+                  debugInfo: result.debugInfo
+            });
+
+            if(!result.ok) {
+                  console.log('CB_OrderEntryProducts_PartSearchEntries: returning upstream error payload');
+                  res.status(result.status || 502).json({
+                        error: 'Corebridge part search request failed.',
+                        status: result.status,
+                        statusText: result.statusText,
+                        url: result.url,
+                        methodUsed: result.methodUsed,
+                        parseMode: result.parseMode,
+                        debugInfo: result.debugInfo,
+                        data: result.data
+                  });
+                  return;
+            }
+
+            console.log('CB_OrderEntryProducts_PartSearchEntries: json fetched result', result.data);
+            console.log('CB_OrderEntryProducts_PartSearchEntries: success response returned');
+            res.status(200).json(result.data);
+      } catch(err) {
+            console.error('CB_OrderEntryProducts_PartSearchEntries: proxy error', err);
+            res.status(500).json({
+                  error: 'Part search proxy failed.',
+                  detail: String(err && err.message ? err.message : err)
+            });
+      }
+});
+
 app.options('/CB_ProductNotesAll', (req, res) => {
       setCorsHeaders(req, res);
       res.status(204).end();
