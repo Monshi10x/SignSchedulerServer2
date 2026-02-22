@@ -16,7 +16,7 @@ function delay(time) {
       return new Promise(resolve => setTimeout(resolve, time));
 }
 
-const TEST_MODE = process.env.PUPPETEER_TEST_MODE = false;
+const TEST_MODE = process.env.PUPPETEER_TEST_MODE = true;
 const PUPPETEER_LAUNCH_OPTIONS = {
       args: [
             '--disable-gpu',
@@ -55,8 +55,10 @@ var page = null;
             await page.waitForSelector('input[id=txtUsername]');
             await page.type('#txtUsername', 'tristan');
             await page.type('#txtPassword', 'tristan10x');
-            await page.click("#btnLogin");
-            await page.waitForNavigation();
+            await Promise.all([
+                  page.waitForNavigation({waitUntil: 'networkidle2', timeout: 60000}),
+                  page.click("#btnLogin")
+            ]);
             console.log("waiting for navigation");
 
             page.on('response', async response => {
@@ -88,18 +90,42 @@ app.get("/jobBoard", (req, res) => {
       res.sendFile(path.join(__dirname) + '/views/ScheduleBoard.html');
 });
 
-app.get('/CB_DesignBoard_Data', (req, resp) => {
+function setCorsHeaders(req, res) {
+      const requestOrigin = req.get('origin');
+      if(requestOrigin) {
+            res.set('Access-Control-Allow-Origin', requestOrigin);
+            res.set('Vary', 'Origin');
+      } else {
+            res.set('Access-Control-Allow-Origin', '*');
+      }
+      res.set('Access-Control-Allow-Methods', 'GET,OPTIONS');
+      res.set('Access-Control-Allow-Headers', 'Content-Type, X-Requested-With');
+}
+
+async function runInCorebridgeSession(script, args) {
+      if(!page) {
+            throw new Error('Corebridge proxy is not ready. Puppeteer page is not initialized.');
+      }
+      return await page.evaluate(script, args || {});
+}
+
+app.options('/CB_DesignBoard_Data', (req, res) => {
+      setCorsHeaders(req, res);
+      res.status(204).end();
+});
+app.get('/CB_DesignBoard_Data', async (req, resp) => {
       console.log("request to goto /CB_DesignBoard_Data");
+      setCorsHeaders(req, resp);
 
       if(page != null) {
-            (async () => {
-                  await page.evaluate(async () => {
+            try {
+                  const result = await runInCorebridgeSession(async () => {
                         const response = await fetch("https://sar10686.corebridge.net/SalesModule/Orders/OrderProduct.asmx/GetOrderProductQueueEntriesPaged", {
-                              "headers": {
-                                    "accept": "application/json, text/javascript, */*; q=0.01",
+                              headers: {
+                                    accept: "application/json, text/javascript, */*; q=0.01",
                                     "accept-language": "en-GB,en;q=0.9",
                                     "content-type": "application/json; charset=UTF-8",
-                                    "priority": "u=1, i",
+                                    priority: "u=1, i",
                                     "sec-ch-ua": "\"Not?A_Brand\";v=\"99\", \"Chromium\";v=\"130\"",
                                     "sec-ch-ua-mobile": "?0",
                                     "sec-ch-ua-platform": "\"Windows\"",
@@ -108,16 +134,182 @@ app.get('/CB_DesignBoard_Data', (req, resp) => {
                                     "sec-fetch-site": "same-origin",
                                     "x-requested-with": "XMLHttpRequest"
                               },
-                              "referrer": "https://sar10686.corebridge.net/DesignModule/DesignMainQueue.aspx",
-                              "referrerPolicy": "strict-origin-when-cross-origin",
-                              "body": "{\"sEcho\":2,\"iColumns\":21,\"sColumns\":\"\",\"iDisplayStart\":0,\"iDisplayLength\":30,\"iSortCol_0\":6,\"sSortDir_0\":\"asc\",\"viewType\":\"design\",\"queueType\":\"design_wip\",\"txSearch\":\"\",\"pageIndex\":1,\"arrQueueFilters\":[null,\"\",null,\"\",\"\",\"\",null,\"\",null,null,\"\",\"\",null,null]}",
-                              "method": "POST",
-                              "mode": "cors",
-                              "credentials": "include"
+                              referrer: "https://sar10686.corebridge.net/DesignModule/DesignMainQueue.aspx",
+                              referrerPolicy: "strict-origin-when-cross-origin",
+                              body: "{\"sEcho\":2,\"iColumns\":21,\"sColumns\":\"\",\"iDisplayStart\":0,\"iDisplayLength\":30,\"iSortCol_0\":6,\"sSortDir_0\":\"asc\",\"viewType\":\"design\",\"queueType\":\"design_wip\",\"txSearch\":\"\",\"pageIndex\":1,\"arrQueueFilters\":[null,\"\",null,\"\",\"\",\"\",null,\"\",null,null,\"\",\"\",null,null]}",
+                              method: "POST",
+                              mode: "cors",
+                              credentials: "include"
                         });
+
+                        const text = await response.text();
+                        let data = null;
+                        try {data = JSON.parse(text);} catch(_eParse) {data = text;}
+                        return {
+                              ok: response.ok,
+                              status: response.status,
+                              statusText: response.statusText,
+                              data: data
+                        };
                   });
+
+                  if(!result.ok) {
+                        resp.status(result.status || 502).json({
+                              error: "Corebridge design board request failed.",
+                              status: result.status,
+                              statusText: result.statusText,
+                              data: result.data
+                        });
+                        return;
+                  }
+
+                  CB_DesignBoard_Data = result && result.data && result.data.d ? result.data.d.QueueEntries : result.data;
+                  dataFetchedTimes.push(Date.now());
                   resp.status(200).json(CB_DesignBoard_Data);
-            })();
+            } catch(err) {
+                  resp.status(500).json({error: "Design board proxy failed.", detail: String(err && err.message ? err.message : err)});
+            }
+            return;
+      }
+      resp.status(503).json({error: 'Corebridge proxy is not ready.'});
+});
+
+app.options('/CB_OrderData_QuoteLevel', (req, res) => {
+      setCorsHeaders(req, res);
+      res.status(204).end();
+});
+app.get('/CB_OrderData_QuoteLevel', async (req, res) => {
+      setCorsHeaders(req, res);
+      console.log("Starting CB_OrderData_QuoteLevel fetch ");
+      const orderId = String(req.query.orderId || '').trim();
+      const accountId = String(req.query.accountId || '').trim();
+      const accountName = String(req.query.accountName || '').trim();
+      if(!orderId || !accountId || !accountName) {
+            res.status(400).json({error: 'Missing required query params: orderId, accountId, accountName.'});
+            return;
+      }
+
+      try {
+            const result = await runInCorebridgeSession(async ({orderId, accountId, accountName}) => {
+                  const accN1 = String(accountName).split(' ').join('+');
+                  const accN2 = String(accountName).split(' ').join('%20');
+                  const url =
+                        'https://sar10686.corebridge.net/Api/OrderEntryCustomer/GetInitialOneTimeFormFields' +
+                        '?OrderType=Order&IsEditMode=true&UseTheLatestProductSetupfee=true&MeasurementUnit=2' +
+                        '&OrderIdentifier=00000000-0000-0000-0000-000000000000&OrderMode=OrderEdit&PdpIds=&Convert=' +
+                        '&OrderId=' + encodeURIComponent(orderId) +
+                        '&Acctid=' + encodeURIComponent(accountId) +
+                        '&Acctname=' + accN1 +
+                        '&PartId=&TxtPricingTierValue=&UseLite=false&LoadAll=false&LatestProdSetupFee=false';
+
+                  const response = await fetch(url, {
+                        headers: {
+                              accept: '*/*',
+                              'content-type': 'application/json; charset=utf-8',
+                              'x-requested-with': 'XMLHttpRequest'
+                        },
+                        referrer:
+                              'https://sar10686.corebridge.net/SalesModule/Orders/EditOrder.aspx?Edit=1&OrderId=' +
+                              orderId +
+                              '&acctid=' +
+                              accountId +
+                              '&acctname=' +
+                              accN2,
+                        referrerPolicy: 'strict-origin-when-cross-origin',
+                        method: 'GET',
+                        mode: 'cors',
+                        credentials: 'include'
+                  });
+                  const text = await response.text();
+                  let data = null;
+                  try {data = JSON.parse(text);} catch(_eParse) {data = text;}
+                  return {
+                        ok: response.ok,
+                        status: response.status,
+                        statusText: response.statusText,
+                        url: url,
+                        data: data
+                  };
+            }, {orderId, accountId, accountName});
+
+            if(!result.ok) {
+                  res.status(result.status || 502).json({
+                        error: 'Corebridge quote-level request failed.',
+                        status: result.status,
+                        statusText: result.statusText,
+                        url: result.url,
+                        data: result.data
+                  });
+                  return;
+            }
+            res.status(200).json(result.data);
+      } catch(err) {
+            res.status(500).json({error: 'Quote-level proxy failed.', detail: String(err && err.message ? err.message : err)});
+      }
+});
+
+app.options('/CB_ProductNotesAll', (req, res) => {
+      setCorsHeaders(req, res);
+      res.status(204).end();
+});
+app.get('/CB_ProductNotesAll', async (req, res) => {
+      setCorsHeaders(req, res);
+      const orderProductId = String(req.query.orderProductId || '').trim();
+      if(!orderProductId) {
+            res.status(400).json({error: 'Missing required query param: orderProductId.'});
+            return;
+      }
+
+      try {
+            const result = await runInCorebridgeSession(async ({orderProductId}) => {
+                  const notesByType = [];
+                  for(let i = 1; i <= 5; i++) {
+                        const url =
+                              'https://sar10686.corebridge.net/Api/OrderProduct/GetProductNotesView' +
+                              '?orderProductId=' +
+                              encodeURIComponent(orderProductId) +
+                              '&noteTypeId=' +
+                              i +
+                              '&isPdpEdit=false';
+                        const response = await fetch(url, {
+                              headers: {
+                                    accept: '*/*',
+                                    'content-type': 'application/json; charset=utf-8',
+                                    'x-requested-with': 'XMLHttpRequest'
+                              },
+                              referrer: 'https://sar10686.corebridge.net/DesignModule/DesignMainQueue.aspx',
+                              referrerPolicy: 'strict-origin-when-cross-origin',
+                              method: 'GET',
+                              mode: 'cors',
+                              credentials: 'include'
+                        });
+                        const text = await response.text();
+                        let data = null;
+                        try {data = JSON.parse(text);} catch(_eParse2) {data = text;}
+                        notesByType.push({
+                              noteTypeId: i,
+                              ok: response.ok,
+                              status: response.status,
+                              statusText: response.statusText,
+                              data: data
+                        });
+                  }
+                  return notesByType;
+            }, {orderProductId});
+
+            const failed = result.find((row) => !row.ok);
+            if(failed) {
+                  res.status(failed.status || 502).json({
+                        error: 'Corebridge product notes proxy failed for one or more note types.',
+                        orderProductId: orderProductId,
+                        notesByType: result
+                  });
+                  return;
+            }
+
+            res.status(200).json(result);
+      } catch(err) {
+            res.status(500).json({error: 'Product notes proxy failed.', detail: String(err && err.message ? err.message : err)});
       }
 });
 
