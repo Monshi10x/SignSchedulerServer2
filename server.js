@@ -498,6 +498,13 @@ app.get('/SpandexBearerToken', async (req, res) => {
             await spandexPage.type('#loginEmail', 'admin.springwood@signarama.com.au');
             await spandexPage.type('#loginPassword', 'ChewyYoda93');
 
+            await spandexPage.evaluate(() => {
+                  const allowCookiesButton = document.querySelector('#CybotCookiebotDialogBodyLevelButtonLevelOptinAllowAll');
+                  if(allowCookiesButton) {
+                        allowCookiesButton.click();
+                  }
+            });
+
             const signInButtonSelector = 'body > ngb-modal-window > div > div > spdx-login-popup > div > spdx-login-form > form > button';
             await spandexPage.waitForSelector(signInButtonSelector, {timeout: 60000});
             await Promise.allSettled([
