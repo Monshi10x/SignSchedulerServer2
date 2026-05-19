@@ -490,27 +490,24 @@ app.get('/SpandexBearerToken', async (req, res) => {
                   timeout: 60000
             });
 
-            const signInSpanSelector = 'body > app-root > spdx-storefront > header > cx-page-layout > cx-page-slot.SiteLogin.has-components.ng-star-inserted > spdx-login > div > span';
+            await spandexPage.waitForSelector('#CybotCookiebotDialogBodyLevelButtonLevelOptinAllowAll', {timeout: 60000});
+            await spandexPage.click('#CybotCookiebotDialogBodyLevelButtonLevelOptinAllowAll');
+
+            const signInSpanSelector = 'body > app-root > spdx-storefront > header > cx-page-layout > cx-page-slot.SiteLogin.has-components.ng-star-inserted > spdx-login > div';
             await spandexPage.waitForSelector(signInSpanSelector, {timeout: 60000});
             await spandexPage.click(signInSpanSelector);
-
+            await delay(1000);
             await spandexPage.waitForSelector('#loginEmail', {timeout: 60000});
             await spandexPage.type('#loginEmail', 'admin.springwood@signarama.com.au');
             await spandexPage.type('#loginPassword', 'ChewyYoda93');
 
-            await spandexPage.evaluate(() => {
-                  const allowCookiesButton = document.querySelector('#CybotCookiebotDialogBodyLevelButtonLevelOptinAllowAll');
-                  if(allowCookiesButton) {
-                        allowCookiesButton.click();
-                  }
-            });
+            await delay(1000);
 
             const signInButtonSelector = 'body > ngb-modal-window > div > div > spdx-login-popup > div > spdx-login-form > form > button';
             await spandexPage.waitForSelector(signInButtonSelector, {timeout: 60000});
-            await Promise.allSettled([
-                  spandexPage.waitForNavigation({waitUntil: 'networkidle2', timeout: 60000}),
-                  spandexPage.click(signInButtonSelector)
-            ]);
+            spandexPage.click(signInButtonSelector);
+
+            await delay(1000);
 
             const bearerToken = await spandexPage.evaluate(() => {
                   const authValue = localStorage.getItem('spartacus⚿AU_Site⚿auth');
@@ -524,6 +521,7 @@ app.get('/SpandexBearerToken', async (req, res) => {
                         return null;
                   }
             });
+            console.log("Bearer Token: " + bearerToken);
 
             res.status(200).json({
                   message: 'Spandex sign-in automation completed.',
