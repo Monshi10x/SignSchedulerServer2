@@ -122,11 +122,11 @@ app.get('/CB_DesignBoard_Data', async (req, resp) => {
                   const result = await runInCorebridgeSession(async () => {
                         const response = await fetch("https://sar10686.corebridge.net/SalesModule/Orders/OrderProduct.asmx/GetOrderProductQueueEntriesPaged", {
                               headers: {
-                                    accept: "application/json, text/javascript, */*; q=0.01",
-                                    "accept-language": "en-GB,en;q=0.9",
+                                    "accept": "application/json, text/javascript, */*; q=0.01",
+                                    "accept-language": "en-US,en;q=0.9",
                                     "content-type": "application/json; charset=UTF-8",
-                                    priority: "u=1, i",
-                                    "sec-ch-ua": "\"Not?A_Brand\";v=\"99\", \"Chromium\";v=\"130\"",
+                                    "priority": "u=1, i",
+                                    "sec-ch-ua": "\"Google Chrome\";v=\"147\", \"Not.A/Brand\";v=\"8\", \"Chromium\";v=\"147\"",
                                     "sec-ch-ua-mobile": "?0",
                                     "sec-ch-ua-platform": "\"Windows\"",
                                     "sec-fetch-dest": "empty",
@@ -135,8 +135,7 @@ app.get('/CB_DesignBoard_Data', async (req, resp) => {
                                     "x-requested-with": "XMLHttpRequest"
                               },
                               referrer: "https://sar10686.corebridge.net/DesignModule/DesignMainQueue.aspx",
-                              referrerPolicy: "strict-origin-when-cross-origin",
-                              body: "{\"sEcho\":2,\"iColumns\":21,\"sColumns\":\"\",\"iDisplayStart\":0,\"iDisplayLength\":30,\"iSortCol_0\":6,\"sSortDir_0\":\"asc\",\"viewType\":\"design\",\"queueType\":\"design_wip\",\"txSearch\":\"\",\"pageIndex\":1,\"arrQueueFilters\":[null,\"\",null,\"\",\"\",\"\",null,\"\",null,null,\"\",\"\",null,null]}",
+                              body: "{\"sEcho\":2,\"iColumns\":21,\"sColumns\":\"\",\"iDisplayStart\":0,\"iDisplayLength\":1000,\"iSortCol_0\":2,\"sSortDir_0\":\"asc\",\"viewType\":\"design\",\"queueType\":\"design_wip\",\"txSearch\":\"\",\"pageIndex\":1,\"arrQueueFilters\":[null,\"\",null,\"\",\"\",\"\",null,\"\",null,null,\"\",\"\",null,null]}",
                               method: "POST",
                               mode: "cors",
                               credentials: "include"
@@ -492,36 +491,44 @@ app.get('/SpandexBearerToken', async (req, res) => {
 
             await spandexPage.waitForSelector('#CybotCookiebotDialogBodyLevelButtonLevelOptinAllowAll', {timeout: 60000});
             await spandexPage.click('#CybotCookiebotDialogBodyLevelButtonLevelOptinAllowAll');
-
+            await delay(500);
             const signInSpanSelector = 'body > app-root > spdx-storefront > header > cx-page-layout > cx-page-slot.SiteLogin.has-components.ng-star-inserted > spdx-login > div';
             await spandexPage.waitForSelector(signInSpanSelector, {timeout: 60000});
             await spandexPage.click(signInSpanSelector);
-            await delay(1000);
+            await delay(500);
             await spandexPage.waitForSelector('#loginEmail', {timeout: 60000});
             await spandexPage.type('#loginEmail', 'admin.springwood@signarama.com.au');
             await spandexPage.type('#loginPassword', 'ChewyYoda93');
 
-            await delay(1000);
+            await delay(500);
 
             const signInButtonSelector = 'body > ngb-modal-window > div > div > spdx-login-popup > div > spdx-login-form > form > button';
             await spandexPage.waitForSelector(signInButtonSelector, {timeout: 60000});
             spandexPage.click(signInButtonSelector);
 
-            await delay(1000);
+            await delay(500);
 
-            const bearerToken = await spandexPage.evaluate(() => {
-                  const authValue = localStorage.getItem('spartacus⚿AU_Site⚿auth');
-                  if(!authValue) {
-                        return null;
-                  }
-                  try {
-                        const parsed = JSON.parse(authValue);
-                        return parsed?.token?.access_token || null;
-                  } catch(err) {
-                        return null;
-                  }
-            });
-            console.log("Bearer Token: " + bearerToken);
+            let tries = 5;
+            let l = 0;
+            let bearerToken;
+            while(l < tries) {
+                  bearerToken = await spandexPage.evaluate(() => {
+                        const authValue = localStorage.getItem('spartacus⚿AU_Site⚿auth');
+                        if(!authValue) {
+                              return null;
+                        }
+                        try {
+                              const parsed = JSON.parse(authValue);
+                              return parsed?.token?.access_token || null;
+                        } catch(err) {
+                              return null;
+                        }
+                  });
+                  console.log("Bearer Token: " + bearerToken);
+                  l++;
+                  if(bearerToken != null) l = 5;
+                  await delay(1000);
+            }
 
             res.status(200).json({
                   message: 'Spandex sign-in automation completed.',
