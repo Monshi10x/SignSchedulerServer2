@@ -163,8 +163,9 @@ app.get('/CB_DesignBoard_Data', async (req, resp) => {
                   }
 
                   CB_DesignBoard_Data = result && result.data && result.data.d ? result.data.d.QueueEntries : result.data;
+                  console.log(CB_DesignBoard_Data.length);
                   dataFetchedTimes.push(Date.now());
-                  resp.status(200).json(CB_DesignBoard_Data);
+                  resp.status(200).json(CB_DesignBoard_Data + " Entries");
             } catch(err) {
                   resp.status(500).json({error: "Design board proxy failed.", detail: String(err && err.message ? err.message : err)});
             }
